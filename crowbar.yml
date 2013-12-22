@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+<<<<<<< HEAD
 
 barclamp:
 <<<<<<< HEAD
@@ -26,10 +27,19 @@ barclamp:
   description: Test Barclamp Integrations
   version: 0
 >>>>>>> barclamp-test/master
+=======
+#
+
+barclamp:
+  name: network
+  display: Network
+  version: 1
+>>>>>>> barclamp-network/master
   license: "apache2"
   copyright: "Dell, Inc 2013"
   api_version: "v2"
   api_version_accepts: "v2"
+<<<<<<< HEAD
 <<<<<<< HEAD
   proposal_schema_version: 2
   os_support:
@@ -505,3 +515,57 @@ crowbar:
   run_order: 99
   chef_order: 99
 >>>>>>> barclamp-test/master
+=======
+  online_help: 'https://github.com/dellcloudedge/crowbar/wiki/Network-barclamp'
+
+crowbar:
+  layout: 2.0
+  order: 20
+
+roles:
+  # network-server exists to hold interface maps right now.
+  - name: network-server
+    jig: noop
+    flags:
+      - server
+    attribs:
+      - name: network_interface_maps
+        description: 'The global set of interface maps that should be used to figure out nic ordering.'
+        map: 'crowbar/interface_map'
+attribs:
+  - name: 'nics'
+    description: 'Ethernet Interface Ports'
+    map: 'ohai/crowbar_ohai/detected/network'
+  - name: 'switches'
+    description: 'Connected Networking Switches'
+    map: 'ohai/crowbar_ohai/switch_config'
+
+rpms:
+  redhat-6.4:
+    pkgs:
+      - vconfig
+      - iptables-ipv6
+  centos-6.4:
+    pkgs:
+      - vconfig
+      - iptables-ipv6
+  opensuse-12.3:
+    pkgs:
+      - vlan
+  opensuse-13.1:
+    pkgs:
+      - vlan
+  pkgs:
+    - bridge-utils
+    - dhcp
+    - iptables
+debs:
+  ubuntu-12.04:
+    pkgs:
+      - rpcbind
+  pkgs:
+    - bridge-utils
+    - vlan
+    - ifenslave-2.6
+    - isc-dhcp-client
+>>>>>>> barclamp-network/master

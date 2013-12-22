@@ -1,6 +1,7 @@
 *.lock
 .idea
 .rvmrc
+<<<<<<< HEAD
 .#*
 *~
 *.dia.autosave
@@ -10,3 +11,7 @@ erl_crash.dump
 /BDD/dev.config
 /BDD/.*.erl.swp
 /crowbar_framework/log/test.*
+=======
+*~
+.#*
+>>>>>>> barclamp-network/master
