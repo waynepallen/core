@@ -14,15 +14,23 @@
 #
 
 barclamp:
+<<<<<<< HEAD
   name: crowbar
   display: Crowbar
   description: Self-referential barclamp enabling other barclamps
   online_help: 'https://crowbar.github.com/'
   version: 2
+=======
+  name: test
+  display: Test
+  description: Test Barclamp Integrations
+  version: 0
+>>>>>>> barclamp-test/master
   license: "apache2"
   copyright: "Dell, Inc 2013"
   api_version: "v2"
   api_version_accepts: "v2"
+<<<<<<< HEAD
   proposal_schema_version: 2
   os_support:
     - ubuntu-12.04
@@ -434,3 +442,66 @@ gems:
     - delayed_job_active_record
     - delayed_job
     - daemons
+=======
+  allow_multiple_deployments: true
+  member:
+    - crowbar
+
+roles:
+  - name: test-admin
+    jig: test
+    flags:
+      - bootstrap
+  - name: test-server
+    jig: test
+    requires:
+      - test-admin
+  - name: test-client
+    jig: test
+    flags:
+      - implicit
+    requires:
+      - test-server
+      - test-library
+  - name: test-client-client
+    jig: test
+    requires:
+      - test-client
+  - name: test-discovery
+    jig: test
+    flags:
+      - discovery
+      - bootstrap
+    requires:
+      - test-admin
+  - name: test-library
+    jig: test
+    flags:
+      - library
+      - implicit
+    requires:
+      - test-admin
+  - name: test-fails
+    jig: test
+  - name: test-event
+    jig: test
+
+attribs:
+  - name: random
+    map: 'test/random'
+    description: 'Random # created by Test Jig instrumentation'
+  - name: marker
+    map: 'test/marker'
+    description: 'Last touched by information created by Test Jig instrumentation'
+
+jigs:
+  - name: test
+    description: 'Test jig for exercising jig and noderole operations.'
+    class: 'BarclampTest::Jig'
+
+crowbar:
+  layout: 1.9
+  order: 99
+  run_order: 99
+  chef_order: 99
+>>>>>>> barclamp-test/master
