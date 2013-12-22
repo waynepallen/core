@@ -4,9 +4,14 @@
 .#*
 *~
 *.dia.autosave
+
 erl_crash.dump
 /BDD/*.beam
 /BDD/default.config
 /BDD/dev.config
 /BDD/.*.erl.swp
+
 /crowbar_framework/log/test.*
+
+/rails/db/migrate/20131222061616_create_delayed_jobs.rb
+/rails/script/delayed_job
