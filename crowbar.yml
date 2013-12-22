@@ -12,130 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-<<<<<<< HEAD
 
-barclamp:
-<<<<<<< HEAD
-  name: crowbar
-  display: Crowbar
-  description: Self-referential barclamp enabling other barclamps
-  online_help: 'https://crowbar.github.com/'
-  version: 2
-=======
-  name: test
-  display: Test
-  description: Test Barclamp Integrations
-  version: 0
->>>>>>> barclamp-test/master
-=======
-#
+version: 2.0
 
-barclamp:
-  name: network
-  display: Network
-  version: 1
->>>>>>> barclamp-network/master
-  license: "apache2"
-  copyright: "Dell, Inc 2013"
-  api_version: "v2"
-  api_version_accepts: "v2"
-<<<<<<< HEAD
-<<<<<<< HEAD
-  proposal_schema_version: 2
-  os_support:
-    - ubuntu-12.04
-    - redhat-6.2
-    - centos-6.2
-    - opensuse-12.3
-    - fedora-18
-    - fedora-19
+os_support:
+  - ubuntu-12.04
+  - redhat-6.2
+  - centos-6.2
+  - opensuse-12.3
+  - fedora-18
+  - fedora-19
 
-roles:
-  - name: crowbar-admin-node
-    description: "Core Crowbar Services Bundle"
-    jig: noop
-    flags:
-      - bootstrap
-      - implicit
-    requires:
-      - deployer-client
-      - network-server
-      - dns-database
-      - provisioner-dhcp-database
-      - provisioner-repos
-  - name: crowbar-managed-node
-    description: "Crowbar Node Service Bundle"
-    jig: noop
-    flags:
-      - discovery
-      - implicit
-    requires:
-      - deployer-client
-      - logging-client
-      - ntp-client
-      - provisioner-repos
-  - name: crowbar-installed-node
-    description: "Crowbar Node Ready Checkpoint"
-    jig: noop
-    flags:
-      - implicit
-    requires:
-      - crowbar-managed-node
-      - provisioner-os-install
+barclamps:
+  - name: crowbar
+    description: Self-referential barclamp enabling other barclamps
+  - name: test
+    description: Test Barclamp Integrations
+  - name: network
+    description: Network
 
 jigs:
+  # Crowbar Core
   - name: script
     class: 'BarclampCrowbar::Jig'
     description: 'Run arbitrary scripts on nodes via SSH'
   - name: noop
     class: NoopJig
     description: "Jig used when roles have no action to run"
+  - name: test
+    description: 'Test jig for exercising jig and noderole operations.'
+    class: 'BarclampTest::Jig'
 
-attribs:
-  - name: asset_tag
-    map: 'ohai/dmi/base_board/asset_tag'
-    description: 'BIOS configured system identifier'
-  - name: serial_number
-    description: 'System Serial Number'
-    map: 'ohai/dmi/base_board/asset_tag'
-  - name: 'kernel'
-    description: 'Kermel Name'
-    map: 'ohai/kernel/name'
-  - name: 'kernel_version'
-    description: 'Kernel Version'
-    map: 'ohai/kernel/version'
-  - name: 'os'
-    description: 'O/S Name'
-    map: 'ohai/platform'
-  - name: 'os_version'
-    description: 'O/S Version'
-    map: 'ohai/platform_version'
-  - name: 'os_description'
-    description: 'O/S Description'
-    map: 'ohai/lsb/description'
-  - name: 'memory'
-    description: 'System Memory'
-    map: 'ohai/memory/total'
-  - name: 'cpu'
-    description: 'System Processor'
-    map: 'ohai/cpu/0/model_name'
-  - name: 'cpu_count'
-    description: 'Number of Processors'
-    map: 'ohai/cpu/total'
-  - name: 'hardware'
-    description: 'Product Name'
-    map: 'ohai/dmi/system/product_name'
-  - name: 'manufacturer'
-    description: 'Product Vendor'
-    map: 'ohai/dmi/system/manufacturer'
-  - name: 'number_of_drives'
-    description: 'RAID set'
-    map: 'ohai/block_device'
-
-crowbar:
-  layout: 2.0
-  order: 0
-  proposal_schema_version: 2
 
 debs:
   ubuntu-12.04:
@@ -229,6 +136,7 @@ debs:
     - linux-headers-generic-lts-raring
     - lxc-docker
 
+
 rpms:
   redhat-6.4:
     repos:
@@ -254,6 +162,9 @@ rpms:
       - openssh-server
       - openssl-devel
       - vim-enhanced
+      # network
+      - vconfig
+      - iptables-ipv6
   centos-6.4:
     repos:
       - rpm http://mirrors.servercentral.net/fedora/epel/6/i386/epel-release-6-8.noarch.rpm
@@ -279,6 +190,9 @@ rpms:
       - openssh-server
       - openssl-devel
       - vim-enhanced
+      # network
+      - vconfig
+      - iptables-ipv6
 
   fedora-18:
     build_pkgs:
@@ -335,6 +249,8 @@ rpms:
       - openssl
       - libssh-devel
       - vim
+      # network
+      - vlan
   opensuse-13.1:
     repos:
       - repo http://download.opensuse.org/repositories/server:/database:/postgresql/openSUSE_13.1/ postgresql
@@ -353,6 +269,8 @@ rpms:
       - openssl
       - libssh-devel
       - vim
+      # network
+      - vlan
   required_pkgs:
     - gcc
     - gcc-c++
@@ -401,7 +319,11 @@ rpms:
     - libecpg6
     # openssh stuff
     - openssh
-
+    # network
+    - bridge-utils
+    - dhcp
+    - iptables
+    
 gems:
   pkgs:
     - active_scaffold
@@ -452,120 +374,3 @@ gems:
     - delayed_job_active_record
     - delayed_job
     - daemons
-=======
-  allow_multiple_deployments: true
-  member:
-    - crowbar
-
-roles:
-  - name: test-admin
-    jig: test
-    flags:
-      - bootstrap
-  - name: test-server
-    jig: test
-    requires:
-      - test-admin
-  - name: test-client
-    jig: test
-    flags:
-      - implicit
-    requires:
-      - test-server
-      - test-library
-  - name: test-client-client
-    jig: test
-    requires:
-      - test-client
-  - name: test-discovery
-    jig: test
-    flags:
-      - discovery
-      - bootstrap
-    requires:
-      - test-admin
-  - name: test-library
-    jig: test
-    flags:
-      - library
-      - implicit
-    requires:
-      - test-admin
-  - name: test-fails
-    jig: test
-  - name: test-event
-    jig: test
-
-attribs:
-  - name: random
-    map: 'test/random'
-    description: 'Random # created by Test Jig instrumentation'
-  - name: marker
-    map: 'test/marker'
-    description: 'Last touched by information created by Test Jig instrumentation'
-
-jigs:
-  - name: test
-    description: 'Test jig for exercising jig and noderole operations.'
-    class: 'BarclampTest::Jig'
-
-crowbar:
-  layout: 1.9
-  order: 99
-  run_order: 99
-  chef_order: 99
->>>>>>> barclamp-test/master
-=======
-  online_help: 'https://github.com/dellcloudedge/crowbar/wiki/Network-barclamp'
-
-crowbar:
-  layout: 2.0
-  order: 20
-
-roles:
-  # network-server exists to hold interface maps right now.
-  - name: network-server
-    jig: noop
-    flags:
-      - server
-    attribs:
-      - name: network_interface_maps
-        description: 'The global set of interface maps that should be used to figure out nic ordering.'
-        map: 'crowbar/interface_map'
-attribs:
-  - name: 'nics'
-    description: 'Ethernet Interface Ports'
-    map: 'ohai/crowbar_ohai/detected/network'
-  - name: 'switches'
-    description: 'Connected Networking Switches'
-    map: 'ohai/crowbar_ohai/switch_config'
-
-rpms:
-  redhat-6.4:
-    pkgs:
-      - vconfig
-      - iptables-ipv6
-  centos-6.4:
-    pkgs:
-      - vconfig
-      - iptables-ipv6
-  opensuse-12.3:
-    pkgs:
-      - vlan
-  opensuse-13.1:
-    pkgs:
-      - vlan
-  pkgs:
-    - bridge-utils
-    - dhcp
-    - iptables
-debs:
-  ubuntu-12.04:
-    pkgs:
-      - rpcbind
-  pkgs:
-    - bridge-utils
-    - vlan
-    - ifenslave-2.6
-    - isc-dhcp-client
->>>>>>> barclamp-network/master
