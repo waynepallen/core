@@ -55,9 +55,8 @@ class BarclampCrowbar::Jig < Jig
   end
 
   def run(nr,data)
-    # Hardcode this for now
     login = "root@#{nr.node.name}"
-    local_scripts = "/opt/dell/barclamps/#{nr.barclamp.name}/script/roles/#{nr.role.name}"
+    local_scripts = File.join nr.barclamp.source_path, 'script', 'roles', nr.role.name
     raise "No local scripts @ #{local_scripts}" unless File.exists?(local_scripts)
     remote_tmpdir,ok = BarclampCrowbar::Jig.ssh("'#{login}' -- mktemp -d /tmp/scriptjig-XXXXXX")
     remote_tmpdir.strip!
