@@ -21,7 +21,7 @@ class NetworkRange < ActiveRecord::Base
 
   belongs_to  :network
   has_many    :network_allocations
-  has_many    :nodes,        :through=>:allocations
+  has_many    :nodes,        :through=>:network_allocations
 
   def first
     IP.coerce(read_attribute("first"))

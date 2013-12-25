@@ -57,6 +57,9 @@ en:
       title: "Network-Node Map"
       node: "Node"
       <<: *network_common
+  network_ranges:
+    index:
+      <<: *network_common
   roles:
     index:
       <<: *network_common
