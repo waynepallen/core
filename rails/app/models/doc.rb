@@ -15,7 +15,7 @@
 
 class Doc < ActiveRecord::Base
 
-  attr_accessible :id, :name, :description, :order
+  attr_accessible :id, :name, :description, :order, :barclamp_id, :parent_id
 
   belongs_to :barclamp
   belongs_to :parent, :class_name => "Doc"
@@ -61,13 +61,14 @@ class Doc < ActiveRecord::Base
   end
 
   # scan the directories and find files
-  def self.discover_docs barclamp, roots = [], found = {}
+  def self.discover_docs barclamp
     doc_path = File.join barclamp.source_path, 'doc'
-    files_list = `find #{doc_path} -iname *.md`
+    files_list = %x[find #{doc_path} -iname *.md]
     files = files_list.split "\n"
     files = files.sort_by {|x| x.length} # to ensure that parents come before their children
-    files.each do |name|
-      f = File.join(root_directory, name)
+    files.each do |file_name|
+
+      name = file_name.sub(doc_path, '')
 
       # figure out order by inspecting name
       order = name[/\/([0-9]+)_[^\/]*$/,1]
@@ -76,57 +77,29 @@ class Doc < ActiveRecord::Base
       order = order.to_s.rjust(6,'0') rescue "!error"
 
       # figure out description by looking in file
-      title = if File.exist? f
-                begin
-                  actual_title = File.open(f, 'r').readline
-                  # we require titles to star w/ # - anything else is considered extra content
-                  next unless actual_title.starts_with? "#"
-                  actual_title.strip[/^#+(.*?)#*$/,1].strip
-                rescue
-                  # if that fails, use the name/path
-                  name.gsub("/"," ").titleize
-                end
-              else
-                name.gsub("/"," ").titleize
+      title = begin
+                actual_title = File.open(file_name, 'r').readline
+                # we require titles to star w/ # - anything else is considered extra content
+                next unless actual_title.starts_with? "#"
+                actual_title.strip[/^#+(.*?)#*$/,1].strip
+              rescue
+                next  # if that fails, skip
               end
 
       # figure out parent by stripping file
       # - first tries to find a parent in the same barclamp
       # - if not found, then tries `default_barclamp`
-      parent_name = name
-      parent = nil
-      while parent == nil
-        m = parent_name.match(/^(.*)\/[^\/]*$/)
-        if not m
-          if parent_name == "#{default_barclamp}.md"
-            break
-          else
-            parent_name = File.join default_barclamp, name[/^[^\/]*\/(.*)$/, 1]
-            next
-          end
-        end
-        parent_name = m[1] + ".md"
-        parent = found[parent_name] if parent_name
-        # parent = Doc.find_by_name parent_name if parent_name and not parent
-      end
+      parent_name = name[/^(.*)\/[^\/]*$/,1]
+      parent = Doc.find_by_name "#{parent_name}.md"
 
-      x = Doc.find_or_create_by_name :name=>name, :description=>title.truncate(120), :order=>order
-      x.barclamp = barclamp
-      if parent.nil?
-        roots << x
-      else
-        x.parent = parent
-      end
-      found[name]=x
-      x.save
+      d = Doc.find_or_create_by_name :name=>name, :description=>title.truncate(120), :order=>order, :parent_id=>(parent ? parent.id : nil), :barclamp_id=>barclamp.id
+
     end
   end
 
   def git_url
     path = self.name.split '/'
-    barclamp = path.first
-    repo = (barclamp.eql?('framework') ? 'crowbar' : "barclamp-#{barclamp}")
-    path[0] = "https://github.com/crowbar/#{repo}/tree/master/doc"
+    path[0] = "https://github.com/opencrowbar/#{barclamp.name}/tree/master/doc"
     return path.join('/')
   end
 

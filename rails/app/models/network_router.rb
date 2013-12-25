@@ -12,16 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class Allocation < ActiveRecord::Base
+class NetworkRouter < ActiveRecord::Base
 
-  validate :sanity_check_address
+  validate    :router_is_sane
+  before_save :infer_address
   
   attr_protected :id
-  belongs_to :range
-  belongs_to :node, :dependent => :destroy
+  belongs_to     :network
 
-  scope  :node,     ->(n)  { where(:node_id => n.id) }
-  scope  :network,  ->(net){ joins(:range).where('ranges.network_id' => net.id) }
+  attr_accessible :pref, :network_id
 
   def address
     IP.coerce(read_attribute("address"))
@@ -31,16 +30,21 @@ class Allocation < ActiveRecord::Base
     write_attribute("address",IP.coerce(addr).to_s)
   end
 
-  def network
-    range.network
-  end
-
   private
 
-  def sanity_check_address
-    unless range === address
-      errors.add("Allocation #{network.name}.#{range.name}.{address.to_s} not in parent range!")
+  def infer_address
+    if read_attribute("address").nil?
+      write_attribute("address", network.ranges.first.first)
     end
   end
-  
+
+  def router_is_sane
+    # A router is sane when its address is in a subnet covered by one of its ranges
+# ZEHICLE TODO this is broken, but needs to be fixed
+#    unless !address.nil? and network.ranges.any?{|r|r.first.subnet === address}
+#      errors.add("Router #{address.to_s} is not any range for #{network.name}")
+#    end
+  end
 end
+
+  

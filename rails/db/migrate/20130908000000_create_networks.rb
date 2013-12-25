@@ -32,14 +32,14 @@ class CreateNetworks < ActiveRecord::Migration
     end
     add_index "networks", :name, :unique => true
 
-    create_table "routers" do |t|
+    create_table "network_routers" do |t|
       t.references   :network
       t.string       :address,     :null => false
       t.integer      :pref,        :null => false, :default => 65536
       t.timestamps
     end
 
-    create_table "ranges" do |t|
+    create_table "network_ranges" do |t|
       t.string       :name,        :null => false
       t.references   :network
       # Both of these should also be CIDRs.
@@ -47,20 +47,15 @@ class CreateNetworks < ActiveRecord::Migration
       t.string       :last,        :null => false
       t.timestamps
     end
-    add_index "ranges", [:name, :network_id], :unique => true
+    add_index "network_ranges", [:network_id, :name], :unique => true
 
-    create_table "allocations" do |t|
+    create_table "network_allocations" do |t|
       t.references   :node
       t.references   :range
       t.string       :address,     :null => false, :index => true, :unique => true
       t.timestamps
     end
-    add_index "allocations", :address, :unique => true
+    add_index "network_allocations", :address, :unique => true
 
-    create_table "settings" do |t|
-      t.string       :name,        :null => false, :unique => true
-      t.string       :value,       :null => false
-      t.timestamps
-    end
   end
 end

@@ -53,7 +53,7 @@ module Crowbar
     config.assets.enabled = true
 
     # Version of your assets, change this if you want to expire all your assets
-    config.assets.version = '1.0'
+    config.assets.version = '2.0'
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers
@@ -78,12 +78,9 @@ module Crowbar
     config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}').to_s]
     # config.i18n.default_locale = :de
     
-    # Legacy vars, should not be needed for Crowbar 2.0
-    #CHEF_CLIENT_KEY = "/opt/dell/crowbar_framework/config/client.pem" unless defined? CHEF_CLIENT_KEY
-    #CHEF_NODE_NAME ="crowbar" unless defined? CHEF_NODE_NAME
-    #CHEF_SERVER_URL = "http://localhost:4000" unless defined? CHEF_SERVER_URL
-    CROWBAR_VERSION = '0.0.1' unless defined? CROWBAR_VERSION
+    CROWBAR_VERSION = '2.0.0' unless defined? CROWBAR_VERSION
     SERVER_PID = %x[ps ax | grep "puma" | grep -v grep].split(' ')[0]  # get a consistent number that changes when the server restarts
 
+    
   end
 end

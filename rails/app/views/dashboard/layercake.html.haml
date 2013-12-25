@@ -29,6 +29,6 @@
 :javascript
 
   function update() {
-    $.ajaxSetup({ timeout: 1000 });
+    $.ajaxSetup({ timeout: #{current_user.settings(:ui).refresh} });
     location.reload();
   }

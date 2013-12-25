@@ -1,6 +1,6 @@
 # OpenCrowbar Documentation README
 
-_This is not the documentation you are looking for, it is a pointer to the real documentation_
+_This is not the documentation you are looking for_. it is a pointer to the real documentation in the /doc directory
 
 ## Looking for Crowbar Resources?
 
@@ -21,7 +21,11 @@ Crowbar documentation is distributed into multiple places under the /doc directo
 1. cd crowbar/rails
 1. bundle install --verbose --path /tmp/crowbar-dev-test/gems
 1. script/rails generate delayed_job:active_record
+1. script/rails generate rails_settings:migration
 1. rake db:create db:migrate
 1. script/delayed_job --queue=NodeRoleRunner -n 2 start
 1. rails s Puma development
+1. use Crowbar!
+   1. http://localhost:3000
+   1. run the BDD test environment (see /doc/devguide/testing/bdd)
 1. script/delayed_job stop

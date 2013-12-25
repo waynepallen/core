@@ -13,8 +13,7 @@
 # limitations under the License.
 #
 
-
-class Scaffolds::ConfigActionsController < ApplicationController
-  active_scaffold :'barclamp_network/config_action' do |conf|
+class Scaffolds::NetworkRangesController < ApplicationController
+  active_scaffold :network_range do |conf|
   end
 end 

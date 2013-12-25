@@ -25,9 +25,13 @@ class Network < ActiveRecord::Base
 
   validates_format_of :v6prefix, :with=>/auto|([a-f0-9]){1,4}:([a-f0-9]){1,4}:([a-f0-9]){1,4}:([a-f0-9]){1,4}/, :message => I18n.t("db.v6prefix", :default=>"Invalid IPv6 prefix."), :allow_nil=>true
 
-  has_many :ranges, :dependent => :destroy
-  has_many :allocations, :through => :ranges
-  has_one  :router, :dependent => :destroy
+  has_many :network_ranges,       :dependent => :destroy
+  has_many :network_allocations,  :through => :network_ranges
+  has_one  :network_router,       :dependent => :destroy
+
+  alias_attribute :ranges,      :network_ranges
+  alias_attribute :routers,     :network_routers
+  alias_attribute :allocations, :network_allocations
 
   belongs_to :deployment
 
@@ -94,12 +98,13 @@ class Network < ActiveRecord::Base
   def auto_prefix
     # Add our IPv6 prefix.
     if (name == "admin" and v6prefix.nil?) || (v6prefix == "auto")
-      BarclampNetwork::Setting.transaction do
+      Network.transaction do
+        user = User.admin.first
         # this config code really needs to move to Crowbar base
-        cluster_prefix = BarclampNetwork::Setting["v6prefix"]
-        if cluster_prefix.nil?
-          cluster_prefix = BarclampNetwork::Network.make_global_v6prefix
-          BarclampNetwork::Setting["v6prefix"] = cluster_prefix
+        cluster_prefix = user.settings(:network).v6prefix[name]
+        if cluster_prefix.nil? or cluster_prefix.eql? "auto"
+          cluster_prefix = Network.make_global_v6prefix
+          user.settings(:network).v6prefix[name] = cluster_prefix
         end
         write_attribute("v6prefix",sprintf("#{cluster_prefix}:%04x",id))
         save!
@@ -213,7 +218,7 @@ class Network < ActiveRecord::Base
     ifhash = Hash.new
     intfs.each{ |i| ifhash[i] = true }
 
-    BarclampNetwork::Network.all.each do |net|
+    Network.all.each do |net|
       # A conduit definition can overlap with another conduit definition either perfectly or not at all.
       nethash = Hash.new
       net.conduit.split(",").map{|i|i.strip}.each do |i|

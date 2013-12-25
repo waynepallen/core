@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class Range < ActiveRecord::Base
+class NetworkRange < ActiveRecord::Base
   
   validate :sanity_check_range
   
   attr_protected :id
   attr_accessible :name, :first, :last, :network_id
 
-  belongs_to :network
-  has_many :allocations
-  has_many :nodes,        :through=>:allocations
+  belongs_to  :network
+  has_many    :network_allocations
+  has_many    :nodes,        :through=>:allocations
 
   def first
     IP.coerce(read_attribute("first"))
@@ -48,15 +48,15 @@ class Range < ActiveRecord::Base
   end
 
   def allocate(node, suggestion = nil)
-    res = BarclampNetwork::Allocation.where(:node_id => node.id, :range_id => self.id).first
+    res = NetworkAllocation.where(:node_id => node.id, :range_id => self.id).first
     return res if res
     if suggestion
       begin
         suggestion = IP.coerce(suggestion)
-        BarclampNetwork::Allocation.transaction do
+        NetworkAllocation.transaction do
           if (self === suggestion) &&
-              BarclampNetwork::Allocation.where(:address => suggestion.to_s).count == 0
-            res = BarclampNetwork::Allocation.create!(:range_id => self.id, :node_id => node.id, :address => suggestion)
+              Networkallocation.where(:address => suggestion.to_s).count == 0
+            res = Networkallocation.create!(:range_id => self.id, :node_id => node.id, :address => suggestion)
           end
         end
       rescue
@@ -65,9 +65,9 @@ class Range < ActiveRecord::Base
     end
     unless res
       (first..last).each do |addr|
-        next if BarclampNetwork::Allocation.where(:address => addr.to_s).count > 0
+        next if Networkallocation.where(:address => addr.to_s).count > 0
         begin
-          res = BarclampNetwork::Allocation.create!(:range_id => self.id, :node_id => node.id, :address => addr.to_s)
+          res = Networkallocation.create!(:range_id => self.id, :node_id => node.id, :address => addr.to_s)
         rescue
           res = nil
         end
@@ -107,8 +107,8 @@ class Range < ActiveRecord::Base
 
     # Now, verify that this range does not overlap with any other range
 
-#    BarclampNetwork::Range.transaction do
-#      BarclampNetwork::Range.all.each do |other|
+#    Range.transaction do
+#      Range.all.each do |other|
 #        if other === first
 #          errors.add("Range #{fullname}: first address #{first.to_s} overlaps with range #{other.fullname}")
 #        end

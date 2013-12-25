@@ -11,17 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130928000000) do
-
-  create_table "allocations", :force => true do |t|
-    t.integer  "node_id"
-    t.integer  "range_id"
-    t.string   "address",    :null => false
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
-  end
-
-  add_index "allocations", ["address"], :name => "index_allocations_on_address", :unique => true
+ActiveRecord::Schema.define(:version => 20131223045609) do
 
   create_table "attribs", :force => true do |t|
     t.integer  "barclamp_id"
@@ -45,12 +35,28 @@ ActiveRecord::Schema.define(:version => 20130928000000) do
     t.integer  "version"
     t.string   "source_path"
     t.string   "commit",      :default => "unknown"
-    t.datetime "build_on",    :default => '2013-12-22 05:52:04'
+    t.datetime "build_on",    :default => '2013-12-24 22:31:28'
     t.datetime "created_at",                                     :null => false
     t.datetime "updated_at",                                     :null => false
   end
 
   add_index "barclamps", ["name"], :name => "index_barclamps_on_name", :unique => true
+
+  create_table "delayed_jobs", :force => true do |t|
+    t.integer  "priority",   :default => 0, :null => false
+    t.integer  "attempts",   :default => 0, :null => false
+    t.text     "handler",                   :null => false
+    t.text     "last_error"
+    t.datetime "run_at"
+    t.datetime "locked_at"
+    t.datetime "failed_at"
+    t.string   "locked_by"
+    t.string   "queue"
+    t.datetime "created_at",                :null => false
+    t.datetime "updated_at",                :null => false
+  end
+
+  add_index "delayed_jobs", ["priority", "run_at"], :name => "delayed_jobs_priority"
 
   create_table "deployment_roles", :force => true do |t|
     t.integer  "snapshot_id", :null => false
@@ -126,6 +132,35 @@ ActiveRecord::Schema.define(:version => 20130928000000) do
     t.datetime "updated_at",                      :null => false
   end
 
+  create_table "network_allocations", :force => true do |t|
+    t.integer  "node_id"
+    t.integer  "range_id"
+    t.string   "address",    :null => false
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
+  add_index "network_allocations", ["address"], :name => "index_network_allocations_on_address", :unique => true
+
+  create_table "network_ranges", :force => true do |t|
+    t.string   "name",       :null => false
+    t.integer  "network_id"
+    t.string   "first",      :null => false
+    t.string   "last",       :null => false
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
+  add_index "network_ranges", ["network_id", "name"], :name => "index_network_ranges_on_network_id_and_name", :unique => true
+
+  create_table "network_routers", :force => true do |t|
+    t.integer  "network_id"
+    t.string   "address",                       :null => false
+    t.integer  "pref",       :default => 65536, :null => false
+    t.datetime "created_at",                    :null => false
+    t.datetime "updated_at",                    :null => false
+  end
+
   create_table "networks", :force => true do |t|
     t.integer  "deployment_id"
     t.string   "name",                             :null => false
@@ -169,7 +204,7 @@ ActiveRecord::Schema.define(:version => 20130928000000) do
     t.text     "wall"
     t.text     "runlog",      :default => "",     :null => false
     t.boolean  "available",   :default => true,   :null => false
-    t.integer  "order",       :default => 301850
+    t.integer  "order",       :default => 330614
     t.datetime "created_at",                      :null => false
     t.datetime "updated_at",                      :null => false
   end
@@ -195,17 +230,6 @@ ActiveRecord::Schema.define(:version => 20130928000000) do
   end
 
   add_index "nodes", ["name"], :name => "index_nodes_on_name", :unique => true
-
-  create_table "ranges", :force => true do |t|
-    t.string   "name",       :null => false
-    t.integer  "network_id"
-    t.string   "first",      :null => false
-    t.string   "last",       :null => false
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
-  end
-
-  add_index "ranges", ["name", "network_id"], :name => "index_ranges_on_name_and_network_id", :unique => true
 
   create_table "role_require_attribs", :force => true do |t|
     t.integer  "role_id"
@@ -247,14 +271,6 @@ ActiveRecord::Schema.define(:version => 20130928000000) do
 
   add_index "roles", ["barclamp_id", "name"], :name => "index_roles_on_barclamp_id_and_name", :unique => true
 
-  create_table "routers", :force => true do |t|
-    t.integer  "network_id"
-    t.string   "address",                       :null => false
-    t.integer  "pref",       :default => 65536, :null => false
-    t.datetime "created_at",                    :null => false
-    t.datetime "updated_at",                    :null => false
-  end
-
   create_table "runs", :force => true do |t|
     t.integer "node_role_id",                    :null => false
     t.integer "node_id",                         :null => false
@@ -266,11 +282,15 @@ ActiveRecord::Schema.define(:version => 20130928000000) do
   add_index "runs", ["running"], :name => "index_runs_on_running"
 
   create_table "settings", :force => true do |t|
-    t.string   "name",       :null => false
-    t.string   "value",      :null => false
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+    t.string   "var",         :null => false
+    t.text     "value"
+    t.integer  "target_id",   :null => false
+    t.string   "target_type", :null => false
+    t.datetime "created_at",  :null => false
+    t.datetime "updated_at",  :null => false
   end
+
+  add_index "settings", ["target_type", "target_id", "var"], :name => "index_settings_on_target_type_and_target_id_and_var", :unique => true
 
   create_table "snapshots", :force => true do |t|
     t.integer  "state",         :default => 0,    :null => false

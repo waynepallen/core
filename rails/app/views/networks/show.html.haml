@@ -1,17 +1,17 @@
 %h1= @network.name
 
-= render :partial => 'barclamp_network/networks/show', :locals  => { :network => @network } 
+= render :partial => 'networks/show', :locals  => { :network => @network } 
 
 %h2= t '.ranges'
 
-= render :partial => 'barclamp_network/ranges/index', :locals  => { :network => @network } 
+= render :partial => 'network_ranges/index', :locals  => { :network => @network } 
 
 %h2= t '.router'
 
 - begin
   - router = @network.router
   - if router
-    = form_for :router, :'data-remote' => true, :url => router_path(router.id, :version=>'v2'), :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic" } do |f|
+    = form_for :router, :'data-remote' => true, :url => network_router_path(router.id, :version=>'v2'), :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic" } do |f|
       %dl
         %dt= t '.address'
         %dd= text_field_tag :address, router.address, :size=>15

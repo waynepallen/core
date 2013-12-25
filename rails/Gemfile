@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-source "file:///home/crowbar/cb2/gemsite"
+#source "file:///home/crowbar/cb2/gemsite"
 # source "file:///tmp/crowbar-dev-test/gemsite"
 # source "file:///tftpboot/gemsite"
-# source 'https://rubygems.org'
+source 'https://rubygems.org'
 
 gem 'rails', '~> 3.2.13'
 
@@ -35,7 +35,7 @@ gem 'devise', "~>3.0.0"
 gem 'rails_config'
 gem 'delayed_job'
 gem 'delayed_job_active_record'
-#gem 'rails-settings'
+gem 'ledermann-rails-settings', :require => 'rails-settings'
 
 gem 'jquery-rails'
 

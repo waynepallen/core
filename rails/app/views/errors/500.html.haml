@@ -1,3 +1,4 @@
+- style = "#{(!current_user.settings(:errors).expand ? 'display:none; ' : '')}position:relative; top:1em"
 %div#error_500{:class=>"fail box"}
   %div.message
     %h2= t 'error.title'
@@ -14,7 +15,7 @@
         )
     %div
       %a.toggle.with_label{:href => "#", :id => "#error_toggle", :rel => "error"}= t('error.details', :message=>@error.message)
-    %div.box{:id=>"error", :style =>"position:relative; top:1em", :futre_style =>"display:none; position:relative; top:1em"} 
+    %div.box{:id=>"error", :style => style } 
       %p
         %em= @error.message
       %h3= t 'error.backtrace'

@@ -1,20 +1,20 @@
-= form_for :network, :'data-remote' => true, :url => barclamp_network.network_path(network.id), :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic" } do |f|
+= form_for :network, :'data-remote' => true, :url => network_path(network.id), :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic" } do |f|
   %dl
-    %dt= t 'name', :scope=>'barclamp_network.networks.show'
+    %dt= t '.name'
     %dd= link_to network.name, main_app.role_path(network.role.id)
-    %dt= t 'description', :scope=>'barclamp_network.networks.show'
+    %dt= t '.description'
     %dd= text_field_tag :description, network.description, :size=>30
-    %dt= t 'deployment', :scope=>'barclamp_network.networks.show'
+    %dt= t '.deployment'
     %dd= select_tag :deployment_id, options_from_collection_for_select(Deployment.all, :id, :name, :selected=>network.deployment.id)
-    %dt= t 'conduit', :scope=>'barclamp_network.networks.show'
+    %dt= t '.conduit'
     %dd= text_field_tag :conduit, network.conduit, :size=>15
-    %dt= t 'vlan', :scope=>'barclamp_network.networks.show'
+    %dt= t '.vlan'
     %dd= text_field_tag :vlan, network.vlan, :size=>5
-    %dt= t 'v6prefix', :scope=>'barclamp_network.networks.show'
+    %dt= t '.v6prefix'
     %dd= text_field_tag :v6prefix, network.v6prefix, :size=>20
-    %dt= t 'team', :scope=>'barclamp_network.networks.show'
+    %dt= t '.team'
     %dd= text_field_tag :team_mode, network.team_mode, :size=>5
-    %dt= t 'bridge', :scope=>'barclamp_network.networks.show'
+    %dt= t '.bridge'
     %dd= text_field_tag :bridge, network.use_bridge, :size=>5
     %dt
     %dd

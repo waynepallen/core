@@ -23,7 +23,7 @@ class CreateNetworkNavs < ActiveRecord::Migration
 
     # scaffolds
     Nav.find_or_create_by_item :item=>'scaffold_networks',  :parent_item=>'scaffold', :name=>'nav.scaffold.networks',  :path=>"scaffolds_networks_path", :order=>2000
-    Nav.find_or_create_by_item :item=>'scaffold_allocations',  :parent_item=>'scaffold', :name=>'nav.scaffold.allocations',  :path=>"scaffolds_allocations_path", :order=>2040
+    Nav.find_or_create_by_item :item=>'scaffold_allocations',  :parent_item=>'scaffold', :name=>'nav.scaffold.allocations',  :path=>"scaffolds_network_allocations_path", :order=>2040
   end
 
   def self.down

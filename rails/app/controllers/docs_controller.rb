@@ -19,7 +19,7 @@ class DocsController < ApplicationController
   skip_before_filter :crowbar_auth
 
   def index
-    if Settings.docs.rebuild or params.has_key?(:rebuild)
+    if params.has_key?(:rebuild) or (current_user.settings(:docs).rebuild rescue true)
       # for dev, we want to be able to turn off rebuilds
       Doc.delete_all unless params[:rebuild].eql? "false"
       Doc.gen_doc_index
@@ -105,6 +105,9 @@ class DocsController < ApplicationController
     end
   end
 
+  def file_name
+    File.join barclamp.source_path, name
+  end
   def export
     @docs = params[:q].split(/,/).map do |id|
       params[:id] = id

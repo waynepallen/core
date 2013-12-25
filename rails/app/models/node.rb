@@ -53,8 +53,11 @@ class Node < ActiveRecord::Base
   has_many    :roles,              :through => :node_roles
   has_many    :snapshots,          :through => :node_roles
   has_many    :deployments,        :through => :snapshots
+  has_many    :network_allocations
   belongs_to  :deployment
   belongs_to  :target_role,        :class_name => "Role", :foreign_key => "target_role_id"
+
+  alias_attribute :ips,                :network_allocations
 
   scope    :admin,              -> { where(:admin => true) }
   scope    :alive,              -> { where(:alive => true) }

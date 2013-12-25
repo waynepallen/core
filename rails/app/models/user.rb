@@ -1,5 +1,5 @@
 #
-# Copyright 2012, Dell
+# Copyright 2013, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,15 @@ class User < ActiveRecord::Base
 
   attr_accessor :admin_reset_password
 
+  # user control for UI, split test and site configuration
+  # see https://github.com/ledermann/rails-settings for help
+  has_settings do |s|
+    s.key :ui,        :defaults => { :refresh => 15000, :fast_refresh => 5000, :debug => true }
+    s.key :errors,    :defaults => { :expand => true }
+    s.key :docs,      :defaults => { :sources => true, :rebuild => true }
+    s.key :network,   :defaults => { :v6prefix => {'admin'=>'auto' } }
+  end
+
   # Setup accessible (or protected) attributes for your model
   attr_accessible :username, :is_admin, :email, :password, :password_confirmation, :remember_me, :encrypted_password
 
@@ -33,6 +42,8 @@ class User < ActiveRecord::Base
   validates :username, :uniqueness => {:case_sensitive => false}, :presence => true
   DIGEST_REALM = "Crowbar"
   
+  scope  :admin,              -> { where(:is_admin => true) }
+ 
   
   def self.find_by_id_or_username(id)
     if id.kind_of?(Integer)

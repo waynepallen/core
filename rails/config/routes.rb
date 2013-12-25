@@ -34,9 +34,8 @@ Crowbar::Application.routes.draw do
     resources :roles
   end
   resources :deployment_roles
-  get 'docs', to: 'docs#index'
-  get 'docs/:id', to: 'docs#show', constraints: {id: /[^\?]*/}
-#  resources :docs
+  resources :docs, constraints: {id: /[^\?]*/}
+
   resources :groups
   resources :jigs
   resources :node_roles  do
@@ -80,7 +79,6 @@ Crowbar::Application.routes.draw do
     get 'fail'          => "support#fail"
     match "bootstrap"     => "support#bootstrap", :as => :bootstrap
     namespace :scaffolds do
-      resources :allocations do as_routes end
       resources :attribs do as_routes end
       resources :barclamps do as_routes end
       resources :docs do as_routes end
@@ -89,13 +87,14 @@ Crowbar::Application.routes.draw do
       resources :groups do as_routes end
       resources :jigs do as_routes end
       resources :navs do as_routes end
+      resources :network_allocations do as_routes end
+      resources :network_ranges do as_routes end
+      resources :network_routers do as_routes end
       resources :networks do as_routes end
       resources :nodes do as_routes end
       resources :node_roles do as_routes end
-      resources :ranges do as_routes end
       resources :roles do as_routes end
       resources :role_requires do as_routes end
-      resources :routers do as_routes end
       resources :runs do as_routes end
       resources :snapshots do as_routes end
     end

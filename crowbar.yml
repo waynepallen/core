@@ -355,6 +355,7 @@ gems:
     - railroad
     - rails-(~>3.2.13)
     - rails_config
+    - ledermann-rails-settings
     - rails-erd
     - rake
     - rcov

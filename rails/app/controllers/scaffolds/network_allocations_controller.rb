@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 
-class Scaffolds::RoutersController < ApplicationController
-  active_scaffold :router do |conf|
+class Scaffolds::NetworkAllocationsController < ApplicationController
+  active_scaffold :network_allocation do |conf|
   end
 end 
