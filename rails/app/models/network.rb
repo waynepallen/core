@@ -30,7 +30,7 @@ class Network < ActiveRecord::Base
   has_one  :network_router,       :dependent => :destroy
 
   alias_attribute :ranges,      :network_ranges
-  alias_attribute :routers,     :network_routers
+  alias_attribute :router,      :network_router
   alias_attribute :allocations, :network_allocations
 
   belongs_to :deployment

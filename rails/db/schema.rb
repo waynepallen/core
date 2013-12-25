@@ -35,7 +35,7 @@ ActiveRecord::Schema.define(:version => 20131223045609) do
     t.integer  "version"
     t.string   "source_path"
     t.string   "commit",      :default => "unknown"
-    t.datetime "build_on",    :default => '2013-12-24 22:31:28'
+    t.datetime "build_on",    :default => '2013-12-25 04:18:37'
     t.datetime "created_at",                                     :null => false
     t.datetime "updated_at",                                     :null => false
   end
@@ -134,10 +134,10 @@ ActiveRecord::Schema.define(:version => 20131223045609) do
 
   create_table "network_allocations", :force => true do |t|
     t.integer  "node_id"
-    t.integer  "range_id"
-    t.string   "address",    :null => false
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+    t.integer  "network_range_id"
+    t.string   "address",          :null => false
+    t.datetime "created_at",       :null => false
+    t.datetime "updated_at",       :null => false
   end
 
   add_index "network_allocations", ["address"], :name => "index_network_allocations_on_address", :unique => true
@@ -204,7 +204,7 @@ ActiveRecord::Schema.define(:version => 20131223045609) do
     t.text     "wall"
     t.text     "runlog",      :default => "",     :null => false
     t.boolean  "available",   :default => true,   :null => false
-    t.integer  "order",       :default => 330614
+    t.integer  "order",       :default => 822686
     t.datetime "created_at",                      :null => false
     t.datetime "updated_at",                      :null => false
   end

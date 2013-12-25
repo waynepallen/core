@@ -17,9 +17,8 @@ Crowbar documentation is distributed into multiple places under the /doc directo
 
 ## Short Term notes for OpenCrowbar Development Environment
 
-1. use the Crowbar ./dev tests setup to position gems
 1. cd crowbar/rails
-1. bundle install --verbose --path /tmp/crowbar-dev-test/gems
+1. bundle install --verbose
 1. script/rails generate delayed_job:active_record
 1. script/rails generate rails_settings:migration
 1. rake db:create db:migrate

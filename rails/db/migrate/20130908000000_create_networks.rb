@@ -51,10 +51,11 @@ class CreateNetworks < ActiveRecord::Migration
 
     create_table "network_allocations" do |t|
       t.references   :node
-      t.references   :range
+      t.references   :network_range
       t.string       :address,     :null => false, :index => true, :unique => true
       t.timestamps
     end
+    # for now, we don't allow the same CIDR address to be allocated twice ANYWHERE
     add_index "network_allocations", :address, :unique => true
 
   end
