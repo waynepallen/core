@@ -147,16 +147,16 @@ Crowbar::Application.routes.draw do
           end
 
           resources :networks do
-            resources :ranges
-            resources :routers
+            resources :networks_ranges
+            resources :networks_routers
             member do
               match 'ip'
               post 'allocate_ip'
               get 'allocations'
             end
           end
-          resources :interfaces
-          
+          resources :networks_interfaces
+
           resources :runs
           resources :jigs
           resources :nodes do
@@ -191,6 +191,10 @@ Crowbar::Application.routes.draw do
             delete "lock", :controller => "users", :action => "unlock"
             put "reset_password", :controller => "users", :action => "reset_password"
           end
+
+          #provisioner          
+          get 'dhcp(/:id)' => 'Dhcps#index'
+
         end # version
       end # api
     end # id constraints
