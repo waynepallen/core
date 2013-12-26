@@ -25,11 +25,13 @@ os_support:
 
 barclamps:
   - name: crowbar
-    description: Self-referential barclamp enabling other barclamps
+    description: "Self-referential barclamp enabling other barclamps"
   - name: test
-    description: Test Barclamp Integrations
+    description: "Test Barclamp Integrations"
   - name: network
-    description: Network
+    description: "Network Configuration"
+  - name: Chef
+    description: "Chef CMDB & DevOps Framework"
 
 jigs:
   # Crowbar Core
@@ -42,10 +44,21 @@ jigs:
   - name: test
     description: 'Test jig for exercising jig and noderole operations.'
     class: 'BarclampTest::Jig'
+  - name: chef
+    class: 'BarclampChef::Jig'
+    description: "Allow Crowbar to manage nodes using Chef"
+    implementor: chef-client
+  - name: chef-solo
+    class: 'BarclampChef::SoloJig'
+    description: "Allow Crowbar to manage nodes using chef-solo"
+    implementor: chef-solo
 
 
 debs:
   ubuntu-12.04:
+    raw_pkgs:
+      - https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/12.04/x86_64/chef-server_11.0.8-1.ubuntu.12.04_amd64.deb
+      - https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/12.04/x86_64/chef_11.6.0-1.ubuntu.12.04_amd64.deb
     repos:
       - deb http://us.archive.ubuntu.com/ubuntu/ precise main restricted universe multiverse
       - deb-src http://us.archive.ubuntu.com/ubuntu/ precise main restricted universe multiverse
@@ -136,9 +149,11 @@ debs:
     - linux-headers-generic-lts-raring
     - lxc-docker
 
-
 rpms:
   redhat-6.4:
+    raw_pkgs:
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-server-11.0.8-1.el6.x86_64.rpm
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-11.6.0-1.el6.x86_64.rpm
     repos:
       - rpm http://mirrors.servercentral.net/fedora/epel/6/i386/epel-release-6-8.noarch.rpm
     build_pkgs:
@@ -166,6 +181,9 @@ rpms:
       - vconfig
       - iptables-ipv6
   centos-6.4:
+    raw_pkgs:
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-server-11.0.8-1.el6.x86_64.rpm
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-11.6.0-1.el6.x86_64.rpm
     repos:
       - rpm http://mirrors.servercentral.net/fedora/epel/6/i386/epel-release-6-8.noarch.rpm
     build_pkgs:
@@ -232,6 +250,11 @@ rpms:
       - openssl-devel
       - vim-enhanced
   opensuse-12.3:
+    raw_pkgs:
+      # Really, we should be using opensuse-specific packages here,
+      # but the omniinstalled ones are so easy to manage.
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-server-11.0.8-1.el6.x86_64.rpm
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-11.6.0-1.el6.x86_64.rpm
     repos:
       - repo http://download.opensuse.org/repositories/server:/database:/postgresql/openSUSE_12.3/ postgresql
       - repo http://download.opensuse.org/repositories/devel:/tools/openSUSE_12.3/ devel-libs
@@ -252,6 +275,10 @@ rpms:
       # network
       - vlan
   opensuse-13.1:
+    raw_pkgs:
+      # openSUSE native packages would be nice
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-server-11.0.8-1.el6.x86_64.rpm
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-11.6.0-1.el6.x86_64.rpm
     repos:
       - repo http://download.opensuse.org/repositories/server:/database:/postgresql/openSUSE_13.1/ postgresql
       - repo http://download.opensuse.org/repositories/devel:/tools/openSUSE_13.1/ devel-libs
@@ -323,7 +350,7 @@ rpms:
     - bridge-utils
     - dhcp
     - iptables
-    
+
 gems:
   pkgs:
     - active_scaffold
@@ -334,6 +361,7 @@ gems:
     - bunny-(<0.8.0)
     - cancan
     - coveralls
+    - 'chef-(=11.6)'
     - database_cleaner
     - devise-(~>3.0.0)
     - email_spec

@@ -1,6 +1,3 @@
-*.lock
-.idea
-.rvmrc
 .#*
 *~
 *.dia.autosave
@@ -13,10 +10,10 @@ erl_crash.dump
 
 /crowbar_framework/log/test.*
 
+/rails/Gemfile.lock
 /rails/tmp/
 /rails/log/
 /rails/coverage/
 /rails/script/delayed_job
 /rails/db/migrate/*_create_delayed_jobs.rb
 /rails/db/migrate/*_rails_settings_migration.rb
-

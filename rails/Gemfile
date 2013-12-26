@@ -36,8 +36,8 @@ gem 'rails_config'
 gem 'delayed_job'
 gem 'delayed_job_active_record'
 gem 'ledermann-rails-settings', :require => 'rails-settings'
-
 gem 'jquery-rails'
+gem 'chef-(=11.6)'
 
 group :development, :test do
   gem "rails-erd"
