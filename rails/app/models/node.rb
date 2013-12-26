@@ -114,7 +114,7 @@ class Node < ActiveRecord::Base
   end
 
   def addresses
-    net = BarclampNetwork::Network.where(:name => "admin").first
+    net = Network.where(:name => "admin").first
     raise "No admin network" if net.nil?
     net.node_allocations(self)
   end
