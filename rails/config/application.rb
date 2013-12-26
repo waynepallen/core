@@ -77,7 +77,7 @@ module Crowbar
     config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '*.{rb,yml}').to_s]
     config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}').to_s]
     config.i18n.default_locale = :en
-    config.i18n.enforce_available_locales = false
+    I18n.config.enforce_available_locales = true
 
     CROWBAR_VERSION = '2.0.0' unless defined? CROWBAR_VERSION
     SERVER_PID = %x[ps ax | grep "puma" | grep -v grep].split(' ')[0]  # get a consistent number that changes when the server restarts

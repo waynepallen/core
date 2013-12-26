@@ -13,20 +13,6 @@
 # limitations under the License.
 #
 
-barclamp:
-  name: dns
-  display: DNS
-  version: 0
-  license: "apache2"
-  copyright: "Dell, Inc 2013"
-  api_version: "v2"
-  api_version_accepts: "v2"
-  requires:
-    - chef
-    - network
-  member:
-    - crowbar
-
 roles:
   - name: dns-server
     jig: chef-solo
@@ -52,19 +38,3 @@ roles:
       - network-admin
     wants-attribs:
       - dns_servers
-
-crowbar:
-  layout: 2.0
-  order: 30
-  run_order: 30
-  chef_order: 30
-
-debs:
-  pkgs:
-    - bind9
-    - bind9utils
-
-rpms:
-  pkgs:
-    - bind
-    - bind-utils

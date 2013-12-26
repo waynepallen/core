@@ -35,7 +35,7 @@ ActiveRecord::Schema.define(:version => 20131223045609) do
     t.integer  "version"
     t.string   "source_path"
     t.string   "commit",      :default => "unknown"
-    t.datetime "build_on",    :default => '2013-12-25 04:18:37'
+    t.datetime "build_on",    :default => '2013-12-26 23:29:01'
     t.datetime "created_at",                                     :null => false
     t.datetime "updated_at",                                     :null => false
   end
@@ -204,7 +204,7 @@ ActiveRecord::Schema.define(:version => 20131223045609) do
     t.text     "wall"
     t.text     "runlog",      :default => "",     :null => false
     t.boolean  "available",   :default => true,   :null => false
-    t.integer  "order",       :default => 822686
+    t.integer  "order",       :default => 266796
     t.datetime "created_at",                      :null => false
     t.datetime "updated_at",                      :null => false
   end
