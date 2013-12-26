@@ -50,8 +50,9 @@ class CreateNavs < ActiveRecord::Migration
       Nav.find_or_create_by_item :item=>'barclamps', :parent_item=>'utils', :name=>'nav.barclamps', :description=>'nav.barclamps_description', :path=>"main_app.barclamps_path", :order=>4000
 
     # users
-    Nav.find_or_create_by_item :item=>'users', :parent_item=>'root', :name=>'nav.users', :description=>'nav.users_description', :path=>"main_app.manage_users_path", :order=>6000
-      Nav.find_or_create_by_item :item=>'manage_users', :parent_item=>'users', :name=>'nav.manage_users', :description=>'nav.manage_users_description', :path=>"main_app.manage_users_path", :order=>100
+    Nav.find_or_create_by_item :item=>'users', :parent_item=>'root', :name=>'nav.users', :description=>'nav.users_description', :path=>"main_app.users_path", :order=>6000
+      Nav.find_or_create_by_item :item=>'manage_users', :parent_item=>'users', :name=>'nav.manage_users', :description=>'nav.manage_users_description', :path=>"main_app.users_path", :order=>100
+      Nav.find_or_create_by_item :item=>'user_settings', :parent_item=>'users', :name=>'nav.user_settings', :description=>'nav.user_settings_description', :path=>"main_app.utils_settings_path", :order=>400
 
     # help
     Nav.find_or_create_by_item :item=>'help', :parent_item=>'root', :name=>'nav.help', :description=>'nav.help_description', :path=>"main_app.docs_path", :order=>9999

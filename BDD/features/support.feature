@@ -39,4 +39,9 @@ Feature: Support UI
       And I should see a link to "chef-server"
       And I should see a link to "network-server"
       And there are no localization errors
+
+  Scenario: Settings Page
+    When I go to the "utils/settings" page 
+    Then I should see a heading {bdd:crowbar.i18n.support.settings.title}
+      And there are no localization errors
     

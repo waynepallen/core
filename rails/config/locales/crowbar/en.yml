@@ -111,6 +111,8 @@ en:
     users: "Users"
     manage_users: "Manage Users"
     manage_users_description: "Add, remove and edit users"
+    user_settings: "Session Settings"
+    user_settings_description: "Turn on Advanced UI Controls"
     sign_out: "Sign Out"
     sign_out_description: "End the current session"
 
@@ -411,7 +413,16 @@ en:
       anneal: "Annealer View"
       hint: 'Select Role to edit initial settings'
       admin_net: 'Core infrastructure network'
-
+    settings:
+      title: 'Session Settings'
+      refresh: 'Reload Time'
+      fast_refresh: 'Fast Reload'
+      millis: 'milliseconds'
+      debug: 'Debug Hints'
+      expand: 'Expand Error'
+      doc_sources: 'Doc Source'
+      edge: "Edge UI"
+      test: "Test UI"
   users:
     common: &user_common
       email: Email

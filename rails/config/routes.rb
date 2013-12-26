@@ -77,6 +77,7 @@ Crowbar::Application.routes.draw do
     get 'restart/:id'   => 'support#restart', :as => :restart
     get 'digest'        => "support#digest"
     get 'fail'          => "support#fail"
+    get 'settings'      => "support#settings", :as => :utils_settings
     match "bootstrap"     => "support#bootstrap", :as => :bootstrap
     namespace :scaffolds do
       resources :attribs do as_routes end
@@ -106,17 +107,7 @@ Crowbar::Application.routes.draw do
     get 'get_cli', :controller => 'support', :action => 'get_cli'
   end
 
-  # these are ok, but really should move to the user resource!
-  put 'reset_password(/:id)', :controller => 'users', :action=>"reset_password", :as=>:reset_password
-  get 'edit_password/:id', :controller => 'users', :action=>'edit_password', :constraints => { :id => /.*/ }, :as => :edit_password
-  delete 'unlock/:id', :controller => 'users', :action=>'unlock', :constraints => { :id => /.*/ }, :as => :unlock
-  post 'lock/:id', :controller => 'users', :action=>'lock', :constraints => { :id => /.*/ }, :as => :lock
-  match "manage_users", :controller => 'users', :action => 'index'
-  match "delete_users", :controller => 'users', :action => 'delete_users', :as=> :delete_users
-
   devise_for :users, { :path_prefix => 'my', :module => :devise, :class_name=> 'Crowbar::User' }
-
-  get    "/users/new(.:format)", :controller => 'users', :action=>'index', :as=> :new_user
   resources :users, :except => :new
 
   # API routes (must be json and must prefix v2)()

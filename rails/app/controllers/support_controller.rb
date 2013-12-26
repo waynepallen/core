@@ -132,6 +132,12 @@ class SupportController < ApplicationController
     end
   end
   
+  def settings
+    respond_to do |format|
+      format.html { }
+    end
+  end
+
   private 
   
   def ctime
@@ -162,19 +168,6 @@ class SupportController < ApplicationController
     rescue
       flash[:notice] = t('support.index.delete_failed') + ": " + f
     end
-  end
-  
-  def extract_crowbar_yml(import_dir, tar, regen = true)
-    archive = File.join import_dir,tar
-    name = tar[/^(.*).tar.gz$/,1]
-    name = tar[/^(.*).tgz$/,1] if name.nil?   #alternate ending
-    name += '.yml'
-    # extra from tar if not present
-    if regen or !File.exist?(File.join(import_dir, name))
-      crowbar = %x[tar -t -f #{archive} | grep crowbar.yml].strip
-      %x[tar -x #{crowbar} -f #{archive} -O > #{File.join(import_dir, name)}] if crowbar
-    end
-    return name
   end
   
   def do_auth!
