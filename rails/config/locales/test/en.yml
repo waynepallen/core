@@ -14,3 +14,9 @@
 #
 
 en:
+  barclamp_test:
+    node_roles:
+      test-discovery:
+        delay: "Delay (seconds)"
+        marker: "Log Mark"
+        test: "Active"
