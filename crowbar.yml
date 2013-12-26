@@ -30,8 +30,10 @@ barclamps:
     description: "Test Barclamp Integrations"
   - name: network
     description: "Network Configuration"
-  - name: Chef
+  - name: chef
     description: "Chef CMDB & DevOps Framework"
+  - name: deployer
+    description: "Discover and Inventory Systems (aka Sledgehammer)"
 
 jigs:
   # Crowbar Core
@@ -92,8 +94,11 @@ debs:
   build_pkgs:
     - ruby1.9.1
     - ruby1.9.1-dev
+    - bison
     - build-essential
     - libsqlite3-dev
+    - make
+    - flex
     - dpkg-dev
     - libxml2-dev
     - zlib1g-dev
@@ -139,6 +144,7 @@ debs:
     #- sun-java6-jre
     - dpkg-dev
     - screen
+    - tcpdump
     - alien
     - graphviz
     - vim
@@ -164,6 +170,7 @@ rpms:
       - mysql-devel
       - zlib-devel
       - rubygems
+      - tar
     required_pkgs:
       - rubygems
     pkgs:
@@ -195,6 +202,7 @@ rpms:
       - mysql-devel
       - zlib-devel
       - rubygems
+      - tar
     required_pkgs:
       - rubygems
     pkgs:
@@ -287,6 +295,7 @@ rpms:
       - libcurl-devel
       - libxml2-devel
       - zlib-devel
+      - tar
     pkgs:
       # openldap stuff
       - openldap2
@@ -311,7 +320,10 @@ rpms:
     - ruby-devel
     - make
     - gcc
+    - glibc-devel
     - kernel-devel
+    - flex
+    - bison
   pkgs:
     # build-essential stuff
     - gcc
@@ -350,6 +362,7 @@ rpms:
     - bridge-utils
     - dhcp
     - iptables
+    - tcpdump
 
 gems:
   pkgs:
@@ -362,6 +375,7 @@ gems:
     - cancan
     - coveralls
     - 'chef-(=11.6)'
+    - cstruct
     - database_cleaner
     - devise-(~>3.0.0)
     - email_spec
