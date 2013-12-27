@@ -18,8 +18,11 @@ version: 2.0
 os_support:
   - ubuntu-12.04
   - redhat-6.2
+  - redhat-6.4
   - centos-6.2
+  - centos-6.4
   - opensuse-12.3
+  - opensuse-13.1
   - fedora-18
   - fedora-19
 
@@ -40,9 +43,10 @@ barclamps:
     description: "Domain Name Service (DNS)"
   - name: ntp 
     description: "Network Time Protocol (NTP)"
+  - name: logging
+    description: "Log Centralization and Management"
 
 jigs:
-  # Crowbar Core
   - name: script
     class: 'BarclampCrowbar::Jig'
     description: 'Run arbitrary scripts on nodes via SSH'
@@ -463,6 +467,8 @@ rpms:
     - bind9utils
     # ntp
     - ntp
+    # loggins
+    - rsyslog
 gems:
   pkgs:
     - active_scaffold
