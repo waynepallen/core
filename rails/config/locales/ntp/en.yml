@@ -14,3 +14,7 @@
 #
 
 en:
+  barclamp_ntp:
+    node_roles:
+      ntp-server:
+        external_servers: "External Servers"

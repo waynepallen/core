@@ -13,25 +13,6 @@
 # limitations under the License.
 #
 
-barclamp:
-  name: ntp
-  display: NTP
-  version: 0
-  license: "apache2"
-  copyright: "Dell, Inc 2013"
-  api_version: "v2"
-  api_version_accepts: "v2"
-  requires:
-    - chef
-  member:
-    - crowbar
-
-crowbar:
-  layout: 2.0
-  order: 50
-  run_order: 50
-  chef_order: 50
-
 roles:
   - name: ntp-server
     jig: chef-solo
@@ -54,10 +35,3 @@ roles:
       - implicit
     wants-attribs:
       - ntp_servers
-debs:
-  pkgs:
-    - ntp
-
-rpms:
-  pkgs:
-    - ntp
