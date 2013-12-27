@@ -29,13 +29,12 @@ ActiveRecord::Schema.define(:version => 20131223045609) do
 
   create_table "barclamps", :force => true do |t|
     t.string   "name"
-    t.string   "type"
     t.string   "description"
     t.integer  "barclamp_id"
     t.integer  "version"
     t.string   "source_path"
     t.string   "commit",      :default => "unknown"
-    t.datetime "build_on",    :default => '2013-12-26 23:29:01'
+    t.datetime "build_on",    :default => '2013-12-27 18:06:45'
     t.datetime "created_at",                                     :null => false
     t.datetime "updated_at",                                     :null => false
   end
@@ -192,21 +191,21 @@ ActiveRecord::Schema.define(:version => 20131223045609) do
   end
 
   create_table "node_roles", :force => true do |t|
-    t.integer  "snapshot_id",                     :null => false
-    t.integer  "role_id",                         :null => false
-    t.integer  "node_id",                         :null => false
-    t.integer  "state",       :default => 4,      :null => false
-    t.integer  "cohort",      :default => 0,      :null => false
-    t.integer  "run_count",   :default => 0,      :null => false
+    t.integer  "snapshot_id",                    :null => false
+    t.integer  "role_id",                        :null => false
+    t.integer  "node_id",                        :null => false
+    t.integer  "state",       :default => 4,     :null => false
+    t.integer  "cohort",      :default => 0,     :null => false
+    t.integer  "run_count",   :default => 0,     :null => false
     t.string   "status"
-    t.text     "userdata",    :default => "{}",   :null => false
-    t.text     "systemdata",  :default => "{}",   :null => false
+    t.text     "userdata",    :default => "{}",  :null => false
+    t.text     "systemdata",  :default => "{}",  :null => false
     t.text     "wall"
-    t.text     "runlog",      :default => "",     :null => false
-    t.boolean  "available",   :default => true,   :null => false
-    t.integer  "order",       :default => 266796
-    t.datetime "created_at",                      :null => false
-    t.datetime "updated_at",                      :null => false
+    t.text     "runlog",      :default => "",    :null => false
+    t.boolean  "available",   :default => true,  :null => false
+    t.integer  "order",       :default => 15059
+    t.datetime "created_at",                     :null => false
+    t.datetime "updated_at",                     :null => false
   end
 
   add_index "node_roles", ["snapshot_id", "role_id", "node_id"], :name => "index_node_roles_on_snapshot_id_and_role_id_and_node_id", :unique => true

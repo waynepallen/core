@@ -15,8 +15,8 @@
 
 class Barclamp < ActiveRecord::Base
 
-  attr_accessible :id, :name, :description, :type, :source_path, :barclamp_id, :commit, :build_on
-  before_create :create_type_from_name
+  attr_accessible :id, :name, :description, :source_path, :barclamp_id, :commit, :build_on
+  
   #
   # Validate the name should unique
   # and that it starts with an alph and only contains alpha,digits,underscore
@@ -27,26 +27,11 @@ class Barclamp < ActiveRecord::Base
   validates_format_of :name, :with=>/^[a-zA-Z][_a-zA-Z0-9]*$/, :message => I18n.t("db.lettersnumbers", :default=>"Name limited to [_a-zA-Z0-9]")
 
   # Deployment
-  has_many :roles,              :dependent => :destroy
-  has_one  :barclamp,           :dependent => :destroy
+  has_many          :roles,     :dependent => :destroy
+  belongs_to        :barclamp,  :dependent => :destroy
   alias_attribute   :parent,    :barclamp
 
   scope :roots, where(:barclamp_id=>nil)
-
-
-  #
-  # Order barclamps by their dependency trees and then their name
-  #
-  def <=>(other)
-    [parents.length,name] <=> [other.parents.length,other.name]
-  end
-
-  #
-  # We should set this to something one day.
-  #
-  def versions
-    [ "2.0" ]
-  end
 
   #
   # Human printable random password generator
@@ -56,42 +41,6 @@ class Barclamp < ActiveRecord::Base
     (1..size).collect{|a| chars[rand(chars.size)] }.join
   end
 
-  # indended to be OVERRIDEN for barclamps that want to validate deployments
-  # called before the proposal is committed
-  # was validate deployment in CB1
-  def is_valid?(deployment)
-    true
-  end
-
-  # The barclamp groups of which I am a member.
-  def groups
-    members.split(",")
-  end
-
-  # The names of all the barclamps that are my parents.
-  def parents(bcs = Barclamp.all)
-    pnames,grps = requirements.split(',').partition{|i|i[0] != '@'}
-    immediate_parents= bcs.select{|bc|pnames.member?(bc.name)}
-    grps.each do |g|
-      immediate_parents += bcs.select{|bc|bc.groups.include?(g)}
-    end
-    immediate_parents.uniq!
-    res = Array.new
-    immediate_parents.each do |p|
-      res += p.parents(bcs)
-    end
-    res += immediate_parents
-    res.uniq
-  end
-
-  # called by the jig when the node changes it's state
-  def transition(role, nodes, state, status)
-
-    Rails.logger.debug "Barclamp transition enter: #{name} to #{state} with #{status}"
-
-    # TODO ZEHICLE change node-role to new state
-
-  end
 
   def self.import(bc_name="crowbar", bc=nil, source_path=nil)
     barclamp = Barclamp.find_or_create_by_name(bc_name)
@@ -143,7 +92,7 @@ class Barclamp < ActiveRecord::Base
                                 :version     => bc['version'] || '2.0',
                                 :source_path => source_path,
                                 :build_on    => gitdate,
-                                :barclamp_id => (subm.id == barclamp.id ? nil : barclamp.id),
+                                :barclamp_id => barclamp.id,
                                 :commit      => gitcommit )
         subm.save!
       end
@@ -206,27 +155,6 @@ class Barclamp < ActiveRecord::Base
       a.save!
     end if bc['attribs']
     barclamp
-  end
-
-  private
-
-  # This method ensures that we have a type defined for
-  def create_type_from_name
-    raise "barclamps require a name" if self.name.nil?
-    namespace = "Barclamp#{self.name.camelize}"
-    # these routines look for the namespace & class,
-    m = Module::const_get(namespace) rescue nil
-    if m
-      c = m.const_get("Barclamp") rescue nil
-    end
-    # if they dont' find it we fall back to BarclampFramework (this should go away!)
-    self.type = if c.nil?
-      Rails.logger.warn "Barclamp #{self.name} created with fallback Model!"
-      "BarclampFramework"
-    else
-      "#{namespace}::Barclamp"
-    end
-
   end
 
 end

@@ -193,6 +193,7 @@ en:
     index:
       title: "Installed Barclamps"
       barclamp: "Barclamp"
+      parent: "Parent"
       description: "Description"
       roles: "Roles"
     show:
