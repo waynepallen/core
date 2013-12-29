@@ -20,8 +20,10 @@ class NetworkRange < ActiveRecord::Base
   attr_accessible :name, :first, :last, :network_id
 
   belongs_to  :network
-  has_many    :network_allocations
-  has_many    :nodes,        :through=>:network_allocations
+  has_many    :network_allocations,   :dependent => :destroy
+  has_many    :nodes,                 :through=>:network_allocations
+
+  alias_attribute :allocations,       :network_allocations
 
   def first
     IP.coerce(read_attribute("first"))
@@ -48,15 +50,17 @@ class NetworkRange < ActiveRecord::Base
   end
 
   def allocate(node, suggestion = nil)
-    res = NetworkAllocation.where(:node_id => node.id, :range_id => self.id).first
+  puts "ZEHICLE #{node.inspect}"
+    res = NetworkAllocation.where(:node_id => node.id, :network_range_id => self.id).first
+  puts "ZEHICLE #{res.inspect}"
     return res if res
     if suggestion
       begin
         suggestion = IP.coerce(suggestion)
         NetworkAllocation.transaction do
           if (self === suggestion) &&
-              Networkallocation.where(:address => suggestion.to_s).count == 0
-            res = Networkallocation.create!(:range_id => self.id, :node_id => node.id, :address => suggestion)
+              NetworkAllocation.where(:address => suggestion.to_s).count == 0
+            res = NetworkAllocation.create!(:network_range_id => self.id, :node_id => node.id, :address => suggestion)
           end
         end
       rescue
@@ -65,9 +69,10 @@ class NetworkRange < ActiveRecord::Base
     end
     unless res
       (first..last).each do |addr|
-        next if Networkallocation.where(:address => addr.to_s).count > 0
+  puts "ZEHICLE #{addr}"
+        next if NetworkAllocation.where(:address => addr.to_s).count > 0
         begin
-          res = Networkallocation.create!(:range_id => self.id, :node_id => node.id, :address => addr.to_s)
+          res = NetworkAllocation.create!(:network_range_id => self.id, :node_id => node.id, :address => addr.to_s)
         rescue
           res = nil
         end
@@ -85,24 +90,24 @@ class NetworkRange < ActiveRecord::Base
     # Just make sure that the start and end are in the same subnets,
     # and that the start comes before the end.
     unless network
-      errors.add("Range does not have an associated network!")
+      errors.add("NetworkRange does not have an associated network!")
     end
 
     unless name
-      errors.add("Range must have a name")
+      errors.add("NetworkRange must have a name")
     end
     
     unless first.class == last.class
-      errors.add("Range #{fullname}: #{first.inspect} and #{last.inspect} must be of the same type")
+      errors.add("NetworkRange #{fullname}: #{first.inspect} and #{last.inspect} must be of the same type")
     end
     unless first.network == last.network
-      errors.add("Range #{fullname}.#{name}: #{first.to_s} and #{last.to_s} must be in the same subnet")
+      errors.add("NetworkRange #{fullname}.#{name}: #{first.to_s} and #{last.to_s} must be in the same subnet")
     end
     if first.network == first
-      errors.add("Range #{fullname}.#{name}: #{first} cannot be a subnet address")
+      errors.add("NetworkRange #{fullname}.#{name}: #{first} cannot be a subnet address")
     end
     if last.broadcast == last
-      errors.add("Range #{fullname}.#{name}: #{last} cannot be a broadcast address")
+      errors.add("NetworkRange #{fullname}.#{name}: #{last} cannot be a broadcast address")
     end
 
     # Now, verify that this range does not overlap with any other range

@@ -36,12 +36,6 @@ class BarclampNetwork::Role < Role
       "run_list" => ["recipe[network]"]}
   end
 
-  def on_node_delete(node)
-    # remove IP allocations from nodes
-    BarclampNetwork::Allocation.where(:node_id=>node.id).destroy_all
-    # TODO do we need to do additional cleanup???
-  end
-
   def sysdata(nr)
     our_addrs = network.node_allocations(nr.node).map{|a|a.to_s}
     res = {"crowbar" => {

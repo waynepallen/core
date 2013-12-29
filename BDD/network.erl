@@ -20,9 +20,8 @@
 % This method is used to define constants
 g(Item) ->
   case Item of
-    base -> "network/api/v2/";
-    path -> g(base) ++ "networks";
-    ipath -> g(base) ++ "interfaces";
+    path -> "/api/v2/networks";
+    ipath -> "/api/v2/network_interfaces";
     _ -> crowbar:g(Item)
   end.
 

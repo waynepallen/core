@@ -53,7 +53,7 @@ class Node < ActiveRecord::Base
   has_many    :roles,              :through => :node_roles
   has_many    :snapshots,          :through => :node_roles
   has_many    :deployments,        :through => :snapshots
-  has_many    :network_allocations
+  has_many    :network_allocations,:dependent => :destroy
   belongs_to  :deployment
   belongs_to  :target_role,        :class_name => "Role", :foreign_key => "target_role_id"
 

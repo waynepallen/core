@@ -17,11 +17,15 @@ class NetworkAllocation < ActiveRecord::Base
   validate :sanity_check_address
   
   attr_protected :id
+  attr_accessible :network_range_id, :node_id, :address
+
   belongs_to :network_range
   belongs_to :node, :dependent => :destroy
 
+  alias_attribute :range,       :network_range
+
   scope  :node,     ->(n)  { where(:node_id => n.id) }
-  scope  :network,  ->(net){ joins(:range).where('network_ranges.network_id' => net.id) }
+  scope  :network,  ->(net){ joins(:network_range).where('network_ranges.network_id' => net.id) }
 
   def address
     IP.coerce(read_attribute("address"))
@@ -32,14 +36,14 @@ class NetworkAllocation < ActiveRecord::Base
   end
 
   def network
-    range.network
+    network_range.network
   end
 
   private
 
   def sanity_check_address
-    unless range === address
-      errors.add("Allocation #{network.name}.#{range.name}.{address.to_s} not in parent range!")
+    unless network_range === address
+      errors.add("Allocation #{network.name}.#{network_range.name}.{address.to_s} not in parent range!")
     end
   end
   

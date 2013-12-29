@@ -34,7 +34,7 @@ class NetworkRouter < ActiveRecord::Base
 
   def infer_address
     if read_attribute("address").nil?
-      write_attribute("address", network.ranges.first.first)
+      write_attribute("address", network.network_ranges.first.first)
     end
   end
 

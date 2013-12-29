@@ -1,7 +1,0 @@
-{
-  "environment": "crowbar-config-test",
-  "mode": "full",
-  "transitions": false,
-  "transition_list": [ ]
-}
-

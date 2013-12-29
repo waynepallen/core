@@ -99,9 +99,9 @@ class SupportController < ApplicationController
         deployment = Deployment.system_root.first
         Network.transaction do
           net = Network.create :name=>'admin', :description=>I18n.t('support.bootstrap.admin_net'),  :deployment_id=>deployment.id, :conduit=>'1g0', :v6prefix => "auto"
-          Network_Range.create :name=>'admin', :network_id=>net.id, :first=>"192.168.124.10/24", :last=>"192.168.124.11/24"
-          Network_Range.create :name=>'dhcp', :network_id=>net.id, :first=>"192.168.124.21/24", :last=>"192.168.124.80/24"
-          Network_Range.create :name=>'host', :network_id=>net.id, :first=>"192.168.124.81/24", :last=>"192.168.124.254/24"
+          NetworkRange.create :name=>'admin', :network_id=>net.id, :first=>"192.168.124.10/24", :last=>"192.168.124.11/24"
+          NetworkRange.create :name=>'dhcp', :network_id=>net.id, :first=>"192.168.124.21/24", :last=>"192.168.124.80/24"
+          NetworkRange.create :name=>'host', :network_id=>net.id, :first=>"192.168.124.81/24", :last=>"192.168.124.254/24"
         end
       end
     end
