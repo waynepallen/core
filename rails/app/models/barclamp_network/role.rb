@@ -32,7 +32,7 @@ class BarclampNetwork::Role < Role
     { "name" => nr.role.name,
       "chef_type" => "role",
       "json_class" => "Chef::Role",
-      "description" => "#{nr.role.name}: Automatically created by Crowbar",
+      "description" => I18n.t('automatic_item_by', :item=>nr.role.name, :name=>"Crowbar"),
       "run_list" => ["recipe[network]"]}
   end
 

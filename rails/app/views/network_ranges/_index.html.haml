@@ -7,7 +7,7 @@
       %th
   %tbody
     - network.ranges.each do |range|
-      = form_for :range, :'data-remote' => true, :url => network_ranges_path(:id=>range.id, :network_id=>network.id, :version=>'v2'), 
+      = form_for :range, :'data-remote' => true, :url => network_network_ranges_api_path(:id=>range.id, :network_id=>network.id, :version=>'v2'), 
                 :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic", :remote=>true } do |f|
         %tr
           %td= text_field_tag :name, range.name, :size => 10
@@ -15,7 +15,7 @@
           %td= text_field_tag :last, range.last, :size => 18
           %td
             %input.button{:type => "submit", :value => t('update'), :onclick=>"location.reload();"} 
-    = form_for :range, :'data-remote' => true, :url => network_ranges_path(:network_id=>network.id, :version=>'v2'), 
+    = form_for :range, :'data-remote' => true, :url => network_network_ranges_api_path(:network_id=>network.id, :version=>'v2'), 
               :html => { :method=>:post, :'data-type' => 'html',  :class => "formtastic", :remote=>true } do |f|
       %tr
         %td

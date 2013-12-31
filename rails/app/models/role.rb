@@ -157,7 +157,11 @@ class Role < ActiveRecord::Base
       cohort = nil
       save!
       RoleRequire.where(:requires => name).each do |rr|
-        rr.role.reset_cohort
+        if rr.role 
+          rr.role.reset_cohort 
+        else
+          Rails.logger.warn "Role: Could not reset cohort for Role #{name} because required Role #{rr.id} does not have a role set"
+        end
       end
     end
   end
@@ -175,7 +179,7 @@ class Role < ActiveRecord::Base
           write_attribute("cohort",c)
           save!
         rescue
-          Rails.logger.info "Could not calculate cohort for #{self.name} because requested parent role does not exist (could be OK due to late binding)"
+          Rails.logger.info "Role: Could not calculate cohort for #{self.name} because requested parent role does not exist (could be OK due to late binding)"
         end
       end
       return c

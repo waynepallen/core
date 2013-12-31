@@ -50,9 +50,7 @@ class NetworkRange < ActiveRecord::Base
   end
 
   def allocate(node, suggestion = nil)
-  puts "ZEHICLE #{node.inspect}"
     res = NetworkAllocation.where(:node_id => node.id, :network_range_id => self.id).first
-  puts "ZEHICLE #{res.inspect}"
     return res if res
     if suggestion
       begin

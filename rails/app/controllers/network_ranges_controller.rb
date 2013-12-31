@@ -12,41 +12,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-class RangesController < ::ApplicationController
+class NetworkRangesController < ::ApplicationController
   respond_to :json
 
   def index
     network =  Network.find_key params[:network_id]
     respond_to do |format|
-      format.json { render api_index :range, network.ranges }
+      format.json { render api_index :range, network.network_ranges }
     end
   end
 
   def show
     network =  Network.find_key params[:network_id]
-    range = network.ranges.find_key(params[:id]) rescue nil
+    range = network.network_ranges.find_key(params[:id]) rescue nil
     respond_to do |format|
-      format.json { render api_show :range, Range, nil, nil, range }
+      format.json { render api_show :network_range, NetworkRange, nil, nil, range }
     end
   end
 
   def create
     params[:network_id] = Network.find_key(params[:network]).id if params.has_key? :network
-    @range = Range.new
+    @range = NetworkRange.new
     @range.first = params[:new_first]
     @range.last = params[:new_last]
     @range.name = params[:name]
     @range.network_id = params[:network_id]
     @range.save!
     respond_to do |format|
-      format.json { render api_show :range, Range, @range.id.to_s, nil, @range }
+      format.json { render api_show :network_range, NetworkRange, @range.id.to_s, nil, @range }
     end
 
   end
 
   def update
     respond_to do |format|
-      format.json { render api_update :range, Range }
+      format.json { render api_update :network_range, NetworkRange }
     end
   end
 
