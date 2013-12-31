@@ -130,11 +130,8 @@ class Network < ActiveRecord::Base
                                         :implicit => true,
                                         :bootstrap => (self.name.eql? ADMIN_NET),
                                         :discovery => (self.name.eql? ADMIN_NET)  )
-puts "\nZEHICLE 2 #{role_name} -> #{r.inspect}"
         RoleRequire.create!(:role_id => r.id, :requires => "network-server")
-puts "\nZEHICLE 3 #{role_name} -> #{r.inspect}"
         RoleRequire.create!(:role_id => r.id, :requires => "deployer-client") 
-puts "\nZEHICLE 4 #{role_name} -> #{r.inspect}"
         RoleRequire.create!(:role_id => r.id, :requires => "crowbar-installed-node") unless name.eql? ADMIN_NET
         # attributes for jig configuraiton
         Attrib.create!(:role_id => r.id,
