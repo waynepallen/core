@@ -12,7 +12,6 @@
   %h2= t('.toc_title')
   %ol(type="1")
     - Doc.roots.sort.each do |x|
-      %li
-        %a{:href=>"##{x.id}"}= truncate(x.description)
-
+      - if x.level==0
+        %li= link_to x.description, doc_path(x.id)
 .clear
