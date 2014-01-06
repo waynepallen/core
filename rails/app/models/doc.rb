@@ -40,7 +40,7 @@ class Doc < ActiveRecord::Base
   # creates the table of contents from the files
   def self.gen_doc_index
     # load barclamp docs
-    Barclamp.roots.order(:id).each { |bc| Doc.discover_docs bc }
+    Barclamp.order(:id).each { |bc| Doc.discover_docs bc }
     Doc.make_index if Rails.env.eql? 'development'
     Doc.all
   end
@@ -77,8 +77,10 @@ class Doc < ActiveRecord::Base
 
   # scan the directories and find files
   def self.discover_docs barclamp
+
     doc_path = File.join barclamp.source_path, 'doc'
-    files_list = %x[find #{doc_path} -iname *.md]
+    Rails.logger.debug("Discovering docs for #{barclamp.name} barclamp under #{doc_path}") 
+    files_list = %x[find #{doc_path} -name *.md]
     files = files_list.split "\n"
     files = files.sort_by {|x| x.length} # to ensure that parents come before their children
     files.each do |file_name|
@@ -88,26 +90,42 @@ class Doc < ActiveRecord::Base
       # figure out order by inspecting name
       order = name[/\/([0-9]+)_[^\/]*$/,1]
       order = "9999" unless order
-      #order = (props["order"] || "9999") unless order
       order = order.to_s.rjust(6,'0') rescue "!error"
 
-      # figure out description by looking in file
+      # figure out title, the first markdown header in the file
       title = begin
                 actual_title = File.open(file_name, 'r').readline
                 # we require titles to star w/ # - anything else is considered extra content
                 next unless actual_title.starts_with? "#"
                 actual_title.strip[/^#+(.*?)#*$/,1].strip
               rescue
+                Rails.logger.debug("Skipping file #{file_name}") 
                 next  # if that fails, skip
               end
 
-      # figure out parent by stripping file
-      # - first tries to find a parent in the same barclamp
-      # - if not found, then tries `default_barclamp`
-      parent_name = name[/^(.*)\/[^\/]*$/,1]
-      parent = Doc.find_by_name "#{parent_name}.md"
+      # figure out parent by looking one level up in the path
+      # If the parent isn't found, we create a placeholder entry, to cover 
+      # instances where the corresponding 'parent_name.md' file doesn't exit
+      # but a parent directory exists.
+      # 
+      parent_name = File.dirname name
+      parent = Doc.find_by_name "#{parent_name}.md"  
 
-      d = Doc.find_or_create_by_name :name=>name, :description=>title.truncate(120), :order=>order, :parent_id=>(parent ? parent.id : nil), :barclamp_id=>barclamp.id
+      if not parent and parent_name != "/"
+        # no parent, create a dummy parent entry
+        grandparent_name = File.dirname File.dirname name
+        # Rails.logger.debug("grandparent: #{grandparent_name}.md ") 
+        grandparent = Doc.find_by_name  "#{grandparent_name}.md" 
+        parent = Doc.create :name=>"#{parent_name}.md", 
+          :description=> "placeholder for missing #{parent_name}".truncate(120),
+          :order=>'009999', :parent_id=>(grandparent ? grandparent.id : nil),
+          :barclamp_id =>barclamp.id
+      end
+
+      d = Doc.find_or_create_by_name :name=>name, 
+        :description=>title.truncate(120),
+        :order=>order, :parent_id=>(parent ? parent.id : nil), 
+        :barclamp_id=>barclamp.id
 
     end
   end
