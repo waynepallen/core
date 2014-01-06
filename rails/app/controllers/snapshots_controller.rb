@@ -72,6 +72,24 @@ class SnapshotsController < ApplicationController
     end
   end
 
+  def cohorts
+
+    @snapshot = Snapshot.find_key params[:snapshot_id]
+    @max = NodeRole.where(:snapshot_id=>@snapshot.id).maximum(:cohort)
+    @min = NodeRole.where(:snapshot_id=>@snapshot.id).minimum(:cohort)
+    @header = {}.tap{ |h| (@min..@max).each{ |i| h[i] = [] }}
+    @cohorts = {}
+    #{}.tap{ |h| @snapshot.roles{ |r| h[r.name] = {} } }  
+    @node_roles = @snapshot.node_roles
+    @node_roles.sort.each do |nr|
+      @cohorts[nr] = @header
+      @cohorts[nr][nr.cohort] << nr
+      nr.parents.each { |p| @cohorts[nr][p.cohort] << p }
+      nr.children.each { |c| @cohorts[nr][c.cohort] << c }
+    end
+
+  end
+
   def graph
     @snapshot = Snapshot.find_key params[:snapshot_id]
     respond_to do |format|

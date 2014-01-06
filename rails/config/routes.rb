@@ -45,6 +45,7 @@ Crowbar::Application.routes.draw do
   resources :snapshots do
     resources :node_roles
     get :graph
+    get :cohorts
     put :propose
     put :commit
     put :recall

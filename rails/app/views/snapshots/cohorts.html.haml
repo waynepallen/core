@@ -1,0 +1,20 @@
+%t1= t '.title'
+
+- if @node_roles
+  %table
+    %tr
+      %th= t '.node'
+      - @header.each do |i, c|
+        %th= i
+    - @cohorts.each do |row, cohorts| 
+      %tr
+        %td= link_to row.node.alias, node_path(row.node.id) rescue t 'error'
+        - cohorts.each do |cohort, nrs|
+          %td
+            - nrs.each do |nr|
+              - if nr.id == row.id
+                %strong= link_to nr.role.name_safe.html_safe, node_role_path(nr.id)
+              - else
+                = link_to nr.role.name_safe.html_safe, node_role_path(nr.id)
+- else 
+  = t 'no_items'
