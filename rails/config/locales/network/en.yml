@@ -46,6 +46,13 @@ en:
     v6prefix: "IPv6 Prefix"
     role: role
     save: "Save"
+    roles:
+      network-server: "Network Bus Map"
+      network-admin: "Admin Network"
+      network-public: "Public Network"
+      network-private: "Private Network"
+      network-storage: "Storage Network"
+      network-bmc: "Managment Network"
   networks:
     index:
       title: "Installed Networks"

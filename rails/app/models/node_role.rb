@@ -28,6 +28,11 @@ class NodeRole < ActiveRecord::Base
   has_many        :attribs,           :through => :role
   has_many        :runs,              :dependent => :destroy
 
+  # make sure that new node-roles have require upstreams
+  # validate        :deployable,        :if => :deployable?
+  has_and_belongs_to_many :parents, :class_name => "NodeRole", :join_table => "node_role_pcms", :foreign_key => "child_id", :association_foreign_key => "parent_id"
+  has_and_belongs_to_many :children, :class_name => "NodeRole", :join_table => "node_role_pcms", :foreign_key => "parent_id", :association_foreign_key => "child_id"
+
   # find other node-roles in this snapshot using their role or node
   scope           :all_by_state,      ->(state) { where(['node_roles.state=?', state]) }
   # A node is runnable if:
@@ -50,11 +55,6 @@ class NodeRole < ActiveRecord::Base
   scope           :peers_by_node,     ->(ss,node)  { in_snapshot(ss).on_node(node) }
   scope           :peers_by_node_and_role,     ->(s,n,r) { peers_by_node(s,n).with_role(r) }
   scope           :snap_node_role,    ->(s,n,r) { where(['snapshot_id=? AND node_id=? AND role_id=?', s.id, n.id, r.id]) }
-
-  # make sure that new node-roles have require upstreams
-  # validate        :deployable,        :if => :deployable?
-  has_and_belongs_to_many :parents, :class_name => "NodeRole", :join_table => "node_role_pcms", :foreign_key => "child_id", :association_foreign_key => "parent_id"
-  has_and_belongs_to_many :children, :class_name => "NodeRole", :join_table => "node_role_pcms", :foreign_key => "parent_id", :association_foreign_key => "child_id"
 
   # State transitions:
   # All node roles start life in the PROPOSED state.

@@ -31,7 +31,7 @@ class Barclamp < ActiveRecord::Base
   belongs_to        :barclamp,  :dependent => :destroy
   alias_attribute   :parent,    :barclamp
 
-  scope :roots, where(:barclamp_id=>nil)
+  scope :roots,     where(["barclamp_id = id"])
 
   #
   # Human printable random password generator

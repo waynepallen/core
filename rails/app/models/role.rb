@@ -1,4 +1,4 @@
-# Copyright 2013, Dell
+# Copyright 2014, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ class Role < ActiveRecord::Base
   scope           :bootstrap,          -> { where(:bootstrap=>true) }
   scope           :server,             -> { where(:server => true) }
   scope           :active,             -> { joins(:jig).where(["jigs.active = ?", true]) }
+  scope           :all_cohorts,        -> { order("cohort ASC, name ASC") }
+  scope           :all_cohorts_desc,   -> { order("cohort DESC, name ASC") }
 
   # update just one value in the template
   # for >1 level deep, add method matching key to role!
@@ -161,9 +163,14 @@ class Role < ActiveRecord::Base
           rr.role.reset_cohort 
         else
           Rails.logger.warn "Role: Could not reset cohort for Role #{name} because required Role #{rr.id} does not have a role set"
+          raise "Role: role not set for role require"
         end
       end
     end
+  end
+
+  def name_safe
+    I18n.t(name, :default=>name, :scope=>'common.roles').gsub("-","&#8209;").gsub(" ","&nbsp;")
   end
 
   def cohort

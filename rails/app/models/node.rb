@@ -1,4 +1,4 @@
-# Copyright 2013, Dell
+# Copyright 2014, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -70,6 +70,10 @@ class Node < ActiveRecord::Base
   # * All attributes that are not defined as part of a node.
   def attribs
     Attrib.where(["attribs.role_id IS NULL OR attribs.role_id in (select role_id from node_roles where node_id = ?)",self.id])
+  end
+
+  def <=>(other)
+    self.name <=> other.name
   end
 
   # look at Node state by scanning all node roles.
@@ -311,7 +315,7 @@ class Node < ActiveRecord::Base
   def after_save_handler
     return unless changed?
     Rails.logger.info("Node: calling all role on_node_change hooks for #{name}")
-    Role.all.each do |r|
+    Role.all_cohorts do |r|
       #Rails.logger.debug("\tNode: calling role #{r.name} for #{name}")
       r.on_node_change(self)
     end
@@ -344,7 +348,10 @@ class Node < ActiveRecord::Base
 
   # Call the on_node_delete hooks.
   def tear_down_roles
-    Role.all.each do |r|
+puts "\n\nZEHICLE ZEHICLE ZEHICLE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #{Role.all.sort.reverse.count}\n\n"
+    # do the low cohorts last
+    Role.all_cohorts_desc do |r|
+puts "ZEHICLE Node:tear down roles #{r.name}"
       begin
         r.on_node_delete(self)
       rescue Exception => e
@@ -363,7 +370,8 @@ class Node < ActiveRecord::Base
 
     # Call all role on_node_create hooks with ourself.
     # These should happen synchronously.
-    Role.all.each do |r|
+    # do the low cohorts first
+    Role.all_cohorts do |r|
       r.on_node_create(self)
     end
   end
