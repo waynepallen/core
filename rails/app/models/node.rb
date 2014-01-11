@@ -138,11 +138,6 @@ class Node < ActiveRecord::Base
     virtual.include? get_attrib('hardware')
   end
 
-  def bmc_set?
-    # TODO ZEHICLE place holder
-    true
-  end
-
   # retrieves the Attrib from Attrib
   def get_attrib(attrib)
     Attrib.get(attrib, self, :discovery) rescue nil
@@ -348,10 +343,8 @@ class Node < ActiveRecord::Base
 
   # Call the on_node_delete hooks.
   def tear_down_roles
-puts "\n\nZEHICLE ZEHICLE ZEHICLE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #{Role.all.sort.reverse.count}\n\n"
     # do the low cohorts last
     Role.all_cohorts_desc do |r|
-puts "ZEHICLE Node:tear down roles #{r.name}"
       begin
         r.on_node_delete(self)
       rescue Exception => e

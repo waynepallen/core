@@ -67,7 +67,6 @@ class NetworkRange < ActiveRecord::Base
     end
     unless res
       (first..last).each do |addr|
-  puts "ZEHICLE #{addr}"
         next if NetworkAllocation.where(:address => addr.to_s).count > 0
         begin
           res = NetworkAllocation.create!(:network_range_id => self.id, :node_id => node.id, :address => addr.to_s)

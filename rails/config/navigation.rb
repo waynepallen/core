@@ -25,12 +25,6 @@ SimpleNavigation::Configuration.run do |navigation|
             title = "Dev Mode: "+title
           end
           primary.item item.item.to_sym, name, eval(item.path) do |secondary|
-            # TODO ZEHICLE - put help listing back!
-            #if item.item.eql? 'help'
-             # Doc.find_by_name('root').children.each do |doc|
-             #   secondary.item doc.name.to_sym, t(doc.name, :scope=>'nav.books'), docs_path(:id=>doc.name.html_safe), {:title=>doc.description }
-             # end
-            #end
             if item.item.eql? 'scaffold'
               build_scaffold_nav(secondary, item)
             else

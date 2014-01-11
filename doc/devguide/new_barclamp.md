@@ -12,6 +12,9 @@ Inside the template:
 
 1. replace "OCBTemplate" occurances with the name of your workload
    1. the replacements include the crowbar.yml, licenses, readme, and /doc files.
+   1. update the /rails_engine/db/migrate/[barclamp_import] script
+      1. change the name of the file to match the workload
+      1. change the class and barclamp name to match the workload
 1. correct file names that are workload specific
   1. rename the =/doc/license/ocbtemplate.md= file with the name of your workload.md
   1. rename the =/barclamps/ocbtemplate.yml= file with the name of your workload.yml

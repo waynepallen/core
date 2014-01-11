@@ -75,17 +75,15 @@ class SnapshotsController < ApplicationController
   def cohorts
 
     @snapshot = Snapshot.find_key params[:snapshot_id]
-    @max = NodeRole.where(:snapshot_id=>@snapshot.id).maximum(:cohort)
-    @min = NodeRole.where(:snapshot_id=>@snapshot.id).minimum(:cohort)
-    @header = {}.tap{ |h| (@min..@max).each{ |i| h[i] = [] }}
-    @cohorts = {}
-    #{}.tap{ |h| @snapshot.roles{ |r| h[r.name] = {} } }  
-    @node_roles = @snapshot.node_roles
-    @node_roles.sort.each do |nr|
-      @cohorts[nr] = @header
-      @cohorts[nr][nr.cohort] << nr
-      nr.parents.each { |p| @cohorts[nr][p.cohort] << p }
-      nr.children.each { |c| @cohorts[nr][c.cohort] << c }
+    respond_to do |format|
+      format.html {
+        @roles = @snapshot.deployment_roles.sort{|a,b|a.role.cohort <=> b.role.cohort}
+        # alpha lists by ID
+        @nodes = Node.order("name ASC").select do |n|
+          (n.deployment_id == @snapshot.deployment_id) ||
+          (n.node_roles.where(:snapshot_id => @snapshot.id).count > 0)
+        end
+      }
     end
 
   end

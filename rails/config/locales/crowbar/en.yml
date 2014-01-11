@@ -390,6 +390,10 @@ en:
       <<: *node_role_states
     graph:
       title: "%{snapshot} Graph"
+    cohorts:
+      title: "NodeRole Relationships"
+      node: "Node"
+      cohort: "Cohort"
   support:
     index:
       title: Exported Files

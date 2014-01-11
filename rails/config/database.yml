@@ -1,6 +1,6 @@
 development:
   adapter: postgresql
-  database: crowbar_development
+  database: opencrowbar_dev
   port: 5439
   username: crowbar
   pool: 10
@@ -12,7 +12,7 @@ development:
 # Do not set this db to the same as development or production.
 test: &test
   adapter: postgresql
-  database: crowbar_test
+  database: opencrowbar_test
   port: 5439
   username: crowbar
   pool: 10
@@ -21,7 +21,7 @@ test: &test
 
 production:
   adapter: postgresql
-  database: crowbar_production
+  database: opencrowbar
   port: 5439
   username: crowbar
   pool: 10
