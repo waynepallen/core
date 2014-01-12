@@ -1,7 +1,7 @@
 //= require html5
 //= require jquery
 //= require jquery-ui
-//= require jquery.sparkline.min
+//= require jquery.sparkline
 //= require rails
 //= require codemirror/codemirror
 //= require codemirror/javascript
