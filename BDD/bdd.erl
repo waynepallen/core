@@ -164,7 +164,7 @@ start(Config) ->
         {{error, A}, {error, B}} -> log(trace, "Errors Reported: Inets ~p Crypto ~p",[B, A]);
         {A, B}                   -> log(trace, "Start Reporting: Inets ~p Crypto ~p",[B, A])
       end,
-      AzConfig = bdd_utils:is_site_up(Config),
+      AzConfig = bdd_utils:is_site_up(),
       file:write_file("/tmp/inspection.list",io_lib:fwrite("~p.\n",[inspect(AzConfig)])),
       bdd_utils:marker("BDD TEST STARTING"),
       bdd_utils:log(debug, bdd, start, "running global setup using `~p:step(...step_setup...)`",[Global]),

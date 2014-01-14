@@ -42,7 +42,10 @@ get_object(Result) when is_record(Result, http) ->
 parse_object(Results)             ->
   case Results#http.data of 
     [${ | _] -> JSON = json:parse(Results#http.data),
-                {"id", ID} = lists:keyfind("id", 1, JSON),
+                ID = case lists:keyfind("id", 1, JSON) of
+                  {"id", FoundID} -> FoundID;
+                  _-> -1 
+                end,
                 URL = case fromCreate of true -> eurl:path([Results#http.url, ID]); _ -> Results#http.url end,
                 #obj{namespace = rest, data=JSON, id= ID, type = json, url = URL };
     [$[ | _] -> JSON = json:parse(Results#http.data),

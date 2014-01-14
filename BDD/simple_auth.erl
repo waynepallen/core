@@ -28,7 +28,7 @@
 %%
 %% Exported Functions
 %%
--export([request/5, request/2, request/4, request/1, authenticate_session/2, header/2, test_calc_response/0]).
+-export([request/4, request/1, authenticate_session/1, header/1, test_calc_response/0]).
 -include("bdd.hrl").
 
 %% Does digest authentication. 
@@ -40,7 +40,6 @@
 %% For example:
 %% application:start(crypto).
 %% application:start(inets).
-%% Config = [{user,"crowbar"},{password,"crowbar"}].
 %% digest_auth:request(Config, get, {URL, []}, [], []).
 %%
 %% Note: You can save time if you add the header to the Config:
@@ -57,32 +56,24 @@
 %%   error, {connect_failed, term}
 %%   error, {send_failed, term}
 %%   error, term
-
-% depricate this approach!  Use the one that returns the http record
-request(Config, URL) ->  request(Config, get, {URL, [], [], []}, [], []).
-request(Config, get, {URL, Headers}, HTTPOptions, Options) ->
-  request(Config, get, {URL, Headers, [], []}, HTTPOptions, Options);
-
-request(Config, delete, {URL}, HTTPOptions, Options) ->
-  request(Config, delete, {URL, [], [], []}, HTTPOptions, Options);
   
-request(Config, Method, {URL, Headers, ContentType, Body}, HTTPOptions, Options) ->
+request_action(Method, {URL, Headers, ContentType, Body}, HTTPOptions, Options) ->
   %% prepare information that's common
   {http, _, _Host, Port, DigestURI, Params} = case http_uri:parse(URL) of
     {error, no_scheme} -> bdd_utils:log(error, simple_auth, request, "incomplete URL (needs http): ~p",[URL]);
     {ok, X} -> X;   % needed for newer erlang BIF
     X -> X
   end,
-  User = bdd_utils:config(Config,user),
+  User = bdd_utils:config(user),
   MethodStr = string:to_upper(atom_to_list(Method)),
-  Password = bdd_utils:config(Config,password),
+  Password = bdd_utils:config(password),
 
   %% suppress auto-redirect - we have to manage it ourselves because 
   %% incorrectly drops port number off of redirect URL
   HTTPOptions2 = HTTPOptions ++ [{autoredirect, false}],
 
   %% if we have authentication data, add auth header to the headers 
-  AuthField = bdd_utils:config(Config, auth_field, undefined),
+  AuthField = bdd_utils:config(auth_field, undefined),
   DigestIndex = case AuthField of
     undefined -> 0;
     _ -> string:str(AuthField,"Digest")
@@ -148,7 +139,7 @@ request(URL)   -> request(get, URL, [], []).
 request(Method, {URL, Headers, ContentType, Input}, HTTPOptions, Options) -> 
   % use the old response that returns the HTTPC tuple
   bdd_utils:log(trace, simple_auth, request, "~p to ~p", [Method, URL]),
-  Response = request([], Method, {URL, Headers, ContentType, Input}, HTTPOptions, Options),
+  Response = request_action(Method, {URL, Headers, ContentType, Input}, HTTPOptions, Options),
   {ok, {{"HTTP/1.1",Code,_State}, Header, Body}} = Response,
   MediaType = proplists:get_value("content-type", Header),
   {DataType, Version} = case string:tokens(MediaType, ";=") of
@@ -176,20 +167,20 @@ assemble_url(Host,Port,Path) ->
 
 
 %% Authenticate and save session_id in config for use by all subsequent test steps
-header(Config, URL) -> 
-  bdd_utils:log(Config, depricate, "simple_auth:header should be replaced with authenticate_session",[]),
-  authenticate_session(Config, URL).
-authenticate_session(Config, URL) ->
+header(URL) -> 
+  bdd_utils:log(depricate, "simple_auth:header should be replaced with authenticate_session",[]),
+  authenticate_session(URL).
+authenticate_session(URL) ->
   % we'll retry for about a minute to give server time to rev-up
-  authenticate_session(Config, URL, 20).
-authenticate_session(Config, _URL, 0) ->
+  authenticate_session(URL, 20).
+authenticate_session(_URL, 0) ->
   % we've retried out hearts out, time to bail...
-  bdd_utils:config_set(Config, auth_error, "could not connect to host");
-authenticate_session(Config, URL, Retries) ->
-  User = bdd_utils:config(Config,user),
-  Password = bdd_utils:config(Config,password),
+  bdd_utils:config_set(auth_error, "could not connect to host");
+authenticate_session(URL, Retries) ->
+  User = bdd_utils:config(user),
+  Password = bdd_utils:config(password),
   Result = httpc:request(post, {
-			  URL++bdd_utils:config(Config, sign_in_url, "/my/users/sign_in"),
+			  URL++bdd_utils:config(sign_in_url, "/my/users/sign_in"),
 			  [], 
 			  "application/x-www-form-urlencoded",
 			  "user[username]="++User++"&user[password]="++Password
@@ -204,19 +195,19 @@ authenticate_session(Config, URL, Retries) ->
 	  Cookie = proplists:get_value("set-cookie", Fields),
           case Cookie of
             undefined -> % no session id returned!
-              bdd_utils:config_set(Config, auth_error, "Could not authenticate "++User++"/"++Password);
+              bdd_utils:config_set(auth_error, "Could not authenticate "++User++"/"++Password);
             _ -> % we should really parse the cookies, l8r
               Sessionidlen = string:str(Cookie, "; "),
               Sessionid = string:substr(Cookie,1,Sessionidlen),
-              bdd_utils:config_set(Config, auth_field, Sessionid)
+              bdd_utils:config_set(auth_field, Sessionid)
           end;
         _ -> % did not successfully authenticate?
-          bdd_utils:config_set(Config, auth_error, "Could not authenticate "++User++"/"++Password)  
+          bdd_utils:config_set(auth_error, "Could not authenticate "++User++"/"++Password)  
       end;
 
     _ -> % probably could not connect to host, try again!
 	 timer:sleep(3000),
-	 authenticate_session(Config, URL, Retries-1)
+	 authenticate_session(URL, Retries-1)
   end.
 
 

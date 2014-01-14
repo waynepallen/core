@@ -22,7 +22,7 @@
 -export([log/5, log/4, log/3, log/2, log/1, log_level/1, depricate/4, depricate/6]).
 -export([features/1, features/2, feature_name/2, os_type/0]).
 -export([setup_create/5, setup_create/6, teardown_destroy/3]).
--export([is_site_up/1, is_a/2, is_a/3, marker/1, parse_object/1]).
+-export([is_site_up/0, is_a/2, is_a/3, marker/1, parse_object/1]).
 -define(NORMAL_TOKEN, 1).
 -define(ESCAPED_TOKEN, 2).
 -define(SUBSTITUTE_TOKEN, 3).
@@ -226,15 +226,15 @@ is_a(Type, Value) ->
   end.
 	
 % Web Site Cake Not Found - GLaDOS cannot test
-is_site_up(Config) ->
-  URL = bdd_utils:config(Config, url),
-  log(Config, header, "Site ~p", [URL]),
-  AzConfig = simple_auth:authenticate_session(Config, URL),
-  case config(AzConfig, auth_error, undefined) of
-    undefined -> AzConfig; % success
+is_site_up() ->
+  URL = bdd_utils:config(url),
+  log(header, "Site ~p", [URL]),
+  simple_auth:authenticate_session(URL),
+  case config(auth_error, undefined) of
+    undefined -> true; % success
     Reason -> 
-      log(Config, error, "bdd_utils: Web site '~p' is not responding! Remediation: Check server.  Message: ~p", [URL, Reason]),
-      Config
+      log(error, "bdd_utils: Web site '~p' is not responding! Remediation: Check server.  Message: ~p", [URL, Reason]),
+      false
   end.
 
 % rest response specific for generic JSON parsing from http record
