@@ -11,7 +11,7 @@
             = net.conduit
   %tbody
     - @nodes.each do |node|
-      - allocations = BarclampNetwork::Allocation.node(node)
+      - allocations = NetworkAllocation.node(node)
       %tr
         %td= link_to node.alias, main_app.node_path(node.id), :title=>node.description
         - @networks.each do |net|
