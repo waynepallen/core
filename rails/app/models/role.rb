@@ -41,8 +41,8 @@ class Role < ActiveRecord::Base
   belongs_to      :jig,               :foreign_key=>:jig_name, :primary_key=>:name
   has_many        :role_requires,     :dependent => :destroy
   has_many        :role_require_attribs, :dependent => :destroy
-  has_many        :attribs
-  has_many        :wanted_attribs, :through => :role_require_attribs, :class_name => "Attrib", :source => :attrib
+  has_many        :attribs,           :dependent => :destroy
+  has_many        :wanted_attribs,    :through => :role_require_attribs, :class_name => "Attrib", :source => :attrib
   has_many        :role_parents, :through => :role_requires, :class_name => "Role", :source => :upstream
   has_many        :node_roles,        :dependent => :destroy
   has_many        :deployment_roles,  :dependent => :destroy

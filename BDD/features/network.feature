@@ -56,12 +56,12 @@ Feature: Networks
 
   Scenario: Admin Node Allocated Correct IP (matches control.sh API call)
     Given parameter "node" is {lookup:crowbar.node_name}
-    When REST requests the "network/api/v2/networks/admin/allocations" page with parameter "node"
+    When REST requests the "api/v2/networks/admin/allocations" page with parameter "node"
     Then Array matches "192\.168\.124\.(10|11)/24" 
 
   Scenario: Network List
     Given I use the Network API to create "bdd_network" with range "bdd1" from "10.10.11.100/24" to "10.10.11.200/24"
-    When I go to the "network/networks" page
+    When I go to the "networks" page
     Then I should see {bdd:crowbar.i18n.networks.index.title}
       And I should see "admin" in section "main_body"
       And I should see "bdd_network" in section "main_body"
@@ -70,7 +70,7 @@ Feature: Networks
 
  Scenario: Network List to Item
     Given I use the Network API to create "bdd_test" with range "bdd1" from "10.10.12.100/24" to "10.10.12.200/24"
-      And I am on the "network/networks" page
+      And I am on the "networks" page
     When I click on the "bdd_test" link
     Then I should see "bdd_test"
       And there should be no translation errors

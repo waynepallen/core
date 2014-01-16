@@ -1,4 +1,4 @@
-% Copyright 2012, Dell 
+% Copyright 2014, Dell 
 % 
 % Licensed under the Apache License, Version 2.0 (the "License"); 
 % you may not use this file except in compliance with the License. 
@@ -15,10 +15,10 @@
 -module(bdd_print).
 -export([file/0, html/0, report/1, result/1, fail/1]).
 
-file() -> bdd_utils:config(results_out,"../crowbar_framework/tmp/bdd_results.out").
+file() -> bdd_utils:config(results_out,"../tmp/bdd_results.out").
 
 html() ->
-  HTML = bdd_utils:config(coverage_out,"../crowbar_framework/tmp/bdd.html"),
+  HTML = bdd_utils:config(coverage_out,"../tmp/bdd.html"),
   {ok, [{test, Date, Time, Results} | _]} = file:consult(file()),
   {ok, S} = file:open(HTML, write),
   io:format(S, "<html>~n<header>BDD Test ~p at ~p</header>~n",[Date, Time]),

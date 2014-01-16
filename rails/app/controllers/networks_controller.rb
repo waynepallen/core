@@ -48,7 +48,7 @@ class NetworksController < ::ApplicationController
         ranges = params[:ranges].is_a?(String) ? JSON.parse(params[:ranges]) : params[:ranges]
         ranges.each do |range|
           range[:network_id] = @network.id
-          Range.create! range
+          NetworkRange.create! range
         end
         params.delete :ranges
       end

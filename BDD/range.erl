@@ -19,7 +19,7 @@
 % This method is used to define constants
 g(Item) ->
   case Item of
-    path -> "ranges";
+    path -> "network_ranges";
     _ -> crowbar:g(Item)
   end.
 
@@ -27,7 +27,7 @@ g(Item) ->
 % Makes sure that the JSON conforms to expectations (only tests deltas)
 validate(JSON) when is_record(JSON, obj) ->
   J = JSON#obj.data,
-  R =[JSON#obj.type == "range",
+  R =[JSON#obj.type == "network_range",
       bdd_utils:is_a(J, length, 7),
       bdd_utils:is_a(J, string, name),
       bdd_utils:is_a(J, dbid, network_id),

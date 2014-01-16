@@ -56,14 +56,18 @@ class BarclampNetwork::Role < Role
 
   def on_proposed(nr)
     NodeRole.transaction do
+puts "ZEHICLE 1"
       return if network.allocations.node(nr.node).count != 0
       addr_range = network.ranges.where(:name => nr.node.is_admin? ? "admin" : "host").first
+puts "ZEHICLE 2"
       return if addr_range.nil?
       # get the node for the hint directly (do not use cached version)
       node = nr.node(true)
+puts "ZEHICLE 3"
       # get the suggested ip address (if any) - nil = automatically assign
       hint = ::Attrib.find_key "hint-#{nr.role.name}-v4addr"
       suggestion = hint.get(node, :hint) if hint
+puts "ZEHICLE 4"
       # allocate
       addr_range.allocate(nr.node, suggestion) unless addr_range.nil?
     end
