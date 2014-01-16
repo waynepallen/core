@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20131223045609) do
+ActiveRecord::Schema.define(:version => 20140112033926) do
 
   create_table "attribs", :force => true do |t|
     t.integer  "barclamp_id"
@@ -34,7 +34,7 @@ ActiveRecord::Schema.define(:version => 20131223045609) do
     t.integer  "version"
     t.string   "source_path"
     t.string   "commit",      :default => "unknown"
-    t.datetime "build_on",    :default => '2014-01-09 20:09:08'
+    t.datetime "build_on",    :default => '2014-01-16 04:40:58'
     t.datetime "created_at",                                     :null => false
     t.datetime "updated_at",                                     :null => false
   end
@@ -185,10 +185,26 @@ ActiveRecord::Schema.define(:version => 20131223045609) do
 
   add_index "node_groups", ["node_id", "group_id"], :name => "index_node_groups_on_node_id_and_group_id", :unique => true
 
+  create_table "node_role_data", :force => true do |t|
+    t.integer  "snapshot_id",                    :null => false
+    t.integer  "node_role_id",                   :null => false
+    t.text     "data",         :default => "{}", :null => false
+    t.text     "sysdata",      :default => "{}", :null => false
+    t.text     "wall",         :default => "{}", :null => false
+    t.boolean  "current",      :default => true, :null => false
+    t.datetime "created_at",                     :null => false
+    t.datetime "updated_at",                     :null => false
+  end
+
+  add_index "node_role_data", ["current"], :name => "index_node_role_data_on_current"
+  add_index "node_role_data", ["node_role_id"], :name => "index_node_role_data_on_node_role_id"
+
   create_table "node_role_pcms", :id => false, :force => true do |t|
     t.integer "parent_id"
     t.integer "child_id"
   end
+
+  add_index "node_role_pcms", ["parent_id", "child_id"], :name => "index_node_role_pcms_on_parent_id_and_child_id", :unique => true
 
   create_table "node_roles", :force => true do |t|
     t.integer  "snapshot_id",                     :null => false
@@ -198,17 +214,15 @@ ActiveRecord::Schema.define(:version => 20131223045609) do
     t.integer  "cohort",      :default => 0,      :null => false
     t.integer  "run_count",   :default => 0,      :null => false
     t.string   "status"
-    t.text     "userdata",    :default => "{}",   :null => false
-    t.text     "systemdata",  :default => "{}",   :null => false
-    t.text     "wall"
     t.text     "runlog",      :default => "",     :null => false
     t.boolean  "available",   :default => true,   :null => false
-    t.integer  "order",       :default => 810938
+    t.integer  "order",       :default => 479520
     t.datetime "created_at",                      :null => false
     t.datetime "updated_at",                      :null => false
   end
 
-  add_index "node_roles", ["snapshot_id", "role_id", "node_id"], :name => "index_node_roles_on_snapshot_id_and_role_id_and_node_id", :unique => true
+  add_index "node_roles", ["role_id", "node_id"], :name => "index_node_roles_on_role_id_and_node_id", :unique => true
+  add_index "node_roles", ["snapshot_id"], :name => "index_node_roles_on_snapshot_id"
 
   create_table "nodes", :force => true do |t|
     t.string   "name",                                                      :null => false
@@ -233,6 +247,7 @@ ActiveRecord::Schema.define(:version => 20131223045609) do
   create_table "role_require_attribs", :force => true do |t|
     t.integer  "role_id"
     t.string   "attrib_name"
+    t.string   "attrib_at"
     t.datetime "created_at",  :null => false
     t.datetime "updated_at",  :null => false
   end

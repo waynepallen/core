@@ -1,4 +1,4 @@
-# Copyright 2013, Dell
+# Copyright 2014, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -180,27 +180,10 @@ class Snapshot < ActiveRecord::Base
         new_dr.save!
         newsnap.deployment_roles << new_dr
       end
-      # collect the node roles
-      node_role_map = Hash.new
-      self.node_roles.each do |nr| 
-        Rails.logger.info("Snapshot: duplicating NodeRole #{nr.id}")
-        new_nr = nr.dup
-        new_nr.snapshot = newsnap
-        # store the new nr because we need it for relationships (it's automatically linked to the snapshot when created)
-        node_role_map[nr.id] = [nr,new_nr]
+      node_roles.each do |nr|
+        nr.snapshot_id = newsnap.id
+        nr.save!
       end
-      node_role_map.each do |id,nr_array|
-        old_nr = nr_array[0]
-        new_nr = nr_array[1]
-        old_nr.children.each do |c_nr|
-          new_nr.children << (node_role_map[c_nr.id][1] || c_nr rescue c_nr)
-        end
-        old_nr.parents.each do |p_nr|
-          new_nr.parents << (node_role_map[p_nr.id][1] || p_nr rescue p_nr)
-        end
-        new_nr.save!
-      end
-      newsnap.save!
       newsnap
     end
   end

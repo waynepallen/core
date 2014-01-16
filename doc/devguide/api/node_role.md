@@ -2,7 +2,7 @@
 
 Node Roles are the core of Crowbar deployment and orchestration engine
 
-There are four types of data that Crowbar tracks, three of them are maintain on node role.
+There are four types of data that Crowbar tracks, three of them are maintained on related NodeRoleDatum mode.
 1. user data (node_role.data) is set by users during the proposed state (also known as "out bound data")
 2. system data (node_role.sysdata) is set by crowbar before annealing (also known as "out bound data")
 3. wall data (node_role.wall) is set by the jig after transistion (also known as "in bound data")

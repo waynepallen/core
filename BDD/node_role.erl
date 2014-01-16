@@ -1,4 +1,4 @@
-% Copyright 2013, Dell 
+% Copyright 2014, Dell 
 % 
 % Licensed under the Apache License, Version 2.0 (the "License"); 
 % you may not use this file except in compliance with the License. 
@@ -33,7 +33,7 @@ g(Item) ->
 validate(JSON) when is_record(JSON, obj) ->
   J = JSON#obj.data,
   R =[JSON#obj.type == "node_role",
-      bdd_utils:is_a(J, length, 16),
+      bdd_utils:is_a(J, length, 13),
       bdd_utils:is_a(J, dbid, node_id),
       bdd_utils:is_a(J, dbid, role_id),
       bdd_utils:is_a(J, dbid, snapshot_id),
@@ -42,9 +42,6 @@ validate(JSON) when is_record(JSON, obj) ->
       bdd_utils:is_a(J, integer, run_count),
       bdd_utils:is_a(J, string, runlog),
       bdd_utils:is_a(J, string, status),
-      bdd_utils:is_a(J, string, userdata),
-      bdd_utils:is_a(J, string, systemdata),
-      bdd_utils:is_a(J, string, wall),
       bdd_utils:is_a(J, boolean, available),
       crowbar_rest:validate_core(J)],
   bdd_utils:assert(R).

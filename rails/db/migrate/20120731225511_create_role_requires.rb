@@ -1,4 +1,4 @@
-# Copyright 2012, Dell
+# Copyright 2014, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ class CreateRoleRequires < ActiveRecord::Migration
     create_table :role_require_attribs do |t|
       t.belongs_to :role
       t.string     :attrib_name
+      t.string     :attrib_at
       t.timestamps
     end
     add_index(:role_require_attribs, [:role_id, :attrib_name], :unique => true)

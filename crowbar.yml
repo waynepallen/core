@@ -119,6 +119,7 @@ debs:
     - libxml2-dev
     - zlib1g-dev
     - libxslt1-dev
+    - libpq-dev
   pkgs:
     # build-essential stuff
     - build-essential
@@ -475,7 +476,7 @@ gems:
     - amqp
     - bluecloth
     - builder
-    - bundler
+    - bundler-(~>1.3.0)
     - bunny-(<0.8.0)
     - cancan
     - coveralls
@@ -505,7 +506,7 @@ gems:
     - ledermann-rails-settings
     - rails-erd
     - rake
-    - rcov
+    #- rcov
     - rdoc
     - rest-client
     # Pinned to not interfere with chefspec.
