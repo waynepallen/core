@@ -1,4 +1,4 @@
-# Copyright 2013, Dell
+# Copyright 2014, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,25 +23,24 @@ class BarclampNetwork::Server < Role
   def interfaces
     o = {}
     if name.eql? 'network-server'
-      raw = template
+      # use the first one of these -> it should be the system deployment
+      raw = deployment_roles(true).first.data
       raw["crowbar"]["interface_map"].each { |im| o[im["pattern"]] = im["bus_order"] }
+    else
+      raise "this model only applies to the network-server named role"
     end
     o
   end
 
   def update_interface(pattern, bus_order)
-    data = self.template
-    found = false
-    data["crowbar"]["interface_map"].each_with_index do |item, index|
-      if pattern.eql? item["pattern"]
-        data["crowbar"]["interface_map"][index]["bus_order"] = bus_order
-        found = true
-      end
-    end
-    unless found
-      iface = { "crowbar" => { "interface_map" => { "pattern"=>pattern, "bus_order"=>bus_order } } }
-      template_update(iface)
-      self.save!
+    # use the first one of these -> it should be the system deployment
+    dr = deployment_roles(true).first
+    map = dr.data["crowbar"]["interface_map"]
+    new_map = map | [{ "pattern"=>pattern, "bus_order"=>bus_order.split("|") }]
+    data = {:crowbar => {:interface_map => new_map }}
+    DeploymentRole.transaction do 
+      dr.data_update(data)
+      dr.save!
     end
   end
 

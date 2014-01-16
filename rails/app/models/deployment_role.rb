@@ -48,16 +48,13 @@ class DeploymentRole < ActiveRecord::Base
 
   def data=(arg)
     arg = JSON.generate(arg) if arg.is_a? Hash
-    # TODO validate!
     write_attribute("data",arg)
   end
 
   def data_update(val)
-    DeploymentRole.transaction do
-      d = data
-      d.deep_merge!(val)
-      data = d
-    end
+    d = data.clone
+    d.deep_merge! val
+    self.data= d
   end
 
   def wall
@@ -73,7 +70,7 @@ class DeploymentRole < ActiveRecord::Base
 
   def wall_update(val)
     DeploymentRole.transaction do
-      d = wall
+      d = wall.clone
       d.deep_merge!(val)
       wall = d
     end

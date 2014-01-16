@@ -155,7 +155,7 @@ Crowbar::Application.routes.draw do
               get 'allocations'
             end
           end
-          resources :network_interfaces
+          resources :interfaces
 
           resources :runs
           resources :jigs

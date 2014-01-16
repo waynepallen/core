@@ -21,7 +21,7 @@
 g(Item) ->
   case Item of
     path -> "/api/v2/networks";
-    ipath -> "/api/v2/network_interfaces";
+    ipath -> "/api/v2/interfaces";
     _ -> crowbar:g(Item)
   end.
 

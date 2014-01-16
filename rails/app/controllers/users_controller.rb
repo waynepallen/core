@@ -61,7 +61,7 @@ class UsersController < ApplicationController
 
   add_help(:unlock,[:id],[:delete]) 
   def unlock
-    # ZEHICLE TODO REFACTOR!
+    # TODO REFACTOR!
     ret = fetch_user
     respond_with(@user)  do |format|
       @user.unlock_access! if (!@user.nil? and @user.access_locked?)
@@ -77,7 +77,7 @@ class UsersController < ApplicationController
 
   add_help(:lock,[:id],[:post])
   def lock
-    # ZEHICLE TODO REFACTOR!
+    # TODO REFACTOR!
     ret = fetch_user
     respond_with(@user)  do |format|
       @user.lock_access! if (!@user.nil? and !@user.access_locked?)
@@ -93,7 +93,7 @@ class UsersController < ApplicationController
  
  add_help(:reset_password,[:id, :password, :password_confirmation],[:put])
  def reset_password
-    # ZEHICLE TODO REFACTOR!
+    #  TODO REFACTOR!
    ret = fetch_user
   respond_with(@user)  do |format|
     Rails.logger.debug("Reset password for user #{@user}")

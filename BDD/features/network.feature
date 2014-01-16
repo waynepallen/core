@@ -81,13 +81,13 @@ Feature: Networks
     Then I get a {integer:404} error
 
   Scenario: Interfaces List
-    When I go to the "network\interfaces" page
+    When I go to the "interfaces" page
     Then I should see {bdd:crowbar.i18n.interfaces.index.title}
       And there should be no translation errors
 
   Scenario: Interface Add to List
     Given I add an Interface "bdd_test" with map "foo | bar"
-    When I go to the "network/interfaces" page
+    When I go to the "interfaces" page
     Then I should see "bdd_test"
       And I should see an input box with "foo | bar"
       And there should be no translation errors

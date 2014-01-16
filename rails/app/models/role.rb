@@ -44,7 +44,8 @@ class Role < ActiveRecord::Base
   has_many        :attribs
   has_many        :wanted_attribs, :through => :role_require_attribs, :class_name => "Attrib", :source => :attrib
   has_many        :role_parents, :through => :role_requires, :class_name => "Role", :source => :upstream
-  has_many        :node_roles
+  has_many        :node_roles,        :dependent => :destroy
+  has_many        :deployment_roles,  :dependent => :destroy
   alias_attribute :requires,          :role_requires
 
   #has_many        :upstreams,         :through => :role_requires
@@ -72,11 +73,9 @@ class Role < ActiveRecord::Base
 
   # incremental update (merges with existing)
   def template_update(val)
-    Role.transaction do
-      d = JSON.parse(read_attribute(template))
-      d.deep_merge!(val)
-      write_attribute("template",JSON.generate(d))
-    end
+    d = JSON.parse(read_attribute(template))
+    d.deep_merge!(val)
+    write_attribute("template",JSON.generate(d))
   end
 
   # replaces existing

@@ -183,11 +183,9 @@ class NodeRole < ActiveRecord::Base
   end
 
   def data_update(val)
-    NodeRole.transaction do
-      d = data
-      d.deep_merge!(val)
-      data = d
-    end
+    d = data.clone
+    d.deep_merge!(val)
+    self.data= d
   end
 
   def sysdata
@@ -203,7 +201,7 @@ class NodeRole < ActiveRecord::Base
 
   def sysdata_update(val)
     NodeRole.transaction do
-      d = sysdata
+      d = sysdata.clone
       d.deep_merge!(val)
       sysdata = d
     end
@@ -227,7 +225,7 @@ class NodeRole < ActiveRecord::Base
 
   def wall_update(val)
     NodeRole.transaction do
-      d = wall
+      d = wall.clone
       d.deep_merge!(val)
       wall = d
     end
