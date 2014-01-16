@@ -14,14 +14,13 @@
 % 
 % 
 -module(bdd_utils).
--export([assert/1, assert/2, assert_atoms/1, tokenize/2, tokenize/6, clean_line/1]).
+-export([assert/1, assert/2, assert_atoms/1, tokenize/1, tokenize/5, clean_line/1]).
 -export([config/1, config/2, config/3, config_set/2, config_set/3, config_unset/1, config_unset/2]).
 -export([alias/1, alias/2]).
 -export([scenario_store/3, scenario_retrieve/3]).
 -export([puts/0, puts/1, puts/2, debug/3, debug/2, debug/1, trace/5, untrace/2]).
 -export([log/5, log/4, log/3, log/2, log/1, log_level/1, depricate/4, depricate/6]).
 -export([features/1, features/2, feature_name/2, os_type/0]).
--export([setup_create/5, setup_create/6, teardown_destroy/3]).
 -export([is_site_up/0, is_a/2, is_a/3, marker/1, parse_object/1]).
 -define(NORMAL_TOKEN, 1).
 -define(ESCAPED_TOKEN, 2).
@@ -60,12 +59,12 @@ debug(Show, Format, Data) -> log(Show, Format, Data, "DEBUG").
 % FOR PERFORMANCE, always call with Config if available!
 log(Format)                       -> log(info, Format, []).
 log(Format, Data)                 -> log(info, Format, Data).
-log(Config, puts, Format)         -> log(Config, puts, Format, []);
-log(Config, Level, Format) when is_atom(Level) -> log(Config, Level, Format, []);
+log(_Config, puts, Format)         -> log(puts, Format, []);
+log(_Config, Level, Format) when is_atom(Level) -> log(Level, Format, []);
 log(Level, Format, Data)          -> log([], Level, Format, Data).
-log(Config, Level, Format, Data)  ->
-  Logs = config(Config, log, ?LOG_DEFAULT),
-  Titles = config(Config, titles, ?LOG_TITLES),
+log(_Config, Level, Format, Data)  ->
+  Logs = config(log, ?LOG_DEFAULT),
+  Titles = config(titles, ?LOG_TITLES),
   Levels = Logs ++ Titles,
   Show = lists:member(Level, Levels), 
   case {Show, Level} of
@@ -315,9 +314,9 @@ clean_line(Raw) ->
 	string:strip(CleanLine2, right, $.).
 
 % converts quoted text into a list
-tokenize(Config, Step) -> tokenize(Config, Step, false, ?NORMAL_TOKEN, [], "").
+tokenize(Step) -> tokenize(Step, false, ?NORMAL_TOKEN, [], "").
 
-tokenize(_Config, [], _IgnoreNext, TokenType, TokenList, Token ) ->
+tokenize([], _IgnoreNext, TokenType, TokenList, Token ) ->
   FinalTokenList = if
     Token /= [] ->
       FinalToken = if
@@ -329,15 +328,15 @@ tokenize(_Config, [], _IgnoreNext, TokenType, TokenList, Token ) ->
   end,
   lists:reverse(FinalTokenList);
 
-tokenize(Config, Step, IgnoreNext, TokenType, TokenList, Token ) ->
+tokenize(Step, IgnoreNext, TokenType, TokenList, Token ) ->
   Char = string:substr(Step,1,1),
   if
     % If this character is escaped, then just add it, even if it is a double quote
-    IgnoreNext -> tokenize(Config, string:substr(Step,2), false, TokenType, TokenList, Token ++ Char);
+    IgnoreNext -> tokenize(string:substr(Step,2), false, TokenType, TokenList, Token ++ Char);
     % The next character is escaped, so don't add the escape
-    Char == "\\" -> tokenize(Config, string:substr(Step,2), true, TokenType, TokenList, Token);
+    Char == "\\" -> tokenize(string:substr(Step,2), true, TokenType, TokenList, Token);
     % Handle the first character being a double quote
-    Char == "\"", Token == "" -> tokenize(Config, string:substr(Step,2), false, ?ESCAPED_TOKEN, TokenList, "");
+    Char == "\"", Token == "" -> tokenize(string:substr(Step,2), false, ?ESCAPED_TOKEN, TokenList, "");
     % Start or end of quotes terminates the last token, whatever it was
     Char == "\"", Token /= "" ->
       NewTokenType = case TokenType of
@@ -346,16 +345,16 @@ tokenize(Config, Step, IgnoreNext, TokenType, TokenList, Token ) ->
         ?SUBSTITUTE_TOKEN -> ?SUBSTITUTE_TOKEN;
         _ -> ?NORMAL_TOKEN
       end,
-      tokenize(Config, string:substr(Step,2), false, NewTokenType, add_token(Token, TokenList), "");
+      tokenize(string:substr(Step,2), false, NewTokenType, add_token(Token, TokenList), "");
     Char == "{", TokenType /= ?ESCAPED_TOKEN, Token == "" ->
-      tokenize(Config, string:substr(Step,2), false, ?SUBSTITUTE_TOKEN, TokenList, "");
+      tokenize(string:substr(Step,2), false, ?SUBSTITUTE_TOKEN, TokenList, "");
     Char == "{", TokenType /= ?ESCAPED_TOKEN, Token /= "" ->
-      tokenize(Config, string:substr(Step,2), false, ?SUBSTITUTE_TOKEN, add_token(Token, TokenList), "");
+      tokenize(string:substr(Step,2), false, ?SUBSTITUTE_TOKEN, add_token(Token, TokenList), "");
     Char == "}", TokenType == ?SUBSTITUTE_TOKEN ->
       SubToken = token_substitute(string:strip(Token)),
-      tokenize(Config, string:substr(Step,2), false, ?NORMAL_TOKEN, [SubToken|TokenList], "");
+      tokenize(string:substr(Step,2), false, ?NORMAL_TOKEN, [SubToken|TokenList], "");
     % Default action is to add to the current token
-    true -> tokenize(Config, string:substr(Step,2), false, TokenType, TokenList, Token ++ Char)
+    true -> tokenize(string:substr(Step,2), false, TokenType, TokenList, Token ++ Char)
   end.
 
 add_token(Token, TokenList) ->
@@ -393,12 +392,3 @@ token_substitute([$i, $n, $t, $e, $g, $e, $r, $: | Apply])
 token_substitute([$i, $n, $t, $: | Apply])        -> token_substitute([$i, $n, $t, $e, $g, $e, $r, $: | Apply]);                                                            
 token_substitute(Token)                           -> Token.
 
-
-setup_create(Config, Path, Atom, Name, JSON) ->
-  depricate({2013,2,1}, bdd_utils, setup_create, crowbar_rest, setup_create, [Config, Path, Atom, Name, JSON]).
-
-setup_create(Config, Path, Atom, Name, JSON, Action) ->
-  depricate({2013,2,1}, bdd_utils, setup_create, crowbar_rest, setup_create, [Config, Path, Atom, Name, JSON, Action]).
-  
-teardown_destroy(Config, Path, Atom) ->
-  depricate({2013,2,1}, bdd_utils, teardown_destroy, crowbar_rest, destroy, [Config, Path, Atom]).

@@ -24,9 +24,9 @@ Feature: Support UI
     Then I should see {bdd:crowbar.i18n.barclamps.index.title}
     
   Scenario: Find Mark in Log
-    While local or devtool
+    While local
     Given I mark the logs with "REMAIN CALM"
-    When I inspect the "../crowbar_framework/log/development.log" for "MARK >>>>>"
+    When I inspect the "../rails/log/development.log" for "MARK >>>>>"
     Then I should grep "MARK >>>>>"
       And I should grep "REMAIN_CALM"
       And I should grep "<<<<< KRAM"

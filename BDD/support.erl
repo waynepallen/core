@@ -32,7 +32,7 @@ step(_Given, {step_when, {_Scenario, _N}, ["I inspect the",Path,"for",Mark]}) ->
   #grep{data = string:tokens(Out,"\n")};
 
 step(Result, {step_then, {_Scenario, _N}, ["I should grep",Grep]}) -> 
-  In = eurl:get_result(Result, grep),
+  {grep, In} = eurl:get_result(Result, grep),
   bdd_utils:log(debug, support, step, "~p looking at ~p",[Grep, In]),
   Eval = [re:run(R,Grep) || R <- In],
   Hits = [true || E <- Eval, E=/=nomatch ],

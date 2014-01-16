@@ -232,7 +232,7 @@ log(Level, Message, Values) -> bdd_utils:log(Level, Message, Values).
 test_scenario(Config, RawSteps, Name) ->
   Hash = erlang:phash2(Name),
   % organize steps in the scenarios
-	case scenario_steps(Config, RawSteps, Hash) of
+	case scenario_steps(RawSteps, Hash) of
 	  {unless, _} -> skip;
   	{N, BackwardsGivenSteps, BackwardsWhenSteps, BackwardsThenSteps, BackwardsFinalSteps}  ->
       % The steps lists are built in reverse order that they appear in the feature file in
@@ -324,12 +324,12 @@ step_run(_Config, _Input, Step, []) ->
 % Each step is given a line number to help w/ debug
 % most steps return step tuple
 % escape clauses ("unless") returns the escape tuple
-scenario_steps(Config, Steps, ScenarioID) ->
-	scenario_steps(Config, Steps, 1, [], [], [], [], unknown, ScenarioID).
-scenario_steps(Config, [H | T], N, Given, When, Then, Finally, LastStep, ScenarioID) ->
+scenario_steps(Steps, ScenarioID) ->
+	scenario_steps(Steps, 1, [], [], [], [], unknown, ScenarioID).
+scenario_steps([H | T], N, Given, When, Then, Finally, LastStep, ScenarioID) ->
 	CleanStep = bdd_utils:clean_line(H),
 	{Type, StepRaw} = step_type(CleanStep),
-	StepPrep = {Type, bdd_utils:tokenize(Config, StepRaw)},
+	StepPrep = {Type, bdd_utils:tokenize(StepRaw)},
 	Step = case StepPrep of
 	  {step_and, SS} -> {LastStep, SS};
 	  {Type, SS} -> {Type, SS}
@@ -340,18 +340,18 @@ scenario_steps(Config, [H | T], N, Given, When, Then, Finally, LastStep, Scenari
 	  {step_skip, S}    ->  log(info,"Skipping ~p ~s", [ScenarioID, S]), 
                     	    skip;
 	  {step_while, S}    -> While = [binary_to_atom(A, utf8) || A <- re:split(S," ")],
-                          Env = bdd_utils:config(Config, environment, undefined),
+                          Env = bdd_utils:config(environment, undefined),
                           % while list is not included in env list then skip  (opposite of while)
                           WhileEnv = lists:member(Env, While),
                           WhileOS = lists:member(OStype, While),
                     	    if WhileEnv; WhileOS ->
-                    	        log(debug,"bdd:test_scenario: while running ~p [~p/P in ~p]", [ScenarioID, Env, OStype, While]),
-                              scenario_steps(Config, T, N, Given, When, Then, Finally, step_while, ScenarioID);
+                    	        log(debug,"bdd:test_scenario: while running ~p [~p/P on ~p in ~p]", [ScenarioID, Env, OStype, While]),
+                              scenario_steps(T, N, Given, When, Then, Finally, step_while, ScenarioID);
                     	      true -> log(debug,"While skipping ~p [~p/~p not in ~p]", [ScenarioID, Env, OStype, While]), 
                     	        skip
                     	    end;
 		{step_unless, S}  ->  Unless = [binary_to_atom(A, utf8) || A <- re:split(S," ")],
-                          Env = bdd_utils:config(Config, environment, undefined),
+                          Env = bdd_utils:config(environment, undefined),
                           % unless list is included in env list then skip (opposite of unless)
                           UnlessEnv = lists:member(Env, Unless),
                           UnlessOS = lists:member(OStype, Unless),
@@ -359,17 +359,17 @@ scenario_steps(Config, [H | T], N, Given, When, Then, Finally, LastStep, Scenari
                 	            log(debug,"Unless skipping ~p [~p/~p  in ~p]", [ScenarioID, Env, OStype, Unless]), 
                     	        skip;
                     	      true -> log(debug,"bdd:test_scenario: running unless ~p [~p/~p not in ~p]", [ScenarioID, Env, OStype, Unless]),
-                              scenario_steps(Config, T, N, Given, When, Then, Finally, step_unless, ScenarioID)
+                              scenario_steps(T, N, Given, When, Then, Finally, step_unless, ScenarioID)
                     	    end;
-		{step_given, S}   -> scenario_steps(Config, T, N+1, [{step_given, {ScenarioID, N}, S} | Given], When, Then, Finally, step_given, ScenarioID);
-		{step_when, S}    -> scenario_steps(Config, T, N+1, Given, [{step_when, {ScenarioID, N}, S} | When], Then, Finally, step_when, ScenarioID);
-		{step_then, S}    -> scenario_steps(Config, T, N+1, Given, When, [{step_then, {ScenarioID, N}, S} | Then], Finally, step_then, ScenarioID);
-		{step_finally, S} -> scenario_steps(Config, T, N+1, Given, When, Then, [{step_finally, {ScenarioID, N}, S} | Finally], step_finally, ScenarioID);
-		{empty, _}        -> scenario_steps(Config, T, N,   Given, When, Then, Finally, empty, ScenarioID);
+		{step_given, S}   -> scenario_steps(T, N+1, [{step_given, {ScenarioID, N}, S} | Given], When, Then, Finally, step_given, ScenarioID);
+		{step_when, S}    -> scenario_steps(T, N+1, Given, [{step_when, {ScenarioID, N}, S} | When], Then, Finally, step_when, ScenarioID);
+		{step_then, S}    -> scenario_steps(T, N+1, Given, When, [{step_then, {ScenarioID, N}, S} | Then], Finally, step_then, ScenarioID);
+		{step_finally, S} -> scenario_steps(T, N+1, Given, When, Then, [{step_finally, {ScenarioID, N}, S} | Finally], step_finally, ScenarioID);
+		{empty, _}        -> scenario_steps(T, N,   Given, When, Then, Finally, empty, ScenarioID);
 		{unknown, Myst}   -> log(warn, "bdd: No prefix match for ~p in Scenario #~p", [Myst, ScenarioID]), 
-		                     scenario_steps(Config, T, N+1, Given, When, Then, Finally, unknown, ScenarioID)		
+		                     scenario_steps(T, N+1, Given, When, Then, Finally, unknown, ScenarioID)		
 	end;
-scenario_steps(_Config, [], N, Given, When, Then, Finally, _, _ScenarioID ) ->
+scenario_steps([], N, Given, When, Then, Finally, _, _ScenarioID ) ->
 	% returns number of steps and breaks list into types, may be expanded for more times in the future!
 	{N, Given, When, Then, Finally}.
 	
@@ -377,7 +377,7 @@ scenario_steps(_Config, [], N, Given, When, Then, Finally, _, _ScenarioID ) ->
 % this relies on the features implmenting the inspect meth
 inspect(Config) ->
   % only inspect if inspect flag is not false
-  case bdd_utils:config(Config, inspect, true) of
+  case bdd_utils:config(inspect, true) of
     false -> [noop];
     _ ->  Features = bdd_utils:features(Config),
           inspect(Config, [], [list_to_atom(bdd_utils:feature_name(Config,F)) || F <- Features])

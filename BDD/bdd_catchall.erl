@@ -18,13 +18,13 @@
 
 step(_Global, {step_given, {Scenario, _N}, ["I mark the logs with",Mark]}) -> 
   URL = bdd_utils:config(marker_url, undefined),
-  S = bdd_utils:integer_to_list(Scenario),
+  S = integer_to_list(Scenario),
   SafePre = string:tokens(Mark," "),
   Safe = string:join(SafePre,"_"),
   case URL of
     undefined -> bdd_utils:log(info, bdd_catchall, stop, "could not mark because marker_url was not set",[]);
-    _         -> eurl:get(eurl:path(URL, S)),
-                 eurl:get(eurl:path(URL, Safe)),
+    _         -> eurl:get_http(eurl:path(URL, S)),
+                 eurl:get_http(eurl:path(URL, Safe)),
                  bdd_utils:log(debug, bdd_catchall, step, "Log marked with ~p and ~p",[S, Mark])
   end;
 

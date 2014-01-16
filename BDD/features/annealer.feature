@@ -12,12 +12,6 @@ Feature: Crowbar Engine
       And I should see {bdd:crowbar.i18n.common.state.blocked}
       And there should be no translation errors
 
-  Scenario: Deployment Run Step
-    Skip WIP ZEHICLE
-    Given the "system" deployment has a committed snapshot
-    When I run the "system" deployment {int:1} time
-    Then I should get an http ok response
-
   Scenario: Add node into Test Deployment
     Given there is a {o:deployment} "bdd_add_node"
       And there is a {o:node} "bdd-add-me.cr0wbar.com" marked alive
