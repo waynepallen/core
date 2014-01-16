@@ -50,8 +50,14 @@ BDD selects the `default.config` file automatically.  You can choose which confi
   <tr>
     <td>results_out</td>
     <td>no</td>
-    <td>../tmp/bdd_results.out</td>
+    <td>/tmp/bdd_results.out</td>
     <td>stores the detailed results of the tests.  Used by bdd:failed().</td>
+  </tr>
+  <tr>
+    <td>coverage_out</td>
+    <td>no</td>
+    <td>/tmp/bdd.html</td>
+    <td>HTML version of test results</td>
   </tr>
   <tr>
     <td>marker_url</td>

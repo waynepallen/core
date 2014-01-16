@@ -34,9 +34,10 @@ class BarclampNetwork::Server < Role
 
   def update_interface(pattern, bus_order)
     # use the first one of these -> it should be the system deployment
+    bus_order = bus_order.split("|") unless bus_order.is_a? Array
     dr = deployment_roles(true).first
     map = dr.data["crowbar"]["interface_map"]
-    new_map = map | [{ "pattern"=>pattern, "bus_order"=>bus_order.split("|") }]
+    new_map = map | [{ "pattern"=>pattern, "bus_order"=>bus_order }]
     data = {:crowbar => {:interface_map => new_map }}
     DeploymentRole.transaction do 
       dr.data_update(data)

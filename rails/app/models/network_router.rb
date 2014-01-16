@@ -40,7 +40,7 @@ class NetworkRouter < ActiveRecord::Base
 
   def router_is_sane
     # A router is sane when its address is in a subnet covered by one of its ranges
-# ZEHICLE TODO this is broken, but needs to be fixed
+# TODO this is broken, but needs to be fixed
 #    unless !address.nil? and network.ranges.any?{|r|r.first.subnet === address}
 #      errors.add("Router #{address.to_s} is not any range for #{network.name}")
 #    end
