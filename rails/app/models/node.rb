@@ -197,18 +197,16 @@ class Node < ActiveRecord::Base
 
   def hint=(arg)
     arg = JSON.parse(arg) unless arg.is_a? Hash
-    data = hint.deep_merge arg
+    data = hint.clone.deep_merge arg
     write_attribute("hint",JSON.generate(data))
     data
   end
 
   def hint_update(val)
-    Node.transaction do
-      h = hint
-      h.deep_merge!(val)
-      write_attribute("hint",JSON.generate(h))
-      h
-    end
+    h = hint.clone
+    h.deep_merge!(val)
+    write_attribute("hint",JSON.generate(h))
+    h
   end
 
   def discovery
@@ -219,14 +217,14 @@ class Node < ActiveRecord::Base
 
   def discovery=(arg)
     arg = JSON.parse(arg) unless arg.is_a? Hash
-    data = discovery.merge arg
+    data = discovery.clone.merge arg
     write_attribute("discovery",JSON.generate(data))
     data
   end
 
   def discovery_update(val)
     Node.transaction do
-      d = discovery
+      d = discovery.clone
       d.deep_merge!(val)
       write_attribute("discovery",JSON.generate(d))
     end

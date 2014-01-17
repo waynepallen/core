@@ -77,9 +77,12 @@ class NodesController < ApplicationController
     hint = JSON.parse(params[:hint] || "{}")
     hint["network-admin"] = {"v4addr"=>params["ip"]} if params.has_key? :ip
     hint["provisioner-repos"] = {"admin_mac"=>params["mac"]} if params.has_key? :mac
-    params[:hint] = JSON.generate(hint)
 
     n = Node.create! params
+    if hint != {}
+      n.hint = hint
+      n.save!
+    end
     render api_show :node, Node, n.id.to_s, nil, n
   end
   

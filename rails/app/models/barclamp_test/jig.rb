@@ -33,7 +33,8 @@ class BarclampTest::Jig < Jig
         Rails.logger.info("TestJig Running node-role: #{nr.to_s}")    
         name = data["marker"] || nr.name
         delay = data["delay"].to_i || 0
-        %x[touch /tmp/test-jig-node-role-test-#{name}.txt]
+        file = File.join "/tmp", "test-jig-noderole-#{name}.txt"
+        %x[touch #{file}]
         o = "TEST JIG >> Working #{nr.node.name} #{name} & pausing for #{delay}"
         puts o
         Rails.logger.info o
