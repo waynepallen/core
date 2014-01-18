@@ -1,18 +1,22 @@
 #!/bin/bash
 
-cd rails 
-
-bundle install --verbose
-rake db:migrate
+cd rails
+bundle --path vendor/cache --standalone --binstubs
+bundle exec rake db:drop \
+    db:create \
+    railties:install:migrations \
+    db:migrate
+bundle exec script/rails generate delayed_job:active_record
+bundle exec rake db:migrate
 
 # Start crowbar services 
 echo "starting the Annealer w/ 2 workers"
-script/delayed_job --queue=NodeRoleRunner -n 2 start
+bundle exec script/delayed_job --queue=NodeRoleRunner -n 2 start
 ps axe | grep delayed_job
 
 echo "starting the API/UI on port 3000"
-rails s Puma development
+bundle exec script/rails s Puma development
 
 #cleanup
-script/delayed_job stop
+bundle exec script/delayed_job stop
 echo "done"

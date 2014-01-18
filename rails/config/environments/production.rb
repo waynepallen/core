@@ -31,13 +31,9 @@ Crowbar::Application.configure do
   config.action_controller.allow_forgery_protection    = true
 
   # See everything in the log (default is :info)
-  # config.log_level = :debug
+  config.log_level = :debug
 
   # Use a different logger for distributed setups
-  require 'syslogger'
-  config.logger = Syslogger.new("crowbar_app", Syslog::LOG_PID, Syslog::LOG_LOCAL0)
-  config.logger.level = Logger::DEBUG
-  config.log_level = :debug
 
   # Use a different cache store in production
   # config.cache_store = :mem_cache_store
