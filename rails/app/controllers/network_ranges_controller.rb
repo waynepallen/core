@@ -16,17 +16,27 @@ class NetworkRangesController < ::ApplicationController
   respond_to :json
 
   def index
-    network =  Network.find_key params[:network_id]
+    @list = if params.has_key? :network_id or params.has_key? :network
+      network =  Network.find_key params[:network_id] || params[:network]
+      network.network_ranges
+    else
+      NetworkRange.all
+    end
     respond_to do |format|
-      format.json { render api_index :range, network.network_ranges }
+      format.html { }
+      format.json { render api_index :network_range, @list }
     end
   end
 
   def show
     network =  Network.find_key params[:network_id]
-    range = network.network_ranges.find_key(params[:id]) rescue nil
+    @range = network.network_ranges.find_key(params[:id]) rescue nil
     respond_to do |format|
-      format.json { render api_show :network_range, NetworkRange, nil, nil, range }
+      format.html { 
+                    @list = [@range]
+                    render :action=>:index 
+                  } 
+      format.json { render api_show :network_range, NetworkRange, nil, nil, @range }
     end
   end
 
@@ -45,8 +55,14 @@ class NetworkRangesController < ::ApplicationController
   end
 
   def update
+    params[:network_id] = Network.find_key(params[:network]).id if params.has_key? :network
+    if params.has_key? :id
+      nr = NetworkRange.find_key params[:id]
+    else
+      nr = NetworkRange.where(:name=>params[:name], :network_id=>params[:network_id]).first
+    end
     respond_to do |format|
-      format.json { render api_update :network_range, NetworkRange }
+      format.json { render api_update :network_range, NetworkRange, nil, nr }
     end
   end
 
