@@ -49,6 +49,19 @@ Feature: Scaffolds
       And I should see "Create New"
       And there should be no translation errors    
 
+Scenario: NodeRoles
+    While interactive
+    When I go to the "utils/scaffolds/node_roles?limit=1" page
+    Then I should see heading "Nodes"
+      And I should see "Node"
+      And I should see "Role"
+      And I should see "Snapshot"
+      And I should see "Created At"
+      And I should see "Updated At"
+      And I should see "Search"
+      And I should see "Create New"
+      And there should be no translation errors
+
   Scenario: Runs
     While interactive
     When I go to the "utils/scaffolds/runs?limit=1" page
