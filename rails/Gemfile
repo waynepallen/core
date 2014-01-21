@@ -37,8 +37,6 @@ gem 'jquery-rails'
 gem 'chef', "11.6"
 
 group :development, :test do
-  gem "rails-erd"
-  gem 'simplecov', :platforms => [:ruby_19,:ruby_20]
   gem 'coveralls', :platforms => [:ruby_19,:ruby_20]
   gem "factory_girl", "<3.0"
   gem "factory_girl_rails", "< 3.0"
