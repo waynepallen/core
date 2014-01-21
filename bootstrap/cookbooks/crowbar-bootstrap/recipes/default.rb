@@ -128,7 +128,7 @@ pg_conf_dir = case
               end
 
 service "postgresql" do
-  action :start
+  action [:enable, :start]
 end
 
 # This will configure us to only listen on a local UNIX socket
@@ -146,3 +146,27 @@ end
   gem_package g
 end
 
+user "crowbar" do
+  home "/home/crowbar"
+  password '$6$afAL.34B$T2WR6zycEe2q3DktVtbH2orOroblhR6uCdo5n3jxLsm47PBm9lwygTbv3AjcmGDnvlh0y83u2yprET8g9/mve.'
+  shell "/bin/bash"
+  supports :manage_home => true
+end
+
+directory "/var/run/crowbar/gems" do
+  owner "crowbar"
+  action :create
+  recursive true
+end
+
+directory "/var/run/crowbar/bin" do
+  owner "crowbar"
+  action :create
+  recursive true
+end
+
+bash "install required gems" do
+  user "crowbar"
+  code "bundle install --path /var/run/crowbar/gems --standalone --binstubs /var/run/crowbar/bin"
+  cwd "/opt/opencrowbar/core/rails"
+end
