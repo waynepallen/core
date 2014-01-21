@@ -17,15 +17,10 @@ Crowbar documentation is distributed into multiple places under the /doc directo
 
 ## Short Term notes for OpenCrowbar Development Environment
 
-1. =dev_init.sh= steps (do once)
-  1. bundle install --verbose
-  1. script/rails generate delayed_job:active_record
-  1. script/rails generate rails_settings:migration
-1. =dev_mode.sh= steps (do each time you start Crowbar)
-  1. rake db:create db:migrate
-  1. script/delayed_job --queue=NodeRoleRunner -n 2 start
-  1. rails s Puma development
-  1. use Crowbar!
-     1. http://localhost:3000
-     1. run the BDD test environment (see /doc/devguide/testing/bdd)
-  1. script/delayed_job stop
+1. Install Docker=dev_init.sh= steps (do once)
+2. To run in development mode:
+  1. ./in_docker ubuntu ./development.sh
+3. To run in production mode:
+  1. ./in_docker ubuntu ./production.sh
+
+Once Crowbar is bootstrapped (or if anything goes wrong), you will get a shell running inside the container.  Exiting the shell will kill Docker.
