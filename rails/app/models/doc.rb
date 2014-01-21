@@ -59,7 +59,8 @@ class Doc < ActiveRecord::Base
   # Generate individual index entries for the markdown format
   # docs index
   def self.make_index_entries(index, doc_entry)
-    index << "\n#{"  "*doc_entry.level}1. [#{doc_entry.description}](#{doc_entry.name})"
+    index << "\n#{"  "*doc_entry.level}1. \
+      [#{doc_entry.description}](#{File.join('.', doc_entry.name)})"
     if doc_entry.level < 3
       doc_entry.children.sort.each do |c| 
         make_index_entries index, c
