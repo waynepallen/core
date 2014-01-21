@@ -64,9 +64,9 @@ Crowbar uses a versioned URL pattern.  Version in the URL allows the barclamp to
 
 * UI URLs: _these are less documented, unsupported for external use, and do not include a version number_.  Do not use these for API calls!
 
-* Base Form: `[barclamp | api]/[bc_version]/[resources]/[id]`
+* Base Form: `[workload | api]/[version]/[resources]/[id]`
   * version - version of Crowbar framework being used (v2 for this guide)
-  * barclamp - barclamp that owns the requested activity.  Framework uses 'api'
+  * workload - workload (aka barclamp) that owns the requested activity.  Framework uses 'api'
   * bc_version - the version of the barclamp being used. 
   * key_word - groups the API into different categories
      * reserved words such as status and crowbar
