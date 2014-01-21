@@ -53,7 +53,6 @@ class Doc < ActiveRecord::Base
     Doc.roots.sort.each do |d|
        make_index_entries index, d
     end
-    index << "\n> Generated on #{DateTime.current}"
     index.close
   end
 
