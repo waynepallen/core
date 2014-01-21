@@ -92,11 +92,7 @@ debs:
   required_pkgs:
     - build-essential
     - curl
-    - efibootmgr
-    - gcc
-    - ipmitool
     - kwalify
-    - libcurl4-gnutls-dev
     - libpq-dev
     - libxml2-dev
     - libxslt1-dev
@@ -106,22 +102,12 @@ debs:
     - ruby1.9.1
     - ruby1.9.1-dev
     - sudo
-    - tcpdump
     - vim
     - zlib1g-dev
   build_pkgs:
-    - ruby1.9.1
-    - ruby1.9.1-dev
     - bison
-    - build-essential
-    - libsqlite3-dev
-    - make
     - flex
-    - dpkg-dev
-    - libxml2-dev
-    - zlib1g-dev
-    - libxslt1-dev
-    - libpq-dev
+    - make
   pkgs:
     # build-essential stuff
     - build-essential
