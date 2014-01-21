@@ -34,7 +34,7 @@ ActiveRecord::Schema.define(:version => 20140112033926) do
     t.integer  "version"
     t.string   "source_path"
     t.string   "commit",      :default => "unknown"
-    t.datetime "build_on",    :default => '2014-01-16 04:40:58'
+    t.datetime "build_on",    :default => '2014-01-21 00:45:36'
     t.datetime "created_at",                                     :null => false
     t.datetime "updated_at",                                     :null => false
   end
@@ -207,12 +207,12 @@ ActiveRecord::Schema.define(:version => 20140112033926) do
   add_index "node_role_pcms", ["parent_id", "child_id"], :name => "index_node_role_pcms_on_parent_id_and_child_id", :unique => true
 
   create_table "node_roles", :force => true do |t|
-    t.integer  "snapshot_id",                     :null => false
-    t.integer  "role_id",                         :null => false
-    t.integer  "node_id",                         :null => false
-    t.integer  "state",       :default => 4,      :null => false
-    t.integer  "cohort",      :default => 0,      :null => false
-    t.integer  "run_count",   :default => 0,      :null => false
+    t.integer  "snapshot_id",                    :null => false
+    t.integer  "role_id",                        :null => false
+    t.integer  "node_id",                        :null => false
+    t.integer  "state",       :default => 4,     :null => false
+    t.integer  "cohort",      :default => 0,     :null => false
+    t.integer  "run_count",   :default => 0,     :null => false
     t.string   "status"
     t.text     "runlog",      :default => "",     :null => false
     t.boolean  "available",   :default => true,   :null => false

@@ -1,9 +1,9 @@
 #!/bin/bash
 ## only do this on real installs.
-[[  -d /tftpboot/ubuntu_dvd/dell/Version || \
-    -d /tftpboot/redhat_dvd/dell/Version || \
-    -d /opt/dell/barclamps/crowbar ]] || \
+[[  -d /opt/opencrowbar/core ]] || \
     { echo "Not an admin node, not creating machine key"; exit 0; }
+
+touch "/tmp/.crowbar_in_bootstrap"
 
 if [[ ! -e /etc/crowbar.install.key ]]; then
     read key rest < <(dd if=/dev/urandom bs=65536 count=1 2>/dev/null |sha512sum - 2>/dev/null)
@@ -11,7 +11,7 @@ if [[ ! -e /etc/crowbar.install.key ]]; then
     machine_user="
 {
   \"username\": \"machine-install\",
-  \"email\": \"root@$(hostname -f)\",
+  \"email\": \"root@localhost.localdomain\",
   \"password\": \"$key\",
   \"password_confirmation\": \"$key\",
   \"remember_me\": false,
@@ -19,9 +19,10 @@ if [[ ! -e /etc/crowbar.install.key ]]; then
   \"digest\": true
 }"
 
-    if ! /opt/dell/bin/crowbar users create "$machine_user"; then
+    if ! /opt/opencrowbar/core/bin/crowbar -U crowbar -P crowbar users create "$machine_user"; then
         echo "Could not create machine-install user!"
         exit 1
     fi
     echo "machine-install:$key" >/etc/crowbar.install.key
+    rm "/tmp/.crowbar_in_bootstrap"
 fi

@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#source "file:///home/crowbar/cb2/gemsite"
-# source "file:///tmp/crowbar-dev-test/gemsite"
-# source "file:///tftpboot/gemsite"
 source 'https://rubygems.org'
 
 gem 'rails', '~> 3.2.13'

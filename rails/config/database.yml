@@ -1,7 +1,7 @@
 development:
   adapter: postgresql
   database: opencrowbar_dev
-  port: 5439
+  port: 5432
   username: crowbar
   pool: 10
   timeout: 5000
@@ -13,7 +13,7 @@ development:
 test: &test
   adapter: postgresql
   database: opencrowbar_test
-  port: 5439
+  port: 5432
   username: crowbar
   pool: 10
   timeout: 5000
@@ -22,7 +22,7 @@ test: &test
 production:
   adapter: postgresql
   database: opencrowbar
-  port: 5439
+  port: 5432
   username: crowbar
   pool: 10
   timeout: 5000

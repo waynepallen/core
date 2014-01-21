@@ -120,6 +120,9 @@ class REST
       end if $debug
 
       if res['www-authenticate']
+        debug "(a) uri: #{uri}"
+        debug "(a) www-authenticate: #{res['www-authenticate']}"
+        debug "(a) req-method: #{req::METHOD}"
         auth=Net::HTTP::DigestAuth.new.auth_header(uri,
                                                    res['www-authenticate'],
                                                    req::METHOD)
