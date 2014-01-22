@@ -15,7 +15,7 @@ tasks=("rake db:create"
     "script/rails generate rails_settings:migration"
     "rake db:migrate")
 for task in "${tasks[@]}"; do
-    su -s /bin/bash -c "bundle exec $task" crowbar && continue
+    su -l -s /bin/bash -c "cd /opt/opencrowbar/core/rails; RAILS_ENV=$RAILS_ENV bundle exec $task" crowbar && continue
     echo "Task $task failed." >&2
     exit 1
 done
