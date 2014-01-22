@@ -128,6 +128,50 @@ bash "Install required files" do
   only_if do ::File.exists?("/tmp/install_pkgs") end
 end
 
+directory "/var/run/sshd" do
+  mode 0755
+  owner "root"
+  recursive true
+end
+
+# We need Special Hackery to run sshd in docker.
+if ENV["container"] == "lxc"
+  service "ssh" do
+    start_command "/usr/sbin/sshd"
+    stop_command "pkill -9 sshd"
+    status_command "pgrep sshd"
+    restart_command "pkill -9 sshd && /usr/sbin/sshd"
+    action [:start]
+  end
+else
+  service "ssh" do
+    action [:enable, :start]
+  end
+end
+
+directory "/root/.ssh" do
+  action :create
+  recursive true
+  owner "root"
+  mode 0644
+end
+
+bash "Regenerate SSH keys" do
+  code "ssh-keygen -q -b 2048 -P '' -f /root/.ssh/id_rsa && cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys"
+  not_if "test -f /root/.ssh/id_rsa"
+end
+
+template "/etc/ssh/sshd_config" do
+  source "sshd_config.erb"
+  action :create
+  notifies :restart, 'service[ssh]', :immediately
+end
+
+template "/etc/sudoers.d/crowbar" do
+  source "crowbar_sudoer.erb"
+  mode 0440
+end
+
 pg_conf_dir = "/var/lib/pgsql/data"
 case node["platform"]
 when "ubuntu","debian"
