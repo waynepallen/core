@@ -36,8 +36,7 @@ if [[ -f /etc/crowbar.install.key ]]; then
 fi
 
 as_crowbar() (
-    cd /opt/opencrowbar/core/rails
-    sudo -H -E -u crowbar -- "$@"
+    su -l -c "cd /opt/opencrowbar/core/rails; RAILS_ENV=$RAILS_ENV $*" crowbar
 )
 
 start(){
