@@ -28,7 +28,7 @@ class Node < ActiveRecord::Base
   # Make sure we have names that are legal
   # requires at least three domain elements "foo.bar.com", cause the admin node shouldn't
   # be a top level domain ;p
-  FQDN_RE = /(?=^.{1,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.){2,}(?:[a-zA-Z]{2,})$)/
+  FQDN_RE = /^([a-zA-Z0-9_\-]{1,63}\.){2,}(?:[a-zA-Z]{2,})$/
   # for to_api_hash
   API_ATTRIBUTES = ["id", "name", "description", "order", "admin", "available", "alive",
                     "allocated", "created_at", "updated_at"]
@@ -43,7 +43,7 @@ class Node < ActiveRecord::Base
 
   # TODO: 'alias' will move to DNS BARCLAMP someday, but will prob hang around here a while
   validates_uniqueness_of :alias, :case_sensitive => false, :message => I18n.t("db.notunique", :default=>"Name item must be unique")
-  validates_format_of :alias, :with=>/^([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$/, :message => I18n.t("db.fqdn", :default=>"Name must be a fully qualified domain name.")
+  validates_format_of :alias, :with=>/^[A-Za-z0-9\-]*[A-Za-z0-9]$/, :message => I18n.t("db.fqdn", :default=>"Alias is not valid.")
   validates_length_of :alias, :maximum => 100
 
   has_and_belongs_to_many :groups, :join_table => "node_groups", :foreign_key => "node_id"
@@ -94,6 +94,10 @@ class Node < ActiveRecord::Base
   def status
     s = []
     node_roles.each { |nr| s[nr.id] = nr.status if nr.error?  }
+  end
+
+  def shortname
+    self.name.split('.').first
   end
 
   def self.name_hash
@@ -231,7 +235,7 @@ class Node < ActiveRecord::Base
   end
 
   def reboot
-    BarclampCrowbar::Jig.ssh("root@#{self.name} reboot")
+    BarclampCrowbar::Jig.ssh("root@#{self.shortname} reboot")
   end
   
   def debug

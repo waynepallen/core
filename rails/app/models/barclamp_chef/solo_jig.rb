@@ -31,7 +31,7 @@ class BarclampChef::SoloJig < Jig
   end
 
   def stage_run(nr)
-    chef_path = "/opt/dell/barclamps/#{nr.role.barclamp.name}/chef-solo"
+    chef_path = File.join(nr.barclamp.source_path, 'chef-solo')
     unless File.directory?(chef_path)
       raise("No Chef data at #{chef_path}")
     end
@@ -50,7 +50,7 @@ class BarclampChef::SoloJig < Jig
 
   def run (nr,data)
     local_tmpdir = %x{mktemp -d /tmp/local-chefsolo-XXXXXX}.strip
-    chef_path = "/opt/dell/barclamps/#{nr.role.barclamp.name}/chef-solo"
+    chef_path = File.join(nr.barclamp.source_path, 'chef-solo')
     node_json = File.join(local_tmpdir,"node.json")
     File.open(node_json,"w") do |f|
       JSON.dump(data,f)

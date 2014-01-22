@@ -55,13 +55,13 @@ class BarclampCrowbar::Jig < Jig
   end
 
   def run(nr,data)
-    login = "root@#{nr.node.name}"
+    login = "root@#{nr.node.shortname}"
     local_scripts = File.join nr.barclamp.source_path, 'script', 'roles', nr.role.name
     raise "No local scripts @ #{local_scripts}" unless File.exists?(local_scripts)
     remote_tmpdir,ok = BarclampCrowbar::Jig.ssh("'#{login}' -- mktemp -d /tmp/scriptjig-XXXXXX")
     remote_tmpdir.strip!
     if remote_tmpdir.empty? || !ok
-      raise "Did not create remote_tmpdir for some reason!"
+      raise "Did not create remote_tmpdir using 'ssh #{login} -- mktemp -d /tmp/scriptjig-XXXXXX' for some reason!"
     else
       Rails.logger.info("Using remote temp dir: #{remote_tmpdir}")
     end
@@ -75,7 +75,7 @@ class BarclampCrowbar::Jig < Jig
       end
     end
     FileUtils.cp_r(local_scripts,local_tmpdir)
-    FileUtils.cp('/opt/dell/barclamps/crowbar/script/runner',local_tmpdir)
+    FileUtils.cp('/opt/opencrowbar/core/script/runner',local_tmpdir)
     Rails.logger.info("Copying staged scriptjig information to #{nr.node.name}")
     nr.runlog,ok = BarclampCrowbar::Jig.scp("-r '#{local_tmpdir}/.' '#{login}:#{remote_tmpdir}'")
     unless ok
