@@ -112,16 +112,6 @@ crowbar nodes update "$FQDN" '{"alive": true}'
 #    -X PUT "http://localhost:3000/api/v2/nodes/$FQDN" \
 #    -d 'alive=true'
 # Converge the admin node.
-tries=3
-converged=false
-while ((tries > 0)); do
-    echo "Converging all noderoles on $FQDN ($tries tries left):"
-    if /opt/dell/bin/crowbar converge; then
-        converged=true
-        break
-    fi
-    tries=$((tries - 1))
-done
-[[ $converged = true ]] && exit 0
-echo "COuld not converge all noderoles!"
+crowbar converge && exit 0
+echo "Could not converge all noderoles!"
 exit 1
