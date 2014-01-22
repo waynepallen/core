@@ -24,7 +24,7 @@ class CreateNodeRoles < ActiveRecord::Migration
       t.string      :status,            :null=>true   # expected for error, blocked, transistioning
       t.text        :runlog,            :null=>false, :default => ""
       t.boolean     :available,         :null=>false, :default => true
-      t.integer     :order,             :default=>Random.rand(1000000)
+      t.integer     :order,             :default => 10000
       t.timestamps
     end
     #natural key
