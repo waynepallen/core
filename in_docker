@@ -7,8 +7,7 @@
 if [[ ! $container = lxc ]]; then
     declare -A image_map
     #image_map["ubuntu"]="ubuntu:precise"
-    #image_map["ubuntu"]="opencrowbar/ubuntu:12.04"
-    image_map["ubuntu"]="opencrowbar/ubuntu:12.04-2"
+    image_map["ubuntu"]="opencrowbar/ubuntu:12.04-3"
     #image_map["centos"]="centos:6.4"
     image_map["centos"]="opencrowbar/centos:6.5"
     image_map["opensuse"]="mmckeen/opensuse-13-1:latest"
