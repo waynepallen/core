@@ -8,12 +8,13 @@
 /BDD/dev.config
 /BDD/.*.erl.swp
 
-/rails/Gemfile.lock
 /rails/tmp/
 /rails/log/
 /rails/coverage/
-/rails/script/delayed_job
-/rails/db/migrate/*_create_delayed_jobs.rb
-/rails/db/migrate/*_rails_settings_migration.rb
+/rails/db/schema.rb
+/rails/Gemfile.lock
+/rails/.bundle/
+/rails/bin/
+/rails/vendor/
+/rails/public/assets/
 
-/core/rails/coverage
