@@ -183,7 +183,7 @@ class Command
 
     # Validate each part of our commandline to make sure it is OK.
     cmdline.each do |p|
-      if p[0] == p[0].upcase
+      if p[0...1] == p[0...1].upcase
         # Val and Json are special.
         # Val indicates that no processing should be done to this parameter
         # Json indicates that this parameter should be valid json.
@@ -220,7 +220,7 @@ class Command
     # command tree, this will be split back apart.
     while !cmdline.empty? do
       c = cmdline.shift
-      if c[0] == c[0].upcase
+      if c[0...1] == c[0...1].upcase
         @cmd[-1] = "#{@cmd[-1]}_#{c}"
       else
         @cmd << c
