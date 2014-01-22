@@ -1,7 +1,7 @@
 if RUBY_VERSION != '1.8.7'
   require 'simplecov'
   require 'coveralls'
-
+  SimpleCov.root("/var/run/crowbar/coverage")
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
     SimpleCov::Formatter::HTMLFormatter,
     Coveralls::SimpleCov::Formatter
