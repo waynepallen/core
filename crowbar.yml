@@ -190,11 +190,12 @@ rpms:
       - yum-plugin-downloadonly
       - createrepo
       - libxml2-devel
-      - mysql-devel
       - zlib-devel
-      - rubygems
       - tar
     required_pkgs:
+      # ruby stuff
+      - ruby
+      - ruby-devel
       - rubygems
     pkgs:
       # openldap stuff
@@ -235,11 +236,12 @@ rpms:
       - yum-plugin-priorities
       - createrepo
       - libxml2-devel
-      - mysql-devel
       - zlib-devel
-      - rubygems
       - tar
     required_pkgs:
+      # ruby stuff
+      - ruby
+      - ruby-devel
       - rubygems
     pkgs:
       # openldap stuff
@@ -270,6 +272,9 @@ rpms:
     repos:
       - rpm http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-redhat93-9.3-1.noarch.rpm
     required_pkgs:
+      # ruby stuff
+      - ruby
+      - ruby-devel
       - sudo
     build_pkgs:
       - libcurl-devel
@@ -359,8 +364,19 @@ rpms:
     - efibootmgr
     - curl
     - vim
+    # postgresql 93 stuff
+    - postgresql93
+    - postgresql93-devel
+    - postgresql93-contrib
+    - postgresql93-server
+    - libxml2-devel
+    - libpq5
+    - libpqxx
+    - libpqxx-devel
+    - libossp-uuid16
+    - libecpg6
+    - sudo
   build_pkgs:
-    - ruby-devel
     - make
     - gcc
     - glibc-devel
@@ -383,22 +399,10 @@ rpms:
     # minicom stuff
     - minicom
     # rabbitmq stuff
-    # ruby stuff
-    - ruby
-    - ruby-devel
     # sudo stuff
     - sudo
     - screen
     - graphviz
-    # postgresql 93 stuff
-    - postgresql93
-    - postgresql93-devel
-    - postgresql93-contrib
-    - postgresql93-server
-    - libxml2-devel
-    - libpq5
-    - libossp-uuid16
-    - libecpg6
     # openssh stuff
     - openssh
     # network
