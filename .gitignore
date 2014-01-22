@@ -15,3 +15,5 @@
 /rails/script/delayed_job
 /rails/db/migrate/*_create_delayed_jobs.rb
 /rails/db/migrate/*_rails_settings_migration.rb
+
+/core/rails/coverage
