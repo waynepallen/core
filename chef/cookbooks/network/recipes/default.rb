@@ -127,6 +127,9 @@ end
 #  * The final number designates the zero-based offset into the set of physical
 #    interfaces that have the requested speed we want.
 def resolve_conduit(net)
+  if node["crowbar_ohai"]["in_docker"]
+    return ["eth0"]
+  end
   known_ifs = node["crowbar"]["sorted_ifs"]
   speeds = %w{10m 100m 1g 10g}
   conduit = node["crowbar"]["network"][net]["conduit"]
@@ -373,6 +376,8 @@ Nic.nics.each do |nic|
   Chef::Log.info("#{nic.name}: required addresses: #{iface["addresses"].map{|a|a.to_s}.sort.inspect}") unless iface["addresses"].empty?
   # Ditch old addresses, add new ones.
   old_iface["addresses"].reject{|i|iface["addresses"].member?(i)}.each do |addr|
+    # Don't kill Docker's IP address, we will need it.
+    next if node["crowbar_ohai"]["in_docker"] && IP.coerce("172.17.0.0/16").include?(addr)
     Chef::Log.info("#{nic.name}: Removing #{addr.to_s}")
     nic.remove_address addr
   end if old_iface
@@ -381,15 +386,17 @@ Nic.nics.each do |nic|
     nic.add_address addr
   end
   # Make sure we are using the proper default route.
-  if ::Kernel.system("ip route show dev #{nic.name} |grep -q default") &&
-      (default_route[:nic] != nic.name)
-    Chef::Log.info("Removing default route from #{nic.name}")
-    ::Kernel.system("ip route del default dev #{nic.name}")
-  elsif default_route[:nic] == nic.name
-    ifs[nic.name]["gateway"] = default_route[:gateway]
-    unless ::Kernel.system("ip route show dev #{nic.name} |grep -q default")
-      Chef::Log.info("Adding default route via #{default_route[:gateway]} to #{nic.name}")
-      ::Kernel.system("ip route add default via #{default_route[:gateway]} dev #{nic.name}")
+  unless default_route.empty?
+    if ::Kernel.system("ip route show dev #{nic.name} |grep -q default") &&
+        (default_route[:nic] != nic.name)
+      Chef::Log.info("Removing default route from #{nic.name}")
+      ::Kernel.system("ip route del default dev #{nic.name}")
+    elsif default_route[:nic] == nic.name
+      ifs[nic.name]["gateway"] = default_route[:gateway]
+      unless ::Kernel.system("ip route show dev #{nic.name} |grep -q default")
+        Chef::Log.info("Adding default route via #{default_route[:gateway]} to #{nic.name}")
+        ::Kernel.system("ip route add default via #{default_route[:gateway]} dev #{nic.name}")
+      end
     end
   end
 end
