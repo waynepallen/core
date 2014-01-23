@@ -30,6 +30,7 @@ if [[ ! $container = lxc ]]; then
     docker_args=(-t -i -w /opt/opencrowbar/core -v "$PWD:/opt/opencrowbar/core")
     docker_args+=(-e "OUTER_UID=$(id -u)")
     docker_args+=(-e "OUTER_GID=$(id -g)")
+    [[ -f $HOME/.ssh/id_rsa.pub ]] && docker_args+=(-e "SSH_PUBKEY=$(cat "$HOME/.ssh/id_rsa.pub")")
     docker_args+=(-p "3000:3000")
     bridge="docker0"
     bridge_re='-b=([^ ])'
@@ -115,5 +116,8 @@ if grep -q crowbar /etc/group; then
     groupmod -o -g "$OUTER_GID" crowbar
     usermod -g "$OUTER_GID" crowbar
 fi
+mkdir -p /root/.ssh
+printf "%s" "$SSH_PUBKEY" >> /root/.ssh/authorized_keys
+
 [[ $1 ]] && "$@"
 /bin/bash -i
