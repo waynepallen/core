@@ -108,6 +108,7 @@ debs:
     # openssh stuff
     - openssh-client
     - openssh-server
+    - less
   build_pkgs:
     - bison
     - flex
