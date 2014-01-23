@@ -214,7 +214,7 @@ bash "create crowbar user for postgres" do
   not_if "sudo -H -u postgres -- psql postgres -tAc \"SELECT 1 FROM pg_roles WHERE rolname='crowbar'\" |grep -q 1"
 end
 
-["bundler","net-http-digest_auth","json"].each do |g|
+["bundler","net-http-digest_auth","json","cstruct"].each do |g|
   gem_package g
 end
 
