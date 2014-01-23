@@ -47,11 +47,18 @@ repos.uniq!
 pkgs.flatten!
 pkgs.compact!
 pkgs.uniq!
+pkgs.sort!
 
 Chef::Log.debug(repos)
 
 file "/tmp/install_pkgs" do
   action :nothing
+end
+
+template "/tmp/required_pkgs" do
+  source "required_pkgs.erb"
+  variables( :pkgs => pkgs )
+  notifies :create_if_missing, "file[/tmp/install_pkgs]",:immediately
 end
 
 case node["platform"]
