@@ -13,6 +13,14 @@
     %div(class='nav-next')
       = link_to "#{t('.nav_next')} (#{truncate @nav_next.description})", doc_path(@nav_next.id)
 
-= link_to t('.edit_this_page'), @doc.git_url, :class=>"button", :style=>"float:right"
+- if current_user.settings(:docs).sources
+  = link_to t('.edit_this_page'), @doc.git_url, :class=>"button", :style=>"float:right"
 
 %p.topic= @text.html_safe
+
+- if current_user.settings(:ui).debug
+  %hr
+    %h3= t 'debug'
+    %ul
+      %li= "Name: #{@doc.name}"
+      %li= "Parent: #{(@doc.parent_id ? @doc.parent.name : t('not_set'))}"

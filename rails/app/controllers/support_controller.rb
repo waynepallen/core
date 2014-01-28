@@ -109,7 +109,6 @@ class SupportController < ApplicationController
     @roles << Role.find_key("dns-server")
     @roles << Role.find_key("ntp-server")
     @roles << Role.find_key("network-server")
-    @roles << Role.find_key("chef-server")
     @roles << Role.find_key("network-#{Network::ADMIN_NET}") || :create_network_admin
   end
 
@@ -133,6 +132,28 @@ class SupportController < ApplicationController
   end
   
   def settings
+  
+    if request.put?
+      case params[:id]
+      when 'refresh'
+        current_user.settings(:ui).refresh = params[:value]
+      when 'fast_refresh'
+        current_user.settings(:ui).fast_refresh = params[:value]
+      when 'edge'
+        current_user.settings(:ui).edge = ( params[:value].eql?('true') ? true : false )
+      when 'test'
+        current_user.settings(:ui).test = ( params[:value].eql?('true')  ? true : false )
+      when 'debug'
+        current_user.settings(:ui).debug = ( params[:value].eql?('true')  ? true : false )
+      when 'expand'
+        current_user.settings(:errors).expand = ( params[:value].eql?('true')  ? true : false )
+      when 'doc_sources'
+        current_user.settings(:docs).sources = ( params[:value].eql?('true')  ? true : false )
+      end
+      current_user.save!
+    end
+  
+
     respond_to do |format|
       format.html { }
     end

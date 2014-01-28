@@ -49,6 +49,7 @@ class DocsController < ApplicationController
     begin
       id = params[:id]
       @doc = Doc.find_key id
+      @doc ||= Doc.find_key "/#{id}"
       if @doc
         @nav_up = @doc.parent
         brothers = Doc.where(:parent_id=>@doc.parent_id).sort

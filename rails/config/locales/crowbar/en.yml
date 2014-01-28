@@ -240,6 +240,7 @@ en:
     index:
       title: "Deployment Roles"
   docs:
+    missing: "%{topic} Topics"
     index:
       title: "Documentation"
       framework_display: "Crowbar Framework"

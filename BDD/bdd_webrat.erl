@@ -1,4 +1,4 @@
-% Copyright 2013 Dell 
+% Copyright 2013-4 Dell 
 % 
 % Licensed under the Apache License, Version 2.0 (the "License"); 
 % you may not use this file except in compliance with the License. 
@@ -116,6 +116,9 @@ step(Result, {step_then, {_Scenario, _N}, ["I should see an input box with",Inpu
   catch
     _ -> false
   end;
+
+step(Result, {step_then, {_Scenario, _N}, ["I should not see heading", Text]}) 
+  -> step(Result, {step_then, _N, ["I should see heading", Text]}) =:= false;
 
 step(Result, {step_then, N, ["I should see a heading", Text]}) -> 
   step(Result, {step_then, N, ["I should see heading", Text]});

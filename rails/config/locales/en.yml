@@ -74,6 +74,7 @@ en:
   automatic_by: "Created Automatically by %{name}"
   automatic_item_by: "%{item}: Created Automatically by %{name}"
   version: "Version %{version}"
+  debug: "Debug Info"
 
   error:
     title: "We're sorry, but something is fuzzy about that request."

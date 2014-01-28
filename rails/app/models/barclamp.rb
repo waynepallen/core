@@ -15,7 +15,7 @@
 
 class Barclamp < ActiveRecord::Base
 
-  attr_accessible :id, :name, :description, :source_path, :barclamp_id, :commit, :build_on
+  attr_accessible :id, :name, :description, :source_path, :source_url, :barclamp_id, :commit, :build_on
   
   #
   # Validate the name should unique
@@ -58,6 +58,8 @@ class Barclamp < ActiveRecord::Base
     # verson tracking
     gitcommit = "unknown" if bc['git'].nil? or bc['git']['commit'].nil?
     gitdate = "unknown" if bc['git'].nil? or bc['git']['date'].nil?
+    version = bc["version"] || '2.0'
+    source_url = bc["source_url"] || "http://github/opencrowbar/unknown"
 
     # load the jig information.
     bc['jigs'].each do |jig|
@@ -89,8 +91,9 @@ class Barclamp < ActiveRecord::Base
       # barclamp data import
       Barclamp.transaction do
         subm.update_attributes( :description => sub_details['description'] || name.humanize,
-                                :version     => bc['version'] || '2.0',
+                                :version     => version,
                                 :source_path => source_path,
+                                :source_url  => source_url,
                                 :build_on    => gitdate,
                                 :barclamp_id => barclamp.id,
                                 :commit      => gitcommit )

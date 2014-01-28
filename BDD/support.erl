@@ -21,8 +21,13 @@
 % Provide Feature scoped strings to DRY the code
 g(Item) ->
   case Item of
+    setting -> 'utils/settings';
     _ -> crowbar:g(Item)
   end.
+
+step(_Global, {step_given, {_Scenario, _N}, ["I set",user,"setting",Key,"to",Value]}) -> 
+  URI = eurl:path([g(setting), Key, Value]),
+  eurl:put_post(URI, "{}", put);
 
 step(_Given, {step_when, {_Scenario, _N}, ["I inspect the",Path,"for",Mark]}) -> 
   Lines = bdd_utils:config(tail_lines, 100),

@@ -36,7 +36,6 @@ Feature: Support UI
     Then I should see a heading {bdd:crowbar.i18n.support.bootstrap.title}
       And I should see a link to "ntp-server"
       And I should see a link to "dns-server"
-      And I should see a link to "chef-server"
       And I should see a link to "network-server"
       And there are no localization errors
 
@@ -45,3 +44,30 @@ Feature: Support UI
     Then I should see a heading {bdd:crowbar.i18n.support.settings.title}
       And there are no localization errors
     
+  Scenario: Settings Change False
+    Given I set {object:user} setting "doc_source" to "false"
+    When I go to the "utils/settings" page
+    Then I should see an input box with "false"
+      And I should see an input box with "doc_sources" 
+
+  Scenario: Settings Change True
+    Given I set {object:user} setting "doc_source" to "true"
+    When I go to the "utils/settings" page
+    Then I should see an input box with "true"
+      And I should see an input box with "doc_sources" 
+
+  Scenario: Settings Change not True
+    Given I set {object:user} setting "doc_source" to "foo"
+    When I go to the "utils/settings" page
+    Then I should see an input box with "false"
+      And I should see an input box with "doc_sources" 
+
+  Scenario: Settings Change Visible Off
+    Given I set {object:user} setting "debug" to "false"
+    When I go to the "docs/devguide.md" page
+    Then I should not see heading {bdd:crowbar.i18n.debug}
+
+  Scenario: Settings Change Visible On
+    Given I set {object:user} setting "debug" to "true"
+    When I go to the "docs/devguide.md" page
+    Then I should see heading {bdd:crowbar.i18n.debug}

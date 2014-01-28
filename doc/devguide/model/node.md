@@ -68,3 +68,5 @@ node, but it will leave the state of the noderoles alone.
 
 A node must be both alive and available for the annealer to perform
 operations on it.
+
+> Defaults: Alive defaults to false and Available default to true.

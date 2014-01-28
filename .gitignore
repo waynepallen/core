@@ -8,9 +8,11 @@
 /BDD/dev.config
 /BDD/.*.erl.swp
 
+/core/rails/coverage/
+
 /rails/tmp/
 /rails/log/
-/rails/coverage/
+/rails/coverage
 /rails/db/schema.rb
 /rails/Gemfile.lock
 /rails/.bundle/
