@@ -32,9 +32,10 @@ ActiveRecord::Schema.define(:version => 20140112033926) do
     t.string   "description"
     t.integer  "barclamp_id"
     t.integer  "version"
+    t.string   "source_url"
     t.string   "source_path"
     t.string   "commit",      :default => "unknown"
-    t.datetime "build_on",    :default => '2014-01-21 00:45:36'
+    t.datetime "build_on",    :default => '2014-01-28 05:18:06'
     t.datetime "created_at",                                     :null => false
     t.datetime "updated_at",                                     :null => false
   end
@@ -214,11 +215,11 @@ ActiveRecord::Schema.define(:version => 20140112033926) do
     t.integer  "cohort",      :default => 0,     :null => false
     t.integer  "run_count",   :default => 0,     :null => false
     t.string   "status"
-    t.text     "runlog",      :default => "",     :null => false
-    t.boolean  "available",   :default => true,   :null => false
-    t.integer  "order",       :default => 479520
-    t.datetime "created_at",                      :null => false
-    t.datetime "updated_at",                      :null => false
+    t.text     "runlog",      :default => "",    :null => false
+    t.boolean  "available",   :default => true,  :null => false
+    t.integer  "order",       :default => 93443
+    t.datetime "created_at",                     :null => false
+    t.datetime "updated_at",                     :null => false
   end
 
   add_index "node_roles", ["role_id", "node_id"], :name => "index_node_roles_on_role_id_and_node_id", :unique => true

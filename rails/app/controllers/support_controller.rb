@@ -109,7 +109,6 @@ class SupportController < ApplicationController
     @roles << Role.find_key("dns-server")
     @roles << Role.find_key("ntp-server")
     @roles << Role.find_key("network-server")
-    @roles << Role.find_key("chef-server")
     @roles << Role.find_key("network-#{Network::ADMIN_NET}") || :create_network_admin
   end
 

@@ -41,3 +41,17 @@ Uesrs can provide shortcuts to the hint data.  The following hints have been def
 * ip - requests a specific network-admin IP 
 * mac - setup up the DHCP resolution for the node using the given MAC address
 * 
+
+#### Examples
+
+Using CURL to create a minimally configured node from the Admin node
+
+  curl --digest -u 'developer:Cr0wbar!' -H "Content-Type:application/json" --url http://127.0.0.1:3000/api/v2/nodes -X POST --data @ns.json
+
+Where the data file is =ns.json= and contains
+
+  {
+    "alive": "true", 
+    "bootenv": "local",  
+    "name": "test.cr0wbar.com"
+  }
