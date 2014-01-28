@@ -17,7 +17,10 @@ Crowbar documentation is distributed into multiple places under the /doc directo
 
 ## Short Term notes for OpenCrowbar Development Environment
 
-1. Install Docker=dev_init.sh= steps (do once)
+1. Prep Environment
+  1. Install Docker (do once)
+  1. Install Postgresql 9.3
+  1. sudo chmod 666 /var/run/docker.sock (to run docker without sudo)
 2. To run in development mode:
   1. ./in_docker ubuntu ./development.sh
 3. To run in production mode:

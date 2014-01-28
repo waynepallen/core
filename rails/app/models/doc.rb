@@ -1,4 +1,4 @@
-# Copyright 2013, Dell
+# Copyright 2014, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -95,6 +95,8 @@ class Doc < ActiveRecord::Base
     files.each do |file_name|
 
       name = file_name.sub(doc_path, '')
+      # don't process readme files
+      next if name.downcase.starts_with? "readme"
 
       # figure out order by inspecting name
       order = name[/\/([0-9]+)_[^\/]*$/,1]
@@ -117,16 +119,29 @@ class Doc < ActiveRecord::Base
       # instances where the corresponding 'parent_name.md' file doesn't exit
       # but a parent directory exists.
       # 
-      parent_name = File.dirname name
-      parent = Doc.find_by_name "#{parent_name}.md"  
+      parent_dir = File.dirname name
+      parent_name = "#{parent_dir}.md" 
+      parent = Doc.where(:name=>parent_name).first
+      if parent.nil?
+        parent_name = File.join parent_dir, "README.md"
+        parent = Doc.where(:name=>parent_name).first
+      end
 
-      if not parent and parent_name != "/"
+      if not parent and parent_name != "/README.md"
         # no parent, create a dummy parent entry
-        grandparent_name = File.dirname File.dirname name
+        grandparent_name = File.dirname parent_dir
         # Rails.logger.debug("grandparent: #{grandparent_name}.md ") 
         grandparent = Doc.find_by_name  "#{grandparent_name}.md" 
-        parent = Doc.create :name=>"#{parent_name}.md", 
-          :description=> "placeholder for missing #{parent_name}".truncate(120),
+        # use description from README.md or use directory as fallback
+        description = if File.exists? File.join(doc_path, parent_name)
+          at = File.open(File.join(doc_path, parent_name), 'r').readline
+          # we require titles to star w/ # - anything else is considered extra content
+          at.strip[/^#+(.*?)#*$/,1].strip if at.starts_with? "#"
+        else
+          I18n.t('docs.missing', :topic=>name.gsub("/"," ").titleize)
+        end
+        parent = Doc.create :name=>parent_name,
+          :description=> description,
           :order=>'009999', :parent_id=>(grandparent ? grandparent.id : nil),
           :barclamp_id =>barclamp.id
       end
@@ -145,9 +160,8 @@ class Doc < ActiveRecord::Base
 
   def git_url
     path = self.name.split '/'
-    path[0] = "https://github.com/opencrowbar/#{barclamp.name}/tree/master/doc"
+    path[0] = "#{self.barclamp.source_url}/tree/master/doc"
     return path.join('/')
   end
-
 
 end
