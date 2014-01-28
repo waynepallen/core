@@ -62,6 +62,11 @@ when "debian","ubuntu"
     notifies :create_if_missing, "file[/tmp/install_pkgs]",:immediately
   end
 when "centos","redhat","suse","opensuse","fedora"
+  # Docker images do not have this, but the postgresql init script insists on it being present.
+  file "/etc/sysconfig/network" do
+    action :create_if_missing
+  end
+
   repos.each do |repo|
     repofile_path = case node["platform"]
                     when "centos","redhat" then "/etc/yum.repos.d"
@@ -75,6 +80,7 @@ when "centos","redhat","suse","opensuse","fedora"
       bash "Install #{rpm_file}" do
         code "rpm -Uvh /tmp/#{rpm_file}"
         action :nothing
+        ignore_failure true
         notifies :create_if_missing, "file[/tmp/install_pkgs]",:immediately
       end
       remote_file "/tmp/#{rpm_file}" do
@@ -121,14 +127,29 @@ bash "Install required files" do
        end
   only_if do ::File.exists?("/tmp/install_pkgs") end
 end
-pg_conf_dir = case
-              when "ubuntu" then "/etc/postgresql/9.3/main"
-              when "opensuse","suse" then "/var/lib/pgsql/data"
-              else raise "Do not know where postgres is located for #{os_token}"
-              end
 
-service "postgresql" do
-  action :start
+pg_conf_dir = "/var/lib/pgsql/data"
+case node["platform"]
+when "ubuntu","debian"
+  pg_conf_dir = "/etc/postgresql/9.3/main"
+  service "postgresql" do
+    action [:enable, :start]
+  end
+when "centos","redhat"
+  pg_conf_dir = "/var/lib/pgsql/9.3/data"
+  bash "Init the postgresql database" do
+    code "service postgresql-9.3 initdb en_US.UTF-8"
+    not_if do File.exists?("#{pg_conf_dir}/pg_hba.conf") end
+  end
+  service "postgresql" do
+    service_name "postgresql-9.3"
+    action [:enable, :start]
+  end
+  # Sigh, we need this so that the pg gem will install correctly
+  bash "Make sure pg_config is in the PATH" do
+    code "ln -sf /usr/pgsql-9.3/bin/pg_config /usr/local/bin/pg_config"
+    not_if "which pg_config"
+  end
 end
 
 # This will configure us to only listen on a local UNIX socket
@@ -142,7 +163,30 @@ bash "create crowbar user for postgres" do
   not_if "sudo -H -u postgres -- psql postgres -tAc \"SELECT 1 FROM pg_roles WHERE rolname='crowbar'\" |grep -q 1"
 end
 
-["bundler","net-http-digest_auth"].each do |g|
+["bundler","net-http-digest_auth","json"].each do |g|
   gem_package g
 end
 
+user "crowbar" do
+  home "/home/crowbar"
+  password '$6$afAL.34B$T2WR6zycEe2q3DktVtbH2orOroblhR6uCdo5n3jxLsm47PBm9lwygTbv3AjcmGDnvlh0y83u2yprET8g9/mve.'
+  shell "/bin/bash"
+  supports :manage_home => true
+end
+
+["/var/run/crowbar",
+ "/var/cache/crowbar",
+ "/var/cache/crowbar/gems",
+ "/var/cache/crowbar/bin",
+ "/var/log/crowbar"
+].each do |d|
+  directory d do
+    owner "crowbar"
+    action :create
+    recursive true
+  end
+end
+
+bash "install required gems" do
+  code "su -l -c 'cd /opt/opencrowbar/core/rails; bundle install --path /var/cache/crowbar/gems --standalone --binstubs /var/cache/crowbar/bin' crowbar"
+end

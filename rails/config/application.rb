@@ -72,7 +72,11 @@ module Crowbar
     # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
     # Run "rake -D time" for a list of tasks for finding time zone names.
     config.time_zone = 'UTC'
-  
+    config.paths['log'] = "/var/log/crowbar/#{Rails.env}.log"
+
+    config.cache_store                   = [ :file_store, "/var/cache/crowbar/rails-cache/" ]
+    config.assets.cache_store            = [ :file_store, "/var/cache/crowbar/rails-cache/assets/#{Rails.env}/" ]
+
     # The default locale is :en and all translations from config/locales/*.rb,yml are auto loaded.
     config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '*.{rb,yml}').to_s]
     config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}').to_s]

@@ -6,13 +6,6 @@
 
 set -x
 
-if ! grep -q '^crowbar:' /etc/passwd; then
-    useradd -m -d /home/crowbar -U \
-        -p '$6$afAL.34B$T2WR6zycEe2q3DktVtbH2orOroblhR6uCdo5n3jxLsm47PBm9lwygTbv3AjcmGDnvlh0y83u2yprET8g9/mve.' \
-        -s /bin/bash \
-        crowbar
-fi
-
 cd /opt/opencrowbar/core/rails
 tasks=("rake db:create"
     "rake assets:precompile"
@@ -22,7 +15,7 @@ tasks=("rake db:create"
     "script/rails generate rails_settings:migration"
     "rake db:migrate")
 for task in "${tasks[@]}"; do
-    su -s /bin/bash -c "bundle exec $task" crowbar && continue
+    su -l -s /bin/bash -c "cd /opt/opencrowbar/core/rails; RAILS_ENV=$RAILS_ENV bundle exec $task" crowbar && continue
     echo "Task $task failed." >&2
     exit 1
 done
@@ -38,10 +31,5 @@ if [[ $OS != suse ]]; then
 else
     chkconfig crowbar on
 fi
-
-for d in /var/run/crowbar; do
-    mkdir -p "$d"
-    chown -R crowbar:crowbar "$d"
-done
 
 /etc/init.d/crowbar start

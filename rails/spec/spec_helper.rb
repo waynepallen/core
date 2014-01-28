@@ -2,6 +2,7 @@
 # application code loads, so keep this block at the top.
 if RUBY_VERSION != '1.8.7'
   require 'simplecov'
+  SimpleCov.root("/var/run/crowbar/coverage")
 end
 
 # This file is copied to spec/ when you run 'rails generate rspec:install'
