@@ -1,10 +1,10 @@
 %h1= t '.title'
 
 %dl
-  = dl_item t('.refresh'), "#{current_user.settings(:ui).refresh} #{t '.millis'}"
-  = dl_item t('.fast_refresh'), "#{current_user.settings(:ui).fast_refresh} #{t '.millis'}"
-  = dl_item t('.edge'), current_user.settings(:ui).edge
-  = dl_item t('.test'), current_user.settings(:ui).test
-  = dl_item t('.debug'), current_user.settings(:ui).debug
-  = dl_item t('.expand'), current_user.settings(:errors).expand
-  = dl_item t('.doc_sources'), current_user.settings(:docs).sources
+  = render :partial => 'settings', :locals=>{ :name=>'refresh', :value=>current_user.settings(:ui).refresh }
+  = render :partial => 'settings', :locals=>{ :name=>'fast_refresh', :value=>current_user.settings(:ui).fast_refresh }
+  = render :partial => 'settings', :locals=>{ :name=>'edge', :value=>current_user.settings(:ui).edge }
+  = render :partial => 'settings', :locals=>{ :name=>'test', :value=> current_user.settings(:ui).test }
+  = render :partial => 'settings', :locals=>{ :name=>'debug', :value=>current_user.settings(:ui).debug }
+  = render :partial => 'settings', :locals=>{ :name=>'expand', :value=>current_user.settings(:errors).expand }
+  = render :partial => 'settings', :locals=>{ :name=>'doc_sources', :value=>current_user.settings(:docs).sources }

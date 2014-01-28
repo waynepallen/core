@@ -78,7 +78,7 @@ Crowbar::Application.routes.draw do
     get 'restart/:id'   => 'support#restart', :as => :restart
     get 'digest'        => "support#digest"
     get 'fail'          => "support#fail"
-    get 'settings'      => "support#settings", :as => :utils_settings
+    match 'settings(/:id/:value)' => "support#settings", :as => :utils_settings
     match "bootstrap"     => "support#bootstrap", :as => :bootstrap
     namespace :scaffolds do
       resources :attribs do as_routes end
