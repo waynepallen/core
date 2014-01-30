@@ -135,6 +135,10 @@ when "ubuntu","debian"
   service "postgresql" do
     action [:enable, :start]
   end
+  pg_database_dir = "/var/lib/postgresql/9.3/main/base"
+  directory "#{pg_database_dir}" do
+    owner "postgres"
+  end
 when "centos","redhat"
   pg_conf_dir = "/var/lib/pgsql/9.3/data"
   bash "Init the postgresql database" do
