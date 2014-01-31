@@ -117,7 +117,7 @@ if grep -q crowbar /etc/group; then
     usermod -g "$OUTER_GID" crowbar
 fi
 mkdir -p /root/.ssh
-printf "%s" "$SSH_PUBKEY" >> /root/.ssh/authorized_keys
+printf "%s\n" "$SSH_PUBKEY" >> /root/.ssh/authorized_keys
 
 [[ $1 ]] && "$@"
 /bin/bash -i

@@ -160,12 +160,35 @@ directory "/root/.ssh" do
   action :create
   recursive true
   owner "root"
-  mode 0644
+  mode 0755
+end
+
+directory "/home/crowbar/.ssh" do
+  action :create
+  owner "crowbar"
+  group "crowbar"
+  mode 0755
 end
 
 bash "Regenerate SSH keys" do
-  code "ssh-keygen -q -b 2048 -P '' -f /root/.ssh/id_rsa && cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys"
-  not_if "test -f /root/.ssh/id_rsa"
+  code "su -l -c 'ssh-keygen -q -b 2048 -P \"\" -f /home/crowbar/.ssh/id_rsa' crowbar"
+  not_if "test -f /home/crowbar/.ssh/id_rsa"
+end
+
+bash "Enable root access" do
+  cwd "/root/.ssh"
+  code <<EOC
+cat authorized_keys /home/crowbar/.ssh/id_rsa.pub >> authorized_keys.new
+sort -u <authorized_keys.new >authorized_keys
+rm authorized_keys.new
+EOC
+end
+
+template "/home/crowbar/.ssh/config" do
+  source "ssh_config.erb"
+  owner "crowbar"
+  group "crowbar"
+  mode 0644
 end
 
 template "/etc/ssh/sshd_config" do

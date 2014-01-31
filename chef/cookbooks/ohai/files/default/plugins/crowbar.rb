@@ -279,6 +279,8 @@ networks.each do |network|
   crowbar_ohai[:switch_config][network][:switch_unit] = sw_unit
 end
 
+crowbar_ohai[:in_docker] = File.executable?("/.dockerinit")
+
 crowbar_ohai[:disks] ||= Mash.new
 disk_ordering = Hash.new
 Dir.foreach("/sys/block")do |device|

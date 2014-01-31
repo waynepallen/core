@@ -14,6 +14,7 @@
 #
 
 require 'digest/md5'
+require 'open3'
 
 class Node < ActiveRecord::Base
 
@@ -98,6 +99,25 @@ class Node < ActiveRecord::Base
 
   def shortname
     self.name.split('.').first
+  end
+
+  def login
+    "root@#{shortname}"
+  end
+
+  def ssh(cmd)
+    out,err,stat = Open3.capture3("ssh -l root #{address.addr} -- #{cmd}")
+    [out, err, stat]
+  end
+
+  def scp_from(remote_src, local_dest, opts="")
+    out,err,stat = Open3.capture3("scp #{opts} root@[#{address.addr}]:#{remote_src} #{local_dest}")
+    [out,err,stat]
+  end
+
+  def scp_to(local_src, remote_dest, opts="")
+    out,err,stat = Open3.capture3("scp #{opts} #{local_src} root@[#{address.addr}]:#{remote_dest}")
+    [out,err,stat]
   end
 
   def self.name_hash
