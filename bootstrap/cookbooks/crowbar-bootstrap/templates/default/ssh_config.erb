@@ -1,10 +1,9 @@
-UserKnownHostsFile /dev/null
-StrictHostKeyChecking no
 CheckHostIP no
-PasswordAuthentication no
-ControlMaster auto
-ConnectionAttempts 5
 ConnectTimeout 5
+ConnectionAttempts 5
+ControlMaster auto
+ControlPath ~/.ssh/.control-%h-%p-%r
+PasswordAuthentication no
+StrictHostKeyChecking no
+UserKnownHostsFile /dev/null
 VerifyHostKeyDNS no
-ControlPath ~/.ssh/.control-%n-%p-%r
-ControlPersist 10
