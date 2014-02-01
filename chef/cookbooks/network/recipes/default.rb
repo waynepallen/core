@@ -51,7 +51,7 @@ node["crowbar"]["interface_map"].each do |ent|
     forcing_ents << split_pci(i)
   end
   break
-end if (node["crowbar"]["interface_map"] rescue nil)
+end if (node["crowbar"]["interface_map"] rescue nil) && node[:dmi] && !node[:dmi].empty?
 
 bus_ents = nics.keys.sort
 Chef::Log.info("Found nics: #{nics.inspect}")
