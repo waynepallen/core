@@ -44,7 +44,7 @@ class Barclamp < ActiveRecord::Base
 
   def self.import(bc_name="crowbar", bc=nil, source_path=nil)
     barclamp = Barclamp.find_or_create_by_name(bc_name)
-    source_path ||= File.join(Rails.root, '..')
+    source_path ||= File.expand_path(File.join(Rails.root, '..'))
     bc_file = File.expand_path(File.join(source_path, bc_name)) + '.yml'
 
     # load JSON
@@ -99,8 +99,9 @@ class Barclamp < ActiveRecord::Base
                                 :commit      => gitcommit )
         subm.save!
       end
-
-      Barclamp.import name, nil, File.join(source_path, 'barclamps')
+      subm_file = File.join(source_path,"barclamps","#{name}.yml")
+      next unless File.exists?(subm_file)
+      Barclamp.import name, YAML.load_file(subm_file), source_path
 
     end if bc["barclamps"]
 
@@ -114,6 +115,7 @@ class Barclamp < ActiveRecord::Base
       flags = role['flags'] || []
       description = role['description'] || role_name.gsub("-"," ").titleize
       template = File.join source_path, role_jig || "none", 'roles', role_name, 'role-template.json'
+      Rails.logger.info("Import: Loading role #{role_name} template from #{template}")
       # roles data import
       ## TODO: Verify that adding the roles will not result in circular role dependencies.
       r = nil
