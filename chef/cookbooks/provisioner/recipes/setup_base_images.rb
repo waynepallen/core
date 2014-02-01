@@ -356,14 +356,14 @@ package "syslinux"
   break
 end
 
-bash "Fetch elilo 3.14" do
+bash "Fetch elilo 3.16" do
   code <<EOC
 export http_proxy=http://#{node.name}:8123
 mkdir -p #{tftproot}/files
 cd #{tftproot}/files
-curl -J -O 'http://sourceforge.net/projects/elilo/files/elilo/elilo-3.14/elilo-3.14-all.tar.gz'
+curl -J -O 'http://sourceforge.net/projects/elilo/files/elilo/elilo-3.16/elilo-3.16-all.tar.gz'
 EOC
-  not_if "test -f '#{tftproot}/files/elilo-3.14-all.tar.gz'"
+  not_if "test -f '#{tftproot}/files/elilo-3.16-all.tar.gz'"
 end if  node["crowbar"]["provisioner"]["server"]["online"]
 
 
