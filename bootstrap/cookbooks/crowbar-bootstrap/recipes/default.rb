@@ -141,9 +141,15 @@ directory "/var/run/sshd" do
   recursive true
 end
 
+bash "Regenerate Host SSH keys" do
+  code "ssh-keygen -q -b 2048 -P '' -f /etc/ssh/ssh_host_rsa_key"
+  not_if "test -f /etc/ssh/ssh_host_rsa_key"
+end
+
 # We need Special Hackery to run sshd in docker.
 if ENV["container"] == "lxc"
   service "ssh" do
+    service_name "sshd" if node["platform"] == "centos"
     start_command "/usr/sbin/sshd"
     stop_command "pkill -9 sshd"
     status_command "pgrep sshd"
@@ -152,6 +158,7 @@ if ENV["container"] == "lxc"
   end
 else
   service "ssh" do
+    service_name "sshd" if node["platform"] == "centos"
     action [:enable, :start]
   end
 end
@@ -170,7 +177,7 @@ directory "/home/crowbar/.ssh" do
   mode 0755
 end
 
-bash "Regenerate SSH keys" do
+bash "Regenerate Crowbar SSH keys" do
   code "su -l -c 'ssh-keygen -q -b 2048 -P \"\" -f /home/crowbar/.ssh/id_rsa' crowbar"
   not_if "test -f /home/crowbar/.ssh/id_rsa"
 end
