@@ -113,6 +113,7 @@ step(Global, {step_setup, {Scenario, _N}, Test}) ->
   bdd_utils:log(debug, crowbar, step, "Global Setup alias: ~p",[get({scenario,alias_map})]),
   bdd_utils:alias(group, group_cb),
   bdd_utils:alias(user, user_cb),
+  bdd_utils:alias(networkrange, range),
   % make sure that the delayed job queues are running
   true = bdd_clirat:step([], {foo, {0,0}, ["process", "delayed","returns", "delayed_job.([0..9])"]}),
   % turn off the delays in the test jig
