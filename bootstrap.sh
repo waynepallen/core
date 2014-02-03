@@ -1,5 +1,21 @@
 #!/bin/bash
 set -e
+# Figure out what we are running on.
+if [[ -f /etc/lsb-release ]]; then
+    . /etc/lsb-release
+elif [[ -f /etc/os-release ]]; then
+    . /etc/os-release
+    DISTRIB_ID="$ID"
+    DISTRIB_RELEASE="$VERSION_ID"
+elif [[ -f /etc/system-release ]]; then
+    read DISTRIB_ID _t DISTRIB_RELEASE rest < /etc/system-release
+else
+    echo "Cannot figure out what we are running on!"
+fi
+DISTRIB_ID="${DISTRIB_ID,,}"
+OS_TOKEN="$DISTRIB_ID-$DISTRIB_RELEASE"
+export OS_TOKEN DISTRIB_ID DISTRIB_RELEASE
+
 if [[ -f bootstrap/${OS_TOKEN}.lib.sh ]]; then
     . "bootstrap/${OS_TOKEN}.lib.sh"
 elif [[ -f bootstrap/${DISTRIB_ID}.lib.sh ]]; then
