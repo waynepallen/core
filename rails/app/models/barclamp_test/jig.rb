@@ -34,9 +34,10 @@ class BarclampTest::Jig < Jig
         name = data["marker"] || nr.name
         delay = data["delay"].to_i || 0
         file = File.join "/tmp", "test-jig-noderole-#{name}.txt"
-        %x[touch #{file}]
         o = "TEST JIG >> Working #{nr.node.name} #{name} & pausing for #{delay}"
         puts o
+        # %x[touch #{file}]
+        puts "touch #{file}"  # use until we figure out which the touch is putting files in the wrong place!
         Rails.logger.info o
         nr.runlog = o
         # we want an easy way to turn off the delay setting
@@ -57,12 +58,12 @@ class BarclampTest::Jig < Jig
   end
 
   def create_node(node)
-    %x[touch /tmp/test-jig-node-#{node.name}]
+    # %x[touch /tmp/test-jig-node-#{node.name}]
     Rails.logger.info("TestJig Creating node: #{node.name}")
   end
 
   def delete_node(node)
-    %x[rm /tmp/test-jig-node-#{node.name}]
+    # %x[rm /tmp/test-jig-node-#{node.name}]
     Rails.logger.info("TestJig Deleting node: #{node.name}")    
   end
   
