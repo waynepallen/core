@@ -1,13 +1,10 @@
 #!/bin/bash
 
 cd rails
-bundle --path vendor/cache --standalone --binstubs
 bundle exec rake db:drop \
     db:create \
     railties:install:migrations \
     db:migrate
-bundle exec script/rails generate delayed_job:active_record
-bundle exec rake db:migrate
 
 # Start crowbar services 
 echo "starting the Annealer w/ 2 workers"
