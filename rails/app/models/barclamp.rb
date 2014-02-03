@@ -110,6 +110,8 @@ class Barclamp < ActiveRecord::Base
     bc['roles'].each do |role|
       role_name = role["name"]
       role_jig = role["jig"]
+      rt = role['type']
+      role_type = (rt.constantize ? rt : nil) rescue nil
       prerequisites = role['requires'] || []
       wanted_attribs = role['wants-attribs'] || []
       flags = role['flags'] || []
@@ -130,7 +132,8 @@ class Barclamp < ActiveRecord::Base
                             :discovery=>flags.include?('discovery'),
                             :server=>flags.include?('server'),
                             :destructive=>flags.include?('destructive'),
-                            :cluster=>flags.include?('cluster'))
+                            :cluster=>flags.include?('cluster'),
+                            :type=>role_type)
         RoleRequire.where(:role_id=>r.id).delete_all
         RoleRequireAttrib.where(:role_id => r.id).delete_all
         r.save!

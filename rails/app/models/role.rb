@@ -333,24 +333,26 @@ class Role < ActiveRecord::Base
 
   # This method ensures that we have a type defined for
   def create_type_from_name
-    raise "roles require a name" if self.name.nil?
-    raise "roles require a barclamp" if self.barclamp_id.nil?
-    namespace = "Barclamp#{self.barclamp.name.camelize}"
-    # remove the redundant part of the name (if any)
-    name = self.name.sub("#{self.barclamp.name}-", '').gsub('-','_').camelize
-    # these routines look for the namespace & class
-    # barclamps can override specific roles
-    test_specific =  ("#{namespace}::#{name}".constantize ? true : false) rescue false
-    # barclamps can provide a generic fallback  "BarclampName::Role"
-    test_generic = ("#{namespace}::Role".constantize ? true : false) rescue false
-    # if they dont' find it we fall back to the core Role
-    self.type = if test_specific
-      "#{namespace}::#{name}"
-    elsif test_generic
-      "#{namespace}::Role"
-    else
-      Rails.logger.info "Role #{self.name} created with fallback Model!"
-      "Role"
+    unless self.type
+      raise "roles require a name" if self.name.nil?
+      raise "roles require a barclamp" if self.barclamp_id.nil?
+      namespace = "Barclamp#{self.barclamp.name.camelize}"
+      # remove the redundant part of the name (if any)
+      name = self.name.sub("#{self.barclamp.name}-", '').gsub('-','_').camelize
+      # these routines look for the namespace & class
+      # barclamps can override specific roles
+      test_specific =  ("#{namespace}::#{name}".constantize ? true : false) rescue false
+      # barclamps can provide a generic fallback  "BarclampName::Role"
+      test_generic = ("#{namespace}::Role".constantize ? true : false) rescue false
+      # if they dont' find it we fall back to the core Role
+      self.type = if test_specific
+        "#{namespace}::#{name}"
+      elsif test_generic
+        "#{namespace}::Role"
+      else
+        Rails.logger.info "Role #{self.name} created with fallback Model!"
+        "Role"
+      end
     end
   end
 
