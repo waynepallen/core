@@ -41,7 +41,7 @@ class Doc < ActiveRecord::Base
   def self.gen_doc_index
     # load barclamp docs
     Barclamp.order(:id).each { |bc| Doc.discover_docs bc }
-    Doc.make_index if Rails.env.eql? 'development'
+    # Doc.make_index if Rails.env.eql? 'development'
     Doc.all
   end
 
