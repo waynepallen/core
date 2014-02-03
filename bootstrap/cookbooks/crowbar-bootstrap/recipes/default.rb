@@ -47,11 +47,18 @@ repos.uniq!
 pkgs.flatten!
 pkgs.compact!
 pkgs.uniq!
+pkgs.sort!
 
 Chef::Log.debug(repos)
 
 file "/tmp/install_pkgs" do
   action :nothing
+end
+
+template "/tmp/required_pkgs" do
+  source "required_pkgs.erb"
+  variables( :pkgs => pkgs )
+  notifies :create_if_missing, "file[/tmp/install_pkgs]",:immediately
 end
 
 case node["platform"]
@@ -128,6 +135,80 @@ bash "Install required files" do
   only_if do ::File.exists?("/tmp/install_pkgs") end
 end
 
+directory "/var/run/sshd" do
+  mode 0755
+  owner "root"
+  recursive true
+end
+
+bash "Regenerate Host SSH keys" do
+  code "ssh-keygen -q -b 2048 -P '' -f /etc/ssh/ssh_host_rsa_key"
+  not_if "test -f /etc/ssh/ssh_host_rsa_key"
+end
+
+# We need Special Hackery to run sshd in docker.
+if ENV["container"] == "lxc"
+  service "ssh" do
+    service_name "sshd" if node["platform"] == "centos"
+    start_command "/usr/sbin/sshd"
+    stop_command "pkill -9 sshd"
+    status_command "pgrep sshd"
+    restart_command "pkill -9 sshd && /usr/sbin/sshd"
+    action [:start]
+  end
+else
+  service "ssh" do
+    service_name "sshd" if node["platform"] == "centos"
+    action [:enable, :start]
+  end
+end
+
+directory "/root/.ssh" do
+  action :create
+  recursive true
+  owner "root"
+  mode 0755
+end
+
+directory "/home/crowbar/.ssh" do
+  action :create
+  owner "crowbar"
+  group "crowbar"
+  mode 0755
+end
+
+bash "Regenerate Crowbar SSH keys" do
+  code "su -l -c 'ssh-keygen -q -b 2048 -P \"\" -f /home/crowbar/.ssh/id_rsa' crowbar"
+  not_if "test -f /home/crowbar/.ssh/id_rsa"
+end
+
+bash "Enable root access" do
+  cwd "/root/.ssh"
+  code <<EOC
+cat authorized_keys /home/crowbar/.ssh/id_rsa.pub >> authorized_keys.new
+sort -u <authorized_keys.new >authorized_keys
+rm authorized_keys.new
+EOC
+end
+
+template "/home/crowbar/.ssh/config" do
+  source "ssh_config.erb"
+  owner "crowbar"
+  group "crowbar"
+  mode 0644
+end
+
+template "/etc/ssh/sshd_config" do
+  source "sshd_config.erb"
+  action :create
+  notifies :restart, 'service[ssh]', :immediately
+end
+
+template "/etc/sudoers.d/crowbar" do
+  source "crowbar_sudoer.erb"
+  mode 0440
+end
+
 pg_conf_dir = "/var/lib/pgsql/data"
 case node["platform"]
 when "ubuntu","debian"
@@ -163,7 +244,7 @@ bash "create crowbar user for postgres" do
   not_if "sudo -H -u postgres -- psql postgres -tAc \"SELECT 1 FROM pg_roles WHERE rolname='crowbar'\" |grep -q 1"
 end
 
-["bundler","net-http-digest_auth","json"].each do |g|
+["bundler","net-http-digest_auth","json","cstruct"].each do |g|
   gem_package g
 end
 

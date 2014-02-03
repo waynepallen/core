@@ -105,6 +105,12 @@ debs:
     - sudo
     - vim
     - zlib1g-dev
+    # openssh stuff
+    - openssh-client
+    - openssh-server
+    - less
+    - efibootmgr
+    - iputils-ping
   build_pkgs:
     - bison
     - flex
@@ -133,9 +139,6 @@ debs:
     - ldap-utils
     - db4.8-util
     - slapd
-    # openssh stuff
-    - openssh-client
-    - openssh-server
     # rabbitmq stuff
     - rabbitmq-server
     # ruby stuff
@@ -198,15 +201,15 @@ rpms:
       - ruby
       - ruby-devel
       - rubygems
+      # openssh stuff
+      - openssh-clients
+      - openssh-server
     pkgs:
       # openldap stuff
       - openldap
       - openldap-servers
       - openldap-clients
       - krb5-workstation
-      # openssh stuff
-      - openssh-clients
-      - openssh-server
       - openssl-devel
       - vim-enhanced
       # network
@@ -244,15 +247,15 @@ rpms:
       - ruby
       - ruby-devel
       - rubygems
+      # openssh stuff
+      - openssh-clients
+      - openssh-server
     pkgs:
       # openldap stuff
       - openldap
       - openldap-servers
       - openldap-clients
       - krb5-workstation
-      # openssh stuff
-      - openssh-clients
-      - openssh-server
       - openssl-devel
       - vim-enhanced
       # network
@@ -277,6 +280,9 @@ rpms:
       - ruby
       - ruby-devel
       - sudo
+      # openssh stuff
+      - openssh-clients
+      - openssh-server
     build_pkgs:
       - libcurl-devel
       - yum-plugin-priorities
@@ -289,9 +295,6 @@ rpms:
       - openldap-servers
       - openldap-clients
       - krb5-workstation
-      # openssh stuff
-      - openssh-clients
-      - openssh-server
       - openssl-devel
       - vim-enhanced
       # provisioner
@@ -333,6 +336,9 @@ rpms:
       - ruby20-devel
       - sudo
       - zlib-devel
+      # openssh stuff
+      - openssh-clients
+      - openssh-server
     build_pkgs:
       - libcurl-devel
       - libxml2-devel

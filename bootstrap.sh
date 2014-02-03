@@ -13,4 +13,6 @@ which ruby >&/dev/null || \
     install_ruby
 which chef-solo &>/dev/null || \
     curl -L https://www.opscode.com/chef/install.sh | bash
-chef-solo -c /opt/opencrowbar/core/bootstrap/chef-solo.rb -o 'recipe[crowbar-bootstrap]' || :
+chef-solo -c /opt/opencrowbar/core/bootstrap/chef-solo.rb -o 'recipe[crowbar-bootstrap]' && exit 0
+echo "Chef-solo bootstrap run failed"
+exit 1

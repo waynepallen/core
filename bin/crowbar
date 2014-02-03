@@ -548,7 +548,7 @@ class Attrib < CrowbarProxy; end
 
 class Network < CrowbarProxy
   def self.path
-    "network/api/v2/networks"
+    "api/v2/networks"
   end
 end
 

@@ -1,4 +1,4 @@
-# Copyright 2013, Dell
+# Copyright 2011, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +13,9 @@
 # limitations under the License.
 #
 
-# This recipe is only for use by chef-solo.  It saves all the attributes
-# on a node object to a known location on the filesystem.
+actions :run
 
-ruby_block "Save attributes at the end of run" do
-  block do
-    File.open("/var/chef/node-out.json","w") do |f|
-      f.write(JSON.pretty_generate(node.for_json))
-    end
-  end
-end
+attribute :name, :kind_of => String, :name_attribute => true
+attribute :password, :kind_of => String
+attribute :settle_time, :kind_of => Integer, :default => 1
+

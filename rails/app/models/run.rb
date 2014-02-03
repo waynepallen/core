@@ -130,11 +130,15 @@ class Run < ActiveRecord::Base
         # in time, as opposed to picking up whatever is lying around when delayed_jobs
         # gets around to actually doing its thing, which may not be what we expect.
         begin
+          j.node_role.runlog = ""
+          j.node_role.save!
           run_data = j.node_role.jig.stage_run(j.node_role)
+          Rails.logger.info("Run: Running #{j.node_role.name} with attribs #{run_data.inspect}")
           j.node_role.jig.delay(:queue => "NodeRoleRunner").run(j.node_role,run_data)
           queued += 1
         rescue Exception => e
-          j.node_role.runlog = "#{e.message}\n#{e.backtrace.join("\n")}"
+          j.node_role.runlog = j.node_role.runlog << "EXCEPTION:\n#{e.message}\n#{e.backtrace.join("\n")}"
+          Rails.logger.error(j.node_role.runlog)
           j.node_role.state = NodeRole::ERROR
           j.node_role.save!
         end
