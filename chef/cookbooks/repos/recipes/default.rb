@@ -54,7 +54,7 @@ when "ubuntu","debian"
         variables(:urls => urls)
         notifies :create, "file[/tmp/.repo_update]", :immediately
       end
-    when repo =~ /.*_online/
+    when repo =~ /.*online/
       template "/etc/apt/sources.list.d/20-barclamp-#{repo}.list" do
         source "10-crowbar-extra.list.erb"
         variables(:urls => urls)
@@ -86,19 +86,29 @@ when "redhat","centos"
     code "sed -i '/^enabled/ s/1/0/' /etc/yum/pluginconf.d/fastestmirror.conf"
     only_if "test -f /etc/yum/pluginconf.d/fastestmirror.conf"
   end
-  bash "Reenable main repos" do
-    code "yum -y reinstall centos-release"
-    not_if "test -f /etc/yum.repos.d/CentOS-Base.repo"
-    notifies :create, "file[/tmp/.repo_update]", :immediately
-  end if online && (node[:platform] == "centos")
-  template "/etc/yum.repos.d/crowbar-base.repo" do
-    source "yum-base.repo.erb"
-    variables(:os_token => os_token, :webserver => webserver)
-    notifies :create, "file[/tmp/.repo_update]", :immediately
+  if online && (node[:platform] == "centos")
+    bash "Reenable main repos" do
+      code "yum -y reinstall centos-release"
+      not_if "test -f /etc/yum.repos.d/CentOS-Base.repo"
+      notifies :create, "file[/tmp/.repo_update]", :immediately
+    end
+    file "/etc/yum.repos.d/crowbar-base.repo" do
+      action :delete
+    end
+  else
+    template "/etc/yum.repos.d/crowbar-base.repo" do
+      source "yum-base.repo.erb"
+      variables(:os_token => os_token, :webserver => webserver)
+      notifies :create, "file[/tmp/.repo_update]", :immediately
+    end
+    bash "Disable online repos" do
+      code "rm -f /etc/yum.repos.d/CentOS-*.repo"
+      only_if "test -f /etc/yum.repos.d/CentOS-Base.repo"
+    end
   end
   repositories.each do |repo,urls|
     case
-    when repo =~ /.*_online/
+    when repo =~ /.*online/
       rpm_sources, bare_sources = urls.keys.partition{|r|r =~ /^rpm /}
       bare_sources.each do |source|
         _, name, _, url = source.split
@@ -114,11 +124,11 @@ when "redhat","centos"
         file = url.split('/').last
         file = file << ".rpm" unless file =~ /\.rpm$/
         bash "fetch /var/cache/#{file}" do
-          not_if "test -f '/var/cache/#{file}'"
+          not_if "test -f '/var/cache/#{file}' "
           code <<EOC
 export http_proxy=http://#{proxy}
 curl -o '/var/cache/#{file}' -L '#{url}'
-rpm -Uvh '/var/cache/#{file}'
+rpm -Uvh '/var/cache/#{file}' || :
 EOC
           notifies :create, "file[/tmp/.repo_update]", :immediately
         end
