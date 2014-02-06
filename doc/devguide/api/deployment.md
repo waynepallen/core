@@ -24,9 +24,9 @@ The =system= deployment is a special purpose built-in deployment that cannot be 
 |Snapshot_id|Internal Ref|??|Actually an Int
 |Parent_id|Internal Ref|??|Actually an Int|
 |Description|String|Yes||
-|Name|String|Yes||
+|Name|String|Yes|Limited to Alpha + Numbers - no spaces or special chars|
 |Created_at|String|No|Unicode - date format|
 |Updated_at|String|No|Unicode - date format|
 
-
+Minimum fields needed for create - name
 
