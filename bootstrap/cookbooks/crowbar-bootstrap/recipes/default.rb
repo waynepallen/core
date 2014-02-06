@@ -20,13 +20,20 @@ os_pkg_type = case node["platform"]
                 raise "Cannot figure out what package type we should use!"
               end
 Chef::Log.debug("os_token: #{os_token}, os_pkg_type: #{os_pkg_type}")
+["http_proxy","https_proxy","no_proxy"].each do |p|
+  next unless ENV[p]
+  Chef::Log.info("Using #{p}='#{ENV[p]}'")
+end
 
 unless prereqs["os_support"].member?(os_token)
   raise "Cannot install crowbar on #{os_token}!  Can only install on one of #{prereqs["os_support"].join(" ")}"
 end
 
+tftproot = "/tftpboot"
+
 repos = []
 pkgs = []
+extra_files = []
 
 # Find all the upstream repos and packages we will need.
 if prereqs[os_pkg_type] && prereqs[os_pkg_type][os_token]
@@ -37,6 +44,7 @@ end
 repos << prereqs[os_pkg_type]["repos"]
 pkgs << prereqs[os_pkg_type]["build_pkgs"]
 pkgs << prereqs[os_pkg_type]["required_pkgs"]
+extra_files << prereqs["extra_files"]
 
 Chef::Log.debug(repos)
 Chef::Log.debug(pkgs)
@@ -48,6 +56,10 @@ pkgs.flatten!
 pkgs.compact!
 pkgs.uniq!
 pkgs.sort!
+extra_files.flatten!
+extra_files.compact!
+extra_files.uniq!
+extra_files.sort!
 
 Chef::Log.debug(repos)
 
@@ -59,6 +71,24 @@ template "/tmp/required_pkgs" do
   source "required_pkgs.erb"
   variables( :pkgs => pkgs )
   notifies :create_if_missing, "file[/tmp/install_pkgs]",:immediately
+end
+
+
+extra_files.each do |f|
+  src, dest = f.strip.split(" ",2)
+  target = "#{tftproot}/files/#{dest}"
+  Chef::Log.info("Installing extra file '#{src}' into '#{target}'")
+  
+  directory target do
+    action :create
+    recursive true
+  end
+
+  bash "Fetch #{src}" do
+    code "curl -fgL -o '#{target}/#{src.split("/")[-1]}' '#{src}'"
+    not_if "test -f '#{target}/#{src.split("/")[-1]}'"
+  end
+
 end
 
 case node["platform"]
@@ -90,11 +120,13 @@ when "centos","redhat","suse","opensuse","fedora"
         ignore_failure true
         notifies :create_if_missing, "file[/tmp/install_pkgs]",:immediately
       end
-      remote_file "/tmp/#{rpm_file}" do
-        source rdest
-        use_conditional_get true
+
+      bash "Fetch #{rpm_file}" do
+        code "curl -fgL -o '/tmp/#{rpm_file}' '#{rdest}'"
+        not_if "test -f '/tmp/#{rpm_file}'"
         notifies :run, "bash[Install #{rpm_file}]",:immediately
       end
+
     when "bare"
       rname, rprio, rurl = rdest.split(" ",3)
       template "#{repofile_path}/crowbar-#{rname}.repo" do
