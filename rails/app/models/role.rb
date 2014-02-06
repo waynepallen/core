@@ -56,8 +56,8 @@ class Role < ActiveRecord::Base
   scope           :bootstrap,          -> { where(:bootstrap=>true) }
   scope           :server,             -> { where(:server => true) }
   scope           :active,             -> { joins(:jig).where(["jigs.active = ?", true]) }
-  scope           :all_cohorts,        -> { order("cohort ASC, name ASC") }
-  scope           :all_cohorts_desc,   -> { order("cohort DESC, name ASC") }
+  scope           :all_cohorts,        -> { active.order("cohort ASC, name ASC") }
+  scope           :all_cohorts_desc,   -> { active.order("cohort DESC, name ASC") }
 
   # update just one value in the template
   # for >1 level deep, add method matching key to role!
@@ -345,13 +345,13 @@ class Role < ActiveRecord::Base
     test_generic = ("#{namespace}::Role".constantize ? true : false) rescue false
     # if they dont' find it we fall back to the core Role
     self.type = if test_specific
-      "#{namespace}::#{name}"
-    elsif test_generic
-      "#{namespace}::Role"
-    else
-      Rails.logger.info "Role #{self.name} created with fallback Model!"
-      "Role"
-    end
+                  "#{namespace}::#{name}"
+                elsif test_generic
+                  "#{namespace}::Role"
+                else
+                  "Role"
+                end
+    Rails.logger.info "Role #{self.name} created with model #{self.type}!"
   end
 
 end
