@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 #
+# This recipe sets up the general environmnet needed to PXE boot
+# other servers.
 
 admin_ip = node.address.addr
 domain_name = node["dns"].nil? ? node["domain"] : (node["dns"]["domain"] || node["domain"])
@@ -22,7 +24,7 @@ v4addr=node.address("admin",IP::IP4)
 v6addr=node.address("admin",IP::IP6)
 node.normal["crowbar"]["provisioner"]["server"]["v4addr"]=v4addr.addr if v4addr
 node.normal["crowbar"]["provisioner"]["server"]["v6addr"]=v6addr.addr if v6addr
-node.normal["crowbar"]["provisioner"]["server"]["proxy"]="#{node.name}:8123"
+node.normal["crowbar"]["provisioner"]["server"]["proxy"]="#{v4addr.addr}:8123"
 web_port = node["crowbar"]["provisioner"]["server"]["web_port"]
 use_local_security =  node["crowbar"]["provisioner"]["server"]["use_local_security"]
 provisioner_web="http://#{node.name}:#{web_port}"
@@ -78,6 +80,73 @@ unless node.normal["crowbar"]["provisioner"]["server"]["repositories"]
   node.normal["crowbar"]["provisioner"]["server"]["repositories"] = Mash.new
 end
 node.normal["crowbar"]["provisioner"]["server"]["available_oses"] = Mash.new
+
+# Generate the appropriate pxe and uefi config files for discovery
+# These will only be used if we have not already discovered the system.
+directory "#{pxecfg_dir}" do
+  action :create
+  recursive true
+end
+
+template "#{pxecfg_dir}/default" do
+  mode 0644
+  owner "root"
+  group "root"
+  source "default.erb"
+  variables(:append_line => "#{append_line} crowbar.state=discovery",
+            :install_name => "discovery",
+            :initrd => "initrd0.img",
+            :machine_key => node["crowbar"]["provisioner"]["machine_key"],
+            :kernel => "vmlinuz0")
+end
+
+# Do uefi as well.
+template "#{uefi_dir}/elilo.conf" do
+  mode 0644
+  owner "root"
+  group "root"
+  source "default.elilo.erb"
+  variables(:append_line => "#{append_line} crowbar.state=discovery",
+            :install_name => "discovery",
+            :initrd => "initrd0.img",
+            :machine_key => node["crowbar"]["provisioner"]["machine_key"],
+            :kernel => "vmlinuz0")
+end
+
+package "syslinux"
+
+["share","lib"].each do |d|
+  next unless ::File.exists?("/usr/#{d}/syslinux/pxelinux.0")
+  bash "Install pxelinux.0" do
+    code "cp /usr/#{d}/syslinux/pxelinux.0 #{discover_dir}"
+    not_if do ::File.exists?("#{discover_dir}/pxelinux.0") end
+  end
+  break
+end
+
+bash "Fetch elilo 3.16" do
+  code <<EOC
+export http_proxy=http://#{v4addr.addr}:8123
+mkdir -p #{tftproot}/files
+cd #{tftproot}/files
+curl -sfL -O 'http://sourceforge.net/projects/elilo/files/elilo/elilo-3.16/elilo-3.16-all.tar.gz'
+EOC
+  not_if "test -f '#{tftproot}/files/elilo-3.16-all.tar.gz'"
+end if  node["crowbar"]["provisioner"]["server"]["online"]
+
+
+bash "Install elilo as UEFI netboot loader" do
+  code <<EOC
+cd #{uefi_dir}
+tar xzf '#{tftproot}/files/elilo-3.16-all.tar.gz'
+mv elilo-3.16-x86_64.efi bootx64.efi
+mv elilo-3.16-ia32.efi bootia32.efi
+mv elilo-3.16-ia64.efi bootia64.efi
+rm elilo*.efi elilo*.tar.gz || :
+EOC
+  not_if "test -f '#{uefi_dir}/bootx64.efi'"
+end
+
 node["crowbar"]["provisioner"]["server"]["supported_oses"].each do |os,params|
   web_path = "#{provisioner_web}/#{os}"
   admin_web = os_install_site = "#{web_path}/install"
@@ -117,34 +186,35 @@ node["crowbar"]["provisioner"]["server"]["supported_oses"].each do |os,params|
   end
 
   if  node["crowbar"]["provisioner"]["server"]["online"]
-    data_bag("barclamps").each do |bc_name|
-      bc = data_bag_item("barclamps",bc_name)
+    # This needs to be less fragile.
+    Dir.glob("/opt/opencrowbar/*/crowbar.yml").each do |yml_file|
+      bc = YAML.load_file(yml_file)
       if bc["debs"]
         bc["debs"]["repos"].each do |repo|
-          unless node["crowbar"]["provisioner"]["server"]["repositories"][os]["#{bc_name}_online"]
-            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["#{bc_name}_online"] = Mash.new
+          unless node["crowbar"]["provisioner"]["server"]["repositories"][os]["online"]
+            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"] = Mash.new
           end
-           node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["#{bc_name}_online"][repo] = true
+           node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"][repo] = true
         end if bc["debs"]["repos"]
         bc["debs"][os]["repos"].each do |repo|
-          unless node["crowbar"]["provisioner"]["server"]["repositories"][os]["#{bc_name}_online"]
-            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["#{bc_name}_online"] = Mash.new
+          unless node["crowbar"]["provisioner"]["server"]["repositories"][os]["online"]
+            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"] = Mash.new
           end
-          node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["#{bc_name}_online"][repo] = true
+          node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"][repo] = true
         end if (bc["debs"][os]["repos"] rescue nil)
       end if os =~ /(ubuntu|debian)/
       if bc["rpms"]
         bc["rpms"]["repos"].each do |repo|
-          unless node["crowbar"]["provisioner"]["server"]["repositories"][os]["#{bc_name}_online"]
-            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["#{bc_name}_online"] = Mash.new
+          unless node["crowbar"]["provisioner"]["server"]["repositories"][os]["online"]
+            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"] = Mash.new
           end
-          node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["#{bc_name}_online"][repo] = true
+          node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"][repo] = true
         end if bc["rpms"]["repos"]
         bc["rpms"][os]["repos"].each do |repo|
-          unless node["crowbar"]["provisioner"]["server"]["repositories"][os]["#{bc_name}_online"]
-            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["#{bc_name}_online"] = Mash.new
+          unless node["crowbar"]["provisioner"]["server"]["repositories"][os]["online"]
+            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"] = Mash.new
           end
-          node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["#{bc_name}_online"][repo] = true
+          node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"][repo] = true
         end if (bc["rpms"][os]["repos"] rescue nil)
       end if os =~ /(centos|redhat)/
     end
@@ -233,148 +303,3 @@ EOC
   end
 end
 
-# Generate the appropriate pxe and uefi config files for discovery
-# These will only be used if we have not already discovered the system.
-directory "#{pxecfg_dir}" do
-  action :create
-  recursive true
-end
-
-template "#{pxecfg_dir}/default" do
-  mode 0644
-  owner "root"
-  group "root"
-  source "default.erb"
-  variables(:append_line => "#{append_line} crowbar.state=discovery",
-            :install_name => "discovery",
-            :initrd => "initrd0.img",
-            :machine_key => node["crowbar"]["provisioner"]["machine_key"],
-            :kernel => "vmlinuz0")
-end
-
-# Do uefi as well.
-template "#{uefi_dir}/elilo.conf" do
-  mode 0644
-  owner "root"
-  group "root"
-  source "default.elilo.erb"
-  variables(:append_line => "#{append_line} crowbar.state=discovery",
-            :install_name => "discovery",
-            :initrd => "initrd0.img",
-            :machine_key => node["crowbar"]["provisioner"]["machine_key"],
-            :kernel => "vmlinuz0")
-end
-
-node.set["apache"]["listen_ports"] = [ web_port, 8123 ]
-include_recipe "apache2"
-include_recipe "apache2::mod_proxy"
-include_recipe "apache2::mod_proxy_http"
-apache_module "cache"
-apache_module "disk_cache"
-
-template "#{node["apache"]["dir"]}/sites-available/provisioner.conf" do
-  path "#{node["apache"]["dir"]}/vhosts.d/provisioner.conf" if node["platform"] == "suse"
-  source "base-apache.conf.erb"
-  mode 0644
-  variables(:docroot => "#{tftproot}",
-            :port => web_port,
-            :logfile => "/var/log/apache2/provisioner-access_log",
-            :errorlog => "/var/log/apache2/provisioner-error_log")
-  notifies :reload, resources(:service => "apache2")
-end
-template "#{node["apache"]["dir"]}/sites-available/proxy.conf" do
-  path "#{node["apache"]["dir"]}/vhosts.d/proxy.conf" if node["platform"] == "suse"
-  source "proxy-apache.conf.erb"
-  mode 0644
-  variables(:port => 8123,
-            :logfile => "/var/log/apache2/proxy-access_log",
-            :errorlog => "/var/log/apache2/proxy-error_log",
-            :allowed_clients => ["127.0.0.1","::1"] + node.all_addresses.map{|a|a.network.to_s}.sort,
-            :upstream_proxy => ( node["crowbar"]["provisioner"]["server"]["upstream_proxy"] || "" rescue ""),
-            :no_cache => node.addresses("admin")
-            )
-  notifies :reload, resources(:service => "apache2")
-end
-apache_site "provisioner.conf"
-apache_site "proxy.conf"
-
-# Set up the TFTP server as well.
-case node["platform"]
-when "ubuntu", "debian"
-  package "tftpd-hpa"
-when "redhat","centos"
-  package "tftp-server"
-when "suse"
-  package "tftp"
-end
-
-case node["platform"]
-when "suse"
-  service "tftp" do
-    enabled true
-    if node["platform_version"].to_f >= 12.3
-      provider Chef::Provider::Service::Systemd
-      service_name "tftp.socket"
-      action [ :enable, :start ]
-    else
-      # on older releases just enable, don't start (xinetd takes care of it)
-      action [ :enable ]
-    end
-  end
-  service "xinetd" do
-    running true
-    enabled true
-    action [ :enable, :start ]
-  end unless node["platform_version"].to_f >= 12.3
-when "ubuntu"
-  service "tftpd-hpa" do
-    action [ :enable ]
-  end
-  template "/etc/default/tftpd-hpa" do
-    source "tftpd-ubuntu.erb"
-    mode 0644
-    user "root"
-    group "root"
-    variables(
-              :address => "0.0.0.0:69",
-              :tftproot => tftproot
-              )
-    notifies :restart, resources(:service => "tftpd-hpa")
-  end
-else
-  raise "Cannot set up TFTP on #{node[platform]}"
-end
-
-package "syslinux"
-
-["share","lib"].each do |d|
-  next unless ::File.exists?("/usr/#{d}/syslinux/pxelinux.0")
-  bash "Install pxelinux.0" do
-    code "cp /usr/#{d}/syslinux/pxelinux.0 #{discover_dir}"
-    not_if do ::File.exists?("#{discover_dir}/pxelinux.0") end
-  end
-  break
-end
-
-bash "Fetch elilo 3.16" do
-  code <<EOC
-export http_proxy=http://#{node.name}:8123
-mkdir -p #{tftproot}/files
-cd #{tftproot}/files
-curl -J -O 'http://sourceforge.net/projects/elilo/files/elilo/elilo-3.16/elilo-3.16-all.tar.gz'
-EOC
-  not_if "test -f '#{tftproot}/files/elilo-3.16-all.tar.gz'"
-end if  node["crowbar"]["provisioner"]["server"]["online"]
-
-
-bash "Install elilo as UEFI netboot loader" do
-  code <<EOC
-cd #{uefi_dir}
-tar xzf '#{tftproot}/files/elilo-3.16-all.tar.gz'
-mv elilo-3.16-x86_64.efi bootx64.efi
-mv elilo-3.16-ia32.efi bootia32.efi
-mv elilo-3.16-ia64.efi bootia64.efi
-rm elilo*.efi elilo*.tar.gz || :
-EOC
-  not_if "test -f '#{uefi_dir}/bootx64.efi'"
-end

@@ -44,18 +44,24 @@ roles:
       - name: provisioner-webserver
         description: 'The URL that managed nodes should use to contact the provisioner webserver.'
         map: 'crowbar/provisioner/server/webserver'
+  - name: provisioner-base-images
+    jig: chef-solo
+    attribs:
       - name: provisioner-package-repos
         description: 'The packages repositories that managed nodes should use to install packages.'
         map: 'crowbar/provisioner/server/repositories'
       - name: provisioner-available-oses
         description: 'The operating systems that the provisioner knows how to install'
         map: 'crowbar/provisioner/server/available_oses'
+    requires:
+      - provisioner-server
   - name: provisioner-repos
     jig: chef-solo
     requires:
       - network-admin
       - dns-client
       - provisioner-server
+      - provisioner-base-images
     flags:
       - implicit
     attribs:
@@ -68,6 +74,7 @@ roles:
     jig: chef-solo
     requires:
       - provisioner-server
+      - provisioner-base-images
   - name: provisioner-dhcp-database
     jig: chef-solo
     requires:
