@@ -117,7 +117,7 @@ fi
 
 # Figure out what IP addresses we should have.
 netline=$(curl -f -g --digest -u "$CROWBAR_KEY" \
-    -X GET "$CROWBAR_WEB/network/api/v2/networks/admin/allocations" \
+    -X GET "$CROWBAR_WEB/api/v2/networks/admin/allocations" \
     -d "node=$HOSTNAME")
 
 # Bye bye to DHCP.
