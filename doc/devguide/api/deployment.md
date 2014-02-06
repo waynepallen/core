@@ -1,36 +1,32 @@
-### Deployment  APIs
+# Deployment APIs
 
-Deployments are the scope boundry for Crowbar activities on nodes-roles.  They are a central component of the Crowbar data model.
+Deployments are the scope boundry for Crowbar activities on nodes-roles. They are a central component of the Crowbar data model.
 
-> The =system= deployment is a special purpose built-in deployment that cannot be edited by Crowbar users.  It handles all node discovery operations.
+The =system= deployment is a special purpose built-in deployment that cannot be edited by Crowbar users. It handles all node discovery operations.
 
-#### API Actions
+##API Actions
+|Verb |	URL |	Comments|
+|-----|-----|-----------|
+|GET |	api/v2/deployments |	List|
+|GET |	api/v2/deployments/:id |	Specific Item|
+|PUT |	api/v2/deployments/:id |	Update Item|
+|POST |	api/v2/deployments |	Create Item|
+|DELETE |	api/v2/deployments/:id |	Delete Item|
+|GET |	api/v2/deployments/head 	|returns the current active deployment snapshot|
+|GET |	api/v2/deployments/next |	returns the most recent inactive deployment snapshot|
+|GET |	api/v2/deployments/:id/roles |	returns deployment_roles bound to the deployment head|
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Comments </th></tr>
-<tr><td> GET  </td>
-  <td> api/v2/deployments </td>
-  <td> List </td></tr>
-<tr><td> GET  </td>
-  <td> api/v2/deployments/:id </td>
-  <td> Specific Item </td></tr>
-<tr><td> PUT  </td>
-  <td> api/v2/deployments/:id </td>
-  <td> Update Item </td></tr>
-<tr><td> POST  </td>
-  <td> api/v2/deployments </td>
-  <td> Create Item </td></tr>
-<tr><td> DELETE  </td>
-  <td> api/v2/deployments/:id </td>
-  <td> Delete Item </td></tr>
-<tr><td> GET  </td>
-  <td> api/v2/deployments/head </td>
-  <td> returns the current active deployment snapshot </td></tr>
-<tr><td> GET  </td>
-  <td> api/v2/deployments/next </td>
-  <td> returns the most recent inactive deployment snapshot </td></tr>
-<tr><td> GET  </td>
-  <td> api/v2/deployments/:id/roles </td>
-  <td> returns deployment_roles bound to the deployment head </td></tr>
+## JSON fields
 
-</table>
+|Attribute|Type|Settable|Note|
+|---------|----|--------|----|
+|System|Boolean|Yes||
+|Snapshot_id|Internal Ref|??|Actually an Int
+|Parent_id|Internal Ref|??|Actually an Int|
+|Description|String|Yes||
+|Name|String|Yes||
+|Created_at|String|No|Unicode - date format|
+|Updated_at|String|No|Unicode - date format|
+
+
+

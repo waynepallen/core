@@ -47,3 +47,41 @@ A barclamp specific override can be created using the name of the barclamp and t
 The Role model has a series of events (Self.on_[STATE]) that are called when any NodeRole changes state.  This is a designed override point where Barclamp Roles can add functionality into the Crowbar Annealer engine.  This functionality is added when a Barclamp defines it's own Role definitions (Barclamp[Name]::[Role]).  If there is no override, then the default behavior is used.
 
 There is a matching event for each NodeRole state.  The event is called when the NodeRole enters that state.  The purpose of this function is to enable Barclamp creators to leverage information available to Crowbar within the Annealer operation including before user editing (Proposed) or system error (Error) states.
+
+## JSON fields
+
+| Attribute | Type |Settable | Note
+|--------|--------|
+|Description|String|Yes||
+|Name|String|Yes||
+|Created_at|String|No|Unicode - date format|
+|Updated_at|String|No|Unicode - date format|
+|Server|Boolean|Yes||
+|Bootstrap|Boolean|Yes||
+|Library|Boolean|Yes||
+|Barclamp_id|Internal Ref|??|Actually an Int|
+|Cluster|Boolean|Yes||
+|Implicit|Boolean|Yes||
+|Template|String|Yes|Another json blob|
+|Jig Name|String|Yes||
+|Destructive|Boolean|Yes||
+|id|Internal Ref|??|Actually an Int|
+|Discovery|Boolean|Yes||
+
+### Structure of the template JSON (from an example)
+
+The template structure is multi-layered - in the table assume that the lines following a 'blob' are the subsidiary structure
+
+|Name|Value
+|--------|--------|
+|Ceph|json blob|
+|config|json blob|
+|osd|json blob|
+|journal|file|
+|encrypt|False|
+|fstype|xfs|
+
+
+
+
+
