@@ -33,7 +33,6 @@ class Node < ActiveRecord::Base
   # for to_api_hash
   API_ATTRIBUTES = ["id", "name", "description", "order", "admin", "available", "alive",
                     "allocated", "created_at", "updated_at"]
-
   #
   # Validate the name should unique (no matter the case)
   # and that it starts with a valid FQDN
@@ -255,7 +254,7 @@ class Node < ActiveRecord::Base
   end
 
   def reboot
-    BarclampCrowbar::Jig.ssh("root@#{self.shortname} reboot")
+    ssh("reboot")
   end
   
   def debug
