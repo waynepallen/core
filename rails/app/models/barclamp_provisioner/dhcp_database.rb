@@ -37,7 +37,7 @@ class BarclampProvisioner::DhcpDatabase < Role
 
 
     Role.transaction do
-      Node.all.each do |node|
+      Node.all(true).each do |node|
         ints = (node.discovery["ohai"]["network"]["interfaces"] rescue nil)
         mac_list = []
         # get the suggested mac (requies an ip address also!
