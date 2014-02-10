@@ -7,9 +7,9 @@
 if [[ ! $container = lxc ]]; then
     declare -A image_map
     #image_map["ubuntu"]="ubuntu:precise"
-    image_map["ubuntu"]="opencrowbar/ubuntu:12.04-3"
+    image_map["ubuntu"]="opencrowbar/ubuntu:12.04-4"
     #image_map["centos"]="centos:6.4"
-    image_map["centos"]="opencrowbar/centos:6.5"
+    image_map["centos"]="opencrowbar/centos:6.5-2"
     image_map["opensuse"]="mmckeen/opensuse-13-1:latest"
     image_map["fedora"]="fedora:20"
     image_map["debian"]="debian:jessie"
@@ -27,7 +27,17 @@ if [[ ! $container = lxc ]]; then
         exit 1
     fi
 
+    # Check to see if we have a Sledgehammer image handy.
+    if [[ ! -f $HOME/.cache/opencrowbar/sledgehammer/tftpboot/initrd0.img ]]; then
+        echo "You need to have a Sledgehammer image created before running a Docker admin node!"
+        echo "Create the Sledgehammer image by running:"
+        echo "$(readlink -f "${0%/*}/build_sledgehammer.sh")"
+        exit 1
+    fi
+    
     docker_args=(-t -i -w /opt/opencrowbar/core -v "$PWD:/opt/opencrowbar/core")
+    docker_args+=(-v "$HOME/.cache/opencrowbar/sledgehammer/tftpboot/initrd0.img:/tftpboot/discovery/initrd0.img")
+    docker_args+=(-v "$HOME/.cache/opencrowbar/sledgehammer/tftpboot/vmlinuz0:/tftpboot/discovery/vmlinuz0")
     docker_args+=(-e "OUTER_UID=$(id -u)")
     docker_args+=(-e "OUTER_GID=$(id -g)")
     [[ -f $HOME/.ssh/id_rsa.pub ]] && docker_args+=(-e "SSH_PUBKEY=$(cat "$HOME/.ssh/id_rsa.pub")")
@@ -39,7 +49,7 @@ if [[ ! $container = lxc ]]; then
     [[ $(ps -C docker -o 'command=') =~ $bridge_re ]] && \
         bridge="${BASH_REMATCH[1]}"
     # Capture the IP of the bridge for later when we are hacking up
-    # proxies.  
+    # proxies.
     [[ $(ip -o -4 addr show dev $bridge) =~ $bridge_addr_re ]] && \
         bridge_ip="${BASH_REMATCH[1]}"
     # Make sure the container knows about our proxies, if applicable.
@@ -83,7 +93,7 @@ if [[ ! $container = lxc ]]; then
         [[ $no_proxy ]] && docker_args+=(-e "no_proxy=$no_proxy")
     fi
     # Run whatever we specified to run inside a container.
-    docker run "${docker_args[@]}" "$image" /opt/opencrowbar/core/in_docker "$@"
+    docker run "${docker_args[@]}" "$image" /opt/opencrowbar/core/tools/docker-admin "$@"
     exit $?
 fi
 export LANG=en_US.UTF-8

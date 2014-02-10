@@ -321,7 +321,7 @@ class Node < ActiveRecord::Base
     return false if alive == false
     return true unless Rails.env == "production"
     a = address
-    return true if a && BarclampCrowbar::Jig.ssh("root@#{a.addr} -- echo alive")[1]
+    return true if a && self.ssh("echo alive")[2].success?
     self[:alive] = false
     save!
     false
@@ -332,8 +332,8 @@ class Node < ActiveRecord::Base
   def after_save_handler
     return unless changed?
     Rails.logger.info("Node: calling all role on_node_change hooks for #{name}")
-    Role.all_cohorts do |r|
-      #Rails.logger.debug("\tNode: calling role #{r.name} for #{name}")
+    Role.all_cohorts.each do |r|
+      Rails.logger.info("Node: Calling #{r.name} on_node_change for #{self.name}")
       r.on_node_change(self)
     end
     if changes["available"] || changes["alive"]
@@ -366,8 +366,10 @@ class Node < ActiveRecord::Base
   # Call the on_node_delete hooks.
   def tear_down_roles
     # do the low cohorts last
-    Role.all_cohorts_desc do |r|
+    Rails.logger.info("Node: calling all role on_node_delete hooks for #{name}")
+    Role.all_cohorts_desc.each do |r|
       begin
+        Rails.logger.info("Node: Calling #{r.name} on_node_delete for #{self.name}")
         r.on_node_delete(self)
       rescue Exception => e
         Rails.logger.error "node #{name} attempting to cleanup role #{r.name} failed with #{e.message}"
@@ -386,7 +388,9 @@ class Node < ActiveRecord::Base
     # Call all role on_node_create hooks with ourself.
     # These should happen synchronously.
     # do the low cohorts first
-    Role.all_cohorts do |r|
+    Rails.logger.info("Node: calling all role on_node_create hooks for #{name}")
+    Role.all_cohorts.each do |r|
+      Rails.logger.info("Node: Calling #{r.name} on_node_create for #{self.name}")
       r.on_node_create(self)
     end
   end

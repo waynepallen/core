@@ -30,8 +30,12 @@ class BarclampChef::SoloJig < Jig
     return runlist
   end
 
+  def on_disk_name
+    "chef"
+  end
+
   def stage_run(nr)
-    chef_path = File.join(nr.barclamp.source_path, 'chef-solo')
+    chef_path = File.join(nr.barclamp.source_path, on_disk_name)
     unless File.directory?(chef_path)
       raise("No Chef data at #{chef_path}")
     end

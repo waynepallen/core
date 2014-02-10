@@ -19,11 +19,15 @@ Crowbar documentation is distributed into multiple places under the /doc directo
 
 1. Prep Environment
   1. Install Docker (do once)
-  1. Install Postgresql 9.3
   1. sudo chmod 666 /var/run/docker.sock (to run docker without sudo)
+  1. sudo usermod -a -G docker <your-user> (to permanently run Docker
+  without sudo)
+2. To build Sledgehammer:
+  1. tools/build_sledgehammer.sh
 2. To run in development mode:
-  1. ./in_docker ubuntu ./development.sh
+  1. tools/docker-admin centos ./development.sh
 3. To run in production mode:
-  1. ./in_docker ubuntu ./production.sh
+  1. tools/docker-admin centos ./production.sh admin.cluster.fqdn
+  1. tools/kvm-slave (to launch a KVM-based compute node)
 
 Once Crowbar is bootstrapped (or if anything goes wrong), you will get a shell running inside the container.  Exiting the shell will kill Docker.

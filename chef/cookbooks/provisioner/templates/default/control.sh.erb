@@ -23,6 +23,7 @@ export PS4='${BASH_SOURCE}@${LINENO}(${FUNCNAME[0]}): '
 
 export http_proxy="http://<%=@proxy%>"
 export https_proxy="$http_proxy"
+export no_proxy="localhost,127.0.0.1,localaddress,.<%=@domain%>"
 provisioner="<%=@provisioner_web%>"
 crowbar="http://<%=@provisioner_name%>:3000"
 crowbar_v4="http://<%=@v4_addr%>:3000"
@@ -37,8 +38,9 @@ cat > /etc/gemrc <<EOF
 :sources:
 <% if @online -%>
 - http://rubygems.org/
-<% end -%>
+<% else -%>
 - ${provisioner}/gemsite/
+<% end -%>
 gem: --no-ri --no-rdoc --bindir /usr/local/bin --http-proxy $http_proxy
 EOF
 gem install rest-client
@@ -63,7 +65,7 @@ EOF
 # Mark us as alive.
 # Mark the node as alive.
 curl -g --digest -u "$CROWBAR_KEY" \
-    -X PUT "$crowbar/api/v2/nodes/$HOSTNAME" \
+    -X PUT "$crowbar_v4/api/v2/nodes/$HOSTNAME" \
     -d 'alive=true'
 
 # We are alive, and we should have a host entry created now.  Wait forever to do something.

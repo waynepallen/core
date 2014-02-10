@@ -109,18 +109,18 @@ class Barclamp < ActiveRecord::Base
     # Jigs are now late-bound, so we just load everything.
     bc['roles'].each do |role|
       role_name = role["name"]
-      role_jig = role["jig"]
+      role_jig = Jig.where(:name => role["jig"]).first
       prerequisites = role['requires'] || []
       wanted_attribs = role['wants-attribs'] || []
       flags = role['flags'] || []
       description = role['description'] || role_name.gsub("-"," ").titleize
-      template = File.join source_path, role_jig || "none", 'roles', role_name, 'role-template.json'
+      template = File.join source_path, role_jig.on_disk_name || "none", 'roles', role_name, 'role-template.json'
       Rails.logger.info("Import: Loading role #{role_name} template from #{template}")
       # roles data import
       ## TODO: Verify that adding the roles will not result in circular role dependencies.
       r = nil
       Role.transaction do
-        r = Role.find_or_create_by_name(:name=>role_name, :jig_name => role_jig, :barclamp_id=>barclamp.id)
+        r = Role.find_or_create_by_name(:name=>role_name, :jig_name => role_jig.name, :barclamp_id=>barclamp.id)
         r.update_attributes(:description=>description,
                             :barclamp_id=>barclamp.id,
                             :template=>(IO.read(template) rescue "{}"),

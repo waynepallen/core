@@ -77,6 +77,10 @@ class Jig < ActiveRecord::Base
     res
   end
 
+  def on_disk_name
+    name
+  end
+
   # Gather all of the attribute data needed for a single noderole run.
   # It should be run to create whatever information will be needed
   # for the actual run before doing the actual run in a delayed job.

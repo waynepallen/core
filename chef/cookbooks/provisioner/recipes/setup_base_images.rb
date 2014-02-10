@@ -26,8 +26,8 @@ node.normal["crowbar"]["provisioner"]["server"]["v4addr"]=v4addr.addr if v4addr
 node.normal["crowbar"]["provisioner"]["server"]["v6addr"]=v6addr.addr if v6addr
 node.normal["crowbar"]["provisioner"]["server"]["proxy"]="#{v4addr.addr}:8123"
 web_port = node["crowbar"]["provisioner"]["server"]["web_port"]
-use_local_security =  node["crowbar"]["provisioner"]["server"]["use_local_security"]
-provisioner_web="http://#{node.name}:#{web_port}"
+use_local_security = node["crowbar"]["provisioner"]["server"]["use_local_security"]
+provisioner_web="http://#{v4addr.addr}:#{web_port}"
 node.normal["crowbar"]["provisioner"]["server"]["webserver"]=provisioner_web
 os_token="#{node["platform"]}-#{node["platform_version"]}"
 tftproot =  node["crowbar"]["provisioner"]["server"]["root"]
@@ -115,25 +115,15 @@ end
 
 package "syslinux"
 
-["share","lib"].each do |d|
-  next unless ::File.exists?("/usr/#{d}/syslinux/pxelinux.0")
-  bash "Install pxelinux.0" do
-    code "cp /usr/#{d}/syslinux/pxelinux.0 #{discover_dir}"
-    not_if do ::File.exists?("#{discover_dir}/pxelinux.0") end
+ruby_block "Install pxelinux.0" do
+  block do
+    ["share","lib"].each do |d|
+      next unless ::File.exists?("/usr/#{d}/syslinux/pxelinux.0")
+      ::Kernel.system("cp /usr/#{d}/syslinux/pxelinux.0 #{discover_dir}")
+    end
   end
-  break
+  not_if do ::File.exists?("#{discover_dir}/pxelinux.0") end
 end
-
-bash "Fetch elilo 3.16" do
-  code <<EOC
-export http_proxy=http://#{v4addr.addr}:8123
-mkdir -p #{tftproot}/files
-cd #{tftproot}/files
-curl -sfL -O 'http://sourceforge.net/projects/elilo/files/elilo/elilo-3.16/elilo-3.16-all.tar.gz'
-EOC
-  not_if "test -f '#{tftproot}/files/elilo-3.16-all.tar.gz'"
-end if  node["crowbar"]["provisioner"]["server"]["online"]
-
 
 bash "Install elilo as UEFI netboot loader" do
   code <<EOC
@@ -289,15 +279,15 @@ EOC
   node.normal["crowbar"]["provisioner"]["server"]["boot_specs"][os]["kernel_params"] = append
 
   case
-  when (/^ubuntu/ =~ os and File.exists?("/tftpboot/#{os}/install/dists"))
+  when (/^ubuntu/ =~ os and File.exists?("#{tftproot}/#{os}/install/dists"))
      node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["base"] = { "#{provisioner_web}/#{os}/install" => true }
   when /^(suse)/ =~ os
      node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["base"] = { "baseurl=#{provisioner_web}/#{os}/install" => true }
   when /^(redhat|centos)/ =~ os
     # Add base OS install repo for redhat/centos
-    if ::File.exists? "/tftpboot/#{os}/install/repodata"
+    if ::File.exists? "#{tftproot}/#{os}/install/repodata"
        node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["base"] = { "baseurl=#{provisioner_web}/#{os}/install" => true }
-    elsif ::File.exists? "/tftpboot/#{os}/install/Server/repodata"
+    elsif ::File.exists? "#{tftproot}/#{os}/install/Server/repodata"
        node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["base"] = { "baseurl=#{provisioner_web}/#{os}/install/Server" => true }
     end
   end
