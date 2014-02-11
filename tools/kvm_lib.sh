@@ -180,9 +180,9 @@ cleanup() {
 
 # Kill a running VM.
 kill_vm() (
-    # $2 = state to assign, defaults to killed.
+    # $1 = state to assign, defaults to killed.
     set +e
-    local killsig=TERM killtries=0 killstate="${2:-killed}"
+    local killsig=TERM killtries=0 killstate="${1:-killed}"
     # If there is no PID file, assume that the VM is already dead.
     [[ -f $VM_DIR/$VMID.pid ]] || {
         > "$VM_DIR/$VMID.$killstate"
