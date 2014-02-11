@@ -40,3 +40,22 @@ Helpers have been added to NodeRole create so that you do not need to provide ID
 * Deployment Name instead of Snapshot ID (uses the Head snapshot)
 * Node Name instead of Node ID
 * Role Name instead of Role ID
+
+## JSON fields
+
+|Attribute|Type|Settable|Note|
+|---------|----|--------|----|
+|Available|Boolean|Yes||
+|Cohort|Integer|??||
+|Created_at|String|No|Unicode - date format|
+|Updated_at|String|No|Unicode - date format|
+|Runlog|String|??||
+|Order|Integer|??||
+|State|Integer|??||
+|Node_Id|Integer|Yes||
+|Status|??|??||
+|Run_count|Integer|No||
+|Snapshot_Id|Integer|??||
+|Role_Id|Integer|Yes||
+|Id|Internal Ref|??|Actually an Int|
+
