@@ -62,6 +62,25 @@ admin_net='
   ]
 }'
 
+provisioner_server_template="
+{\"template\": {
+  \"crowbar\": {
+    \"provisioner\": {
+      \"server\": {
+        \"root\": \"/tftpboot\",
+        \"use_local_security\": true,
+        \"web_port\": 8091,
+        \"upstream_proxy\": \"${http_proxy}\",
+        \"use_serial_console\": false,
+        \"default_user\": \"crowbar\",
+        \"default_password_hash\": \"\$1\$BDC3UwFr\$/VqOWN1Wi6oM0jiMOjaPb.\",
+        \"online\": true
+        }
+      }
+    }
+  }
+}"
+
 admin_node="
 {
   \"name\": \"$FQDN\",
@@ -74,6 +93,10 @@ admin_node="
 # This should vanish once we have a real bootstrapping story.
 ###
 ip_re='([0-9a-f.:]+/[0-9]+)'
+
+# Update the provisioner server template to use whatever
+# proxy the admin node should be using.
+crowbar roles update provisioner-server "$provisioner_server_template"
 
 # Create a stupid default admin network
 crowbar networks create "$admin_net"

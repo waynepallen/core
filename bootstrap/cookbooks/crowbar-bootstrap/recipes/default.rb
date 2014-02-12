@@ -19,11 +19,6 @@ os_pkg_type = case node["platform"]
               else
                 raise "Cannot figure out what package type we should use!"
               end
-Chef::Log.debug("os_token: #{os_token}, os_pkg_type: #{os_pkg_type}")
-["http_proxy","https_proxy","no_proxy"].each do |p|
-  next unless ENV[p]
-  Chef::Log.info("Using #{p}='#{ENV[p]}'")
-end
 
 unless prereqs["os_support"].member?(os_token)
   raise "Cannot install crowbar on #{os_token}!  Can only install on one of #{prereqs["os_support"].join(" ")}"
@@ -62,6 +57,39 @@ extra_files.uniq!
 extra_files.sort!
 
 Chef::Log.debug(repos)
+
+proxies = Hash.new
+["http_proxy","https_proxy","no_proxy"].each do |p|
+  next unless ENV[p] && !ENV[p].strip.empty?
+  Chef::Log.info("Using #{p}='#{ENV[p]}'")
+  proxies[p]=ENV[p].strip
+end
+unless proxies.empty?
+  # Hack up /etc/environment to hold our proxy environment info
+  template "/etc/environment" do
+    source "environment.erb"
+    variables(:values => proxies)
+  end
+
+  template "/etc/profile.d/proxy.sh" do
+    source "proxy.sh.erb"
+    variables(:values => proxies)
+  end
+
+  case node["platform"]
+  when "redhat","centos"
+    template "/etc/yum.conf" do
+      source "yum.conf.erb"
+      variables(
+                :distro => node["platform"],
+                :proxy => proxies["http_proxy"]
+                )
+    end
+    bash "Disable fastestmirrors plugin" do
+      code "sed -i '/enabled/ s/1/0/' /etc/yum/pluginconf.d/fastestmirror.conf"
+    end
+  end
+end
 
 file "/tmp/install_pkgs" do
   action :nothing
@@ -276,7 +304,7 @@ bash "create crowbar user for postgres" do
   not_if "sudo -H -u postgres -- psql postgres -tAc \"SELECT 1 FROM pg_roles WHERE rolname='crowbar'\" |grep -q 1"
 end
 
-["bundler","net-http-digest_auth","json","cstruct"].each do |g|
+["bundler","net-http-digest_auth","json","cstruct","builder"].each do |g|
   gem_package g
 end
 

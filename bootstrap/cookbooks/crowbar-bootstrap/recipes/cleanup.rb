@@ -15,3 +15,7 @@ end
 service "postgresql" do
   action :stop
 end
+
+file "/etc/environment" do
+  action :delete
+end

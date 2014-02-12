@@ -24,5 +24,8 @@ if [[ ! -e /etc/crowbar.install.key ]]; then
         exit 1
     fi
     echo "machine-install:$key" >/etc/crowbar.install.key
+    cat >/etc/profile.d/crowbar-key.sh <<EOF
+export CROWBAR_KEY=$(cat /etc/crowbar.install.key)
+EOF
     rm "/tmp/.crowbar_in_bootstrap"
 fi

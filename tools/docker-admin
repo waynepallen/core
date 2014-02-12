@@ -115,4 +115,5 @@ mkdir -p /root/.ssh
 printf "%s\n" "$SSH_PUBKEY" >> /root/.ssh/authorized_keys
 
 [[ $1 ]] && "$@"
+. /etc/profile
 /bin/bash -i
