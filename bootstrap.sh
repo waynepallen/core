@@ -1,14 +1,14 @@
 #!/bin/bash
 set -e
 # Figure out what we are running on.
-if [[ -f /etc/lsb-release ]]; then
-    . /etc/lsb-release
+if [[ -f /etc/system-release ]]; then
+    read DISTRIB_ID _t DISTRIB_RELEASE rest < /etc/system-release
 elif [[ -f /etc/os-release ]]; then
     . /etc/os-release
     DISTRIB_ID="$ID"
     DISTRIB_RELEASE="$VERSION_ID"
-elif [[ -f /etc/system-release ]]; then
-    read DISTRIB_ID _t DISTRIB_RELEASE rest < /etc/system-release
+elif [[ -f /etc/lsb-release ]]; then
+    . /etc/lsb-release
 else
     echo "Cannot figure out what we are running on!"
 fi
