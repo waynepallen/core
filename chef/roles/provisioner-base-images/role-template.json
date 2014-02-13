@@ -20,7 +20,7 @@
                         "initrd": "images/pxeboot/initrd.img",
                         "kernel": "images/pxeboot/vmlinuz",
                         "append": "method=%os_install_site%",
-                        "online_mirror": "http://mirror.centos.org/centos/6/"
+                        "online_mirror": "http://mirrors.kernel.org/centos/6/"
                     },
                     "suse-11.2": {
                         "initrd": "boot/x86_64/loader/initrd",

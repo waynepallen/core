@@ -83,6 +83,19 @@ node.normal["crowbar"]["provisioner"]["server"]["available_oses"] = Mash.new
 
 # Generate the appropriate pxe and uefi config files for discovery
 # These will only be used if we have not already discovered the system.
+
+package "syslinux"
+
+ruby_block "Install pxelinux.0" do
+  block do
+    ["share","lib"].each do |d|
+      next unless ::File.exists?("/usr/#{d}/syslinux/pxelinux.0")
+      ::Kernel.system("cp /usr/#{d}/syslinux/pxelinux.0 #{discover_dir}")
+    end
+  end
+  not_if do ::File.exists?("#{discover_dir}/pxelinux.0") end
+end
+
 directory "#{pxecfg_dir}" do
   action :create
   recursive true
@@ -113,30 +126,6 @@ template "#{uefi_dir}/elilo.conf" do
             :kernel => "vmlinuz0")
 end
 
-package "syslinux"
-
-ruby_block "Install pxelinux.0" do
-  block do
-    ["share","lib"].each do |d|
-      next unless ::File.exists?("/usr/#{d}/syslinux/pxelinux.0")
-      ::Kernel.system("cp /usr/#{d}/syslinux/pxelinux.0 #{discover_dir}")
-    end
-  end
-  not_if do ::File.exists?("#{discover_dir}/pxelinux.0") end
-end
-
-bash "Install elilo as UEFI netboot loader" do
-  code <<EOC
-cd #{uefi_dir}
-tar xzf '#{tftproot}/files/elilo-3.16-all.tar.gz'
-mv elilo-3.16-x86_64.efi bootx64.efi
-mv elilo-3.16-ia32.efi bootia32.efi
-mv elilo-3.16-ia64.efi bootia64.efi
-rm elilo*.efi elilo*.tar.gz || :
-EOC
-  not_if "test -f '#{uefi_dir}/bootx64.efi'"
-end
-
 node["crowbar"]["provisioner"]["server"]["supported_oses"].each do |os,params|
   web_path = "#{provisioner_web}/#{os}"
   admin_web = os_install_site = "#{web_path}/install"
@@ -150,65 +139,92 @@ node["crowbar"]["provisioner"]["server"]["supported_oses"].each do |os,params|
   # Don't bother for OSes that are not actaully present on the provisioner node.
   next unless (File.directory? os_dir and File.directory? "#{os_dir}/install") or
     ( node["crowbar"]["provisioner"]["server"]["online"] and params["online_mirror"])
-   node.normal["crowbar"]["provisioner"]["server"]["available_oses"][os] = true
-
-  # Index known barclamp repositories for this OS
+  node.normal["crowbar"]["provisioner"]["server"]["available_oses"][os] = true
   node.normal["crowbar"]["provisioner"]["server"]["repositories"][os] = Mash.new
-  if File.exists? "#{os_dir}/crowbar-extra" and File.directory? "#{os_dir}/crowbar-extra"
-    Dir.foreach("#{os_dir}/crowbar-extra") do |f|
-      next unless File.symlink? "#{os_dir}/crowbar-extra/#{f}"
-      node.normal["crowbar"]["provisioner"]["server"]["repositories"][os][f] = Mash.new
-      case
-      when os =~ /(ubuntu|debian)/
-        bin="deb #{provisioner_web}/#{os}/crowbar-extra/#{f} /"
-        src="deb-src #{provisioner_web}/#{os}/crowbar-extra/#{f} /"
-         node.normal["crowbar"]["provisioner"]["server"]["repositories"][os][f][bin] = true if
-          File.exists? "#{os_dir}/crowbar-extra/#{f}/Packages.gz"
-         node.normal["crowbar"]["provisioner"]["server"]["repositories"][os][f][src] = true if
-          File.exists? "#{os_dir}/crowbar-extra/#{f}/Sources.gz"
-      when os =~ /(redhat|centos|suse)/
-        bin="baseurl=#{provisioner_web}/#{os}/crowbar-extra/#{f}"
-         node.normal["crowbar"]["provisioner"]["server"]["repositories"][os][f][bin] = true
-        else
-          raise ::RangeError.new("Cannot handle repos for #{os}")
-      end
-    end
-  end
 
-  if  node["crowbar"]["provisioner"]["server"]["online"]
-    # This needs to be less fragile.
+  # Figure out what package type the OS takes.  This is relatively hardcoded.
+  pkgtype = case
+            when os =~ /^(ubuntu|debian)/ then "debs"
+            when os =~ /^(redhat|centos|suse)/ then "rpms"
+            else raise "Unknown OS type #{os}"
+            end
+  # If we are running in online mode, we need to do a few extra tasks.
+  if node["crowbar"]["provisioner"]["server"]["online"]
+    # This information needs to be saved much earlier.
     Dir.glob("/opt/opencrowbar/*/crowbar.yml").each do |yml_file|
       bc = YAML.load_file(yml_file)
-      if bc["debs"]
-        bc["debs"]["repos"].each do |repo|
-          unless node["crowbar"]["provisioner"]["server"]["repositories"][os]["online"]
-            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"] = Mash.new
-          end
-           node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"][repo] = true
-        end if bc["debs"]["repos"]
-        bc["debs"][os]["repos"].each do |repo|
-          unless node["crowbar"]["provisioner"]["server"]["repositories"][os]["online"]
-            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"] = Mash.new
-          end
+
+      # Grab any extra_files that we may need.
+      bc["extra_files"].each do |f|
+        src, dest = f.strip.split(" ",2)
+        target_dir = "#{tftproot}/files/#{dest}"
+        target = "#{target_dir}/#{src.split("/")[-1]}"
+        next if File.exists?(target)
+        Chef::Log.info("Installing extra file '#{src}' into '#{target}'")
+        directory target_dir do
+          action :create
+          recursive true
+        end
+
+        bash "#{target}: Fetch #{src}" do
+          code "curl -fgL -o '#{target}' '#{src}'"
+        end
+
+      end if bc["extra_files"]
+
+      # Populate our known online repos.
+      if bc[pkgtype]
+        bc[pkgtype]["repos"].each do |repo|
+          node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"] ||= Mash.new
           node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"][repo] = true
-        end if (bc["debs"][os]["repos"] rescue nil)
-      end if os =~ /(ubuntu|debian)/
-      if bc["rpms"]
-        bc["rpms"]["repos"].each do |repo|
-          unless node["crowbar"]["provisioner"]["server"]["repositories"][os]["online"]
-            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"] = Mash.new
-          end
+        end if bc[pkgtype]["repos"]
+        bc[pkgtype][os]["repos"].each do |repo|
+          node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"] ||= Mash.new
           node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"][repo] = true
-        end if bc["rpms"]["repos"]
-        bc["rpms"][os]["repos"].each do |repo|
-          unless node["crowbar"]["provisioner"]["server"]["repositories"][os]["online"]
-            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"] = Mash.new
+        end if (bc[pkgtype][os]["repos"] rescue nil)
+      end
+      # Download and create local packages repositories for any raw_pkgs for this OS.
+      if (bc[pkgtype][os]["raw_pkgs"] rescue nil)
+        destdir = "#{os_dir}/crowbar-extra/raw_pkgs"
+
+        directory destdir do
+          action :create
+          recursive true
+        end
+        bash "Delete #{destdir}/gen_meta" do
+          code "rm -f #{destdir}/gen_meta"
+          action :nothing
+        end
+
+        bash "Update package metadata in #{destdir}" do
+          cwd destdir
+          action :nothing
+          notifies :run, "bash[Delete #{destdir}/gen_meta]"
+          code case pkgtype
+               when "debs" then "dpkg-scanpackages . |gzip -9 >Packages.gz"
+               when "rpms" then "createrepo ."
+               else raise "Cannot create package metadata for #{pkgtype}"
+               end
+        end
+
+        file "#{destdir}/gen_meta" do
+          action :nothing
+          notifies :run, "bash[Update package metadata in #{destdir}]"
+        end
+
+        bc[pkgtype][os]["raw_pkgs"].each do |src|
+          dest = "#{destdir}/#{src.split('/')[-1]}"
+          bash "#{destdir}: Fetch #{src}" do
+            code "curl -fgL -o '#{dest}' '#{src}'"
+            notifies :create, "file[#{destdir}/gen_meta]"
+            not_if "test -f '#{dest}'"
           end
-          node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["online"][repo] = true
-        end if (bc["rpms"][os]["repos"] rescue nil)
-      end if os =~ /(centos|redhat)/
+      end
+      end
+
     end
 
+    # Locally cache the kernel and initrd pairs for each OS we want to install in online mode.
     if params["online_mirror"]
       directory "#{os_dir}/install/#{initrd.split('/')[0...-1].join('/')}" do
         recursive true
@@ -234,11 +250,36 @@ node["crowbar"]["provisioner"]["server"]["supported_oses"].each do |os,params|
         bash "#{os}: fetch #{k}" do
           code <<EOC
 set -x
-export http_proxy=http://127.0.0.1:8123/
 curl -sfL -o '#{os_dir}/install/#{k}.new' '#{v}' && \
 mv '#{os_dir}/install/#{k}.new' '#{os_dir}/install/#{k}'
 EOC
           not_if "test -f '#{os_dir}/install/#{k}'"
+        end
+      end
+    end
+  end
+
+  # Index known barclamp repositories for this OS
+  ruby_block "Index the current local package repositories" do
+    block do
+      if File.exists? "#{os_dir}/crowbar-extra" and File.directory? "#{os_dir}/crowbar-extra"
+        Dir.glob("#{os_dir}/crowbar-extra/*") do |f|
+          reponame = f.split("/")[-1]
+          node.normal["crowbar"]["provisioner"]["server"]["repositories"][os][reponame] = Mash.new
+          case
+          when os =~ /(ubuntu|debian)/
+            bin="deb #{provisioner_web}/#{os}/crowbar-extra/#{reponame} /"
+            src="deb-src #{provisioner_web}/#{os}/crowbar-extra/#{reponame} /"
+            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os][reponame][bin] = true if
+              File.exists? "#{os_dir}/crowbar-extra/#{reponame}/Packages.gz"
+            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os][reponame][src] = true if
+              File.exists? "#{os_dir}/crowbar-extra/#{reponame}/Sources.gz"
+          when os =~ /(redhat|centos|suse)/
+            bin="baseurl=#{provisioner_web}/#{os}/crowbar-extra/#{reponame}"
+            node.normal["crowbar"]["provisioner"]["server"]["repositories"][os][reponame][bin] = true
+          else
+            raise ::RangeError.new("Cannot handle repos for #{os}")
+          end
         end
       end
     end
@@ -264,7 +305,7 @@ EOC
   if  node["crowbar"]["provisioner"]["server"]["use_serial_console"]
     append << " console=tty0 console=ttyS1,115200n8"
   end
-  
+
   # Add per-OS base repos that may not have been added above.
 
   unless node["crowbar"]["provisioner"]["server"]["boot_specs"]
@@ -293,3 +334,14 @@ EOC
   end
 end
 
+bash "Install elilo as UEFI netboot loader" do
+  code <<EOC
+cd #{uefi_dir}
+tar xzf '#{tftproot}/files/elilo-3.16-all.tar.gz'
+mv elilo-3.16-x86_64.efi bootx64.efi
+mv elilo-3.16-ia32.efi bootia32.efi
+mv elilo-3.16-ia64.efi bootia64.efi
+rm elilo*.efi elilo*.tar.gz || :
+EOC
+  not_if "test -f '#{uefi_dir}/bootx64.efi'"
+end
