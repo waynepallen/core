@@ -7,6 +7,6 @@ Feature: Network Ranges
     Then the page returns {integer:200}
 
   Scenario: REST JSON check
-    When REST gets 'api/v2/admin/network_ranges/admin'
+    When REST requests the "api/v2/networks/admin/network_ranges/admin" page
     Then the {object:networkrange} is properly formatted
   
