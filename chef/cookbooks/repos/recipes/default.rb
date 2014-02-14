@@ -25,12 +25,50 @@ online = node[:crowbar][:provisioner][:server][:online] rescue nil
 proxy = node[:crowbar][:provisioner][:server][:proxy]
 webserver = node[:crowbar][:provisioner][:server][:webserver]
 
+# Once the local proxy service is set up, we need to use it.
+proxies = {
+  "http_proxy" => "http://#{proxy}",
+  "https_proxy" => "http://#{proxy}",
+  "no_proxy" => (["127.0.0.1","::1"] + node.all_addresses.map{|a|a.network.to_s}.sort).join(",")
+}
+
 template "/etc/gemrc" do
   variables(:online => online,
             :webserver => webserver,
             :proxy => proxy)
 end
 
+# Set up proper environments and stuff
+template "/etc/environment" do
+  source "environment.erb"
+  variables(:values => proxies)
+end
+
+template "/etc/profile.d/proxy.sh" do
+  source "proxy.sh.erb"
+  variables(:values => proxies)
+end
+
+case node["platform"]
+when "ubuntu","debian"
+  template "/etc/apt/apt.conf.d/00-proxy" do
+    source "apt-proxy.erb"
+    variables(:proxy => proxy)
+  end
+when "redhat","centos"
+  bash "add yum proxy" do
+    code <<EOC
+grep -q -F 'proxy=http://#{proxy}' /etc/yum.conf && exit 0
+if ! grep -q '^proxy=http' /etc/yum.conf; then
+  echo 'proxy=http://#{proxy}' >> /etc/yum.conf
+else
+    sed -i '/^proxy/ s@http://.*@http://#{proxy}@' /etc/yum.conf
+fi
+EOC
+  end
+else
+  raise "Cannot handle configuring the proxy for OS #{node["platform"]}"
+end
 unless repositories
   Chef::Log.info("Provisioner: No repositories for #{os_token}")
 end
@@ -43,10 +81,6 @@ when "ubuntu","debian"
   file "/etc/apt/sources.list" do
     action :delete
   end unless online
-  template "/etc/apt/apt.conf.d/00-proxy" do
-    source "apt-proxy.erb"
-    variables(:proxy => proxy)
-  end
   repositories.each do |repo,urls|
     case
     when repo == "base"
@@ -77,10 +111,6 @@ when "redhat","centos"
   bash "update software sources" do
     code "yum clean expire-cache"
     action :nothing
-  end
-  bash "add yum proxy" do
-    code "echo proxy=http://#{proxy} >> /etc/yum.conf"
-    not_if "grep -q '^proxy=http' /etc/yum.conf"
   end
   bash "Disable fastestmirror plugin" do
     code "sed -i '/^enabled/ s/1/0/' /etc/yum/pluginconf.d/fastestmirror.conf"

@@ -25,14 +25,12 @@ web_port = node["crowbar"]["provisioner"]["server"]["web_port"]
 provisioner_web="http://#{v4addr.addr}:#{web_port}"
 node.normal["crowbar"]["provisioner"]["server"]["webserver"]=provisioner_web
 
-
 # Once the local proxy service is set up, we need to use it.
 proxies = {
   "http_proxy" => "http://#{node["crowbar"]["provisioner"]["server"]["proxy"]}",
   "https_proxy" => "http://#{node["crowbar"]["provisioner"]["server"]["proxy"]}",
   "no_proxy" => (["127.0.0.1","::1"] + node.all_addresses.map{|a|a.network.to_s}.sort).join(",")
 }
-
 
 node.set["apache"]["listen_ports"] = [ node["crowbar"]["provisioner"]["server"]["web_port"], 8123 ]
 include_recipe "apache2"
