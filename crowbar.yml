@@ -111,8 +111,11 @@ debs:
     - less
     - efibootmgr
     - iputils-ping
+    # Package mangling stuff
     - createrepo
     - dpkg-dev
+    # To let us extract ISO images without loopback mounting them.
+    - libcdio-utils
   build_pkgs:
     - bison
     - flex
@@ -385,8 +388,11 @@ rpms:
     - libossp-uuid16
     - libecpg6
     - sudo
+    # Repo and iso mangling stuff
     - createrepo
     - dpkg-devel
+    # To extract ISO images without needing a loopback mount.
+    - cdw
   build_pkgs:
     - make
     - gcc

@@ -81,21 +81,6 @@ unless node.normal["crowbar"]["provisioner"]["server"]["repositories"]
 end
 node.normal["crowbar"]["provisioner"]["server"]["available_oses"] = Mash.new
 
-# Generate the appropriate pxe and uefi config files for discovery
-# These will only be used if we have not already discovered the system.
-
-package "syslinux"
-
-ruby_block "Install pxelinux.0" do
-  block do
-    ["share","lib"].each do |d|
-      next unless ::File.exists?("/usr/#{d}/syslinux/pxelinux.0")
-      ::Kernel.system("cp /usr/#{d}/syslinux/pxelinux.0 #{discover_dir}")
-    end
-  end
-  not_if do ::File.exists?("#{discover_dir}/pxelinux.0") end
-end
-
 directory "#{pxecfg_dir}" do
   action :create
   recursive true
@@ -131,16 +116,42 @@ node["crowbar"]["provisioner"]["server"]["supported_oses"].each do |os,params|
   admin_web = os_install_site = "#{web_path}/install"
   crowbar_repo_web="#{web_path}/crowbar-extra"
   os_dir="#{tftproot}/#{os}"
+  os_install_dir = "#{os_dir}/install"
+  iso_dir="#{tftproot}/isos"
   os_codename=node["lsb"]["codename"]
   role="#{os}_install"
   initrd = params["initrd"]
   kernel = params["kernel"]
 
   # Don't bother for OSes that are not actaully present on the provisioner node.
-  next unless (File.directory? os_dir and File.directory? "#{os_dir}/install") or
-    ( node["crowbar"]["provisioner"]["server"]["online"] and params["online_mirror"])
+  next unless File.file?("#{iso_dir}/#{params["iso_file"]}") or
+    File.file?("#{os_install_dir}/.#{params["iso_file"]}.crowbar_canary")
   node.normal["crowbar"]["provisioner"]["server"]["available_oses"][os] = true
   node.normal["crowbar"]["provisioner"]["server"]["repositories"][os] = Mash.new
+
+  if File.file?("#{iso_dir}/#{params["iso_file"]}") &&
+      !File.file?("#{os_install_dir}/.#{params["iso_file"]}.crowbar_canary")
+    # Extract the ISO install image.
+    # Do so in such a way the we avoid using loopback mounts and get
+    # proper filenames in the end.
+    bash "Extract #{params["iso_file"]}" do
+      code <<EOC
+set -e
+[[ -d "#{os_install_dir}.extracting" ]] && rm -rf "#{os_install_dir}.extracting"
+mkdir -p "#{os_install_dir}.extracting"
+while read fsize fname; do
+  [[ $fname = ${fname#/} ]] && continue
+  dname="#{os_install_dir}.extracting/${fname#/}"
+  [[ -d $dname ]] && continue
+  mkdir -p "${dname%/*}"
+  iso-read -i "#{iso_dir}/#{params["iso_file"]}" -e "$fname" -o "$dname"
+done < <(iso-info --no-header -f -i "#{iso_dir}/#{params["iso_file"]}" |tac)
+touch "#{os_install_dir}.extracting/.#{params["iso_file"]}.crowbar_canary"
+[[ -d "#{os_install_dir}" ]] && rm -rf "#{os_install_dir}"
+mv "#{os_install_dir}.extracting" "#{os_install_dir}"
+EOC
+    end
+  end
 
   # Figure out what package type the OS takes.  This is relatively hardcoded.
   pkgtype = case
@@ -219,48 +230,13 @@ node["crowbar"]["provisioner"]["server"]["supported_oses"].each do |os,params|
             notifies :create, "file[#{destdir}/gen_meta]"
             not_if "test -f '#{dest}'"
           end
-      end
-      end
-
-    end
-
-    # Locally cache the kernel and initrd pairs for each OS we want to install in online mode.
-    if params["online_mirror"]
-      directory "#{os_dir}/install/#{initrd.split('/')[0...-1].join('/')}" do
-        recursive true
-      end
-      case
-      when os =~ /^(ubuntu|debian)/
-        raise ArgumentError.new("Cannot configure provisioner for online deploy of #{os}: missing codename") unless params["codename"]
-        netboot_urls = {
-          initrd => "#{params["online_mirror"]}/dists/#{params["codename"]}/main/installer-amd64/current/images/#{initrd.split('/')[1..-1].join('/')}",
-          kernel => "#{params["online_mirror"]}/dists/#{params["codename"]}/main/installer-amd64/current/images/#{kernel.split('/')[1..-1].join('/')}"
-        }
-        os_install_site = params["online_mirror"]
-      when os =~/^(centos|redhat)/
-        netboot_urls = {
-          initrd => "#{params["online_mirror"]}/os/x86_64/#{initrd}",
-          kernel => "#{params["online_mirror"]}/os/x86_64/#{kernel}"
-        }
-        os_install_site = "#{params["online_mirror"]}/os/x86_64"
-      else
-        raise ArgumentError.new("Cannot configure provisioner for online deploy of #{os}: missing codepaths.")
-      end
-      netboot_urls.each do |k,v|
-        bash "#{os}: fetch #{k}" do
-          code <<EOC
-set -x
-curl -sfL -o '#{os_dir}/install/#{k}.new' '#{v}' && \
-mv '#{os_dir}/install/#{k}.new' '#{os_dir}/install/#{k}'
-EOC
-          not_if "test -f '#{os_dir}/install/#{k}'"
         end
       end
     end
   end
 
   # Index known barclamp repositories for this OS
-  ruby_block "Index the current local package repositories" do
+  ruby_block "Index the current local package repositories for #{os}" do
     block do
       if File.exists? "#{os_dir}/crowbar-extra" and File.directory? "#{os_dir}/crowbar-extra"
         Dir.glob("#{os_dir}/crowbar-extra/*") do |f|
@@ -319,19 +295,38 @@ EOC
   node.normal["crowbar"]["provisioner"]["server"]["boot_specs"][os]["os_install_site"] = os_install_site
   node.normal["crowbar"]["provisioner"]["server"]["boot_specs"][os]["kernel_params"] = append
 
-  case
-  when (/^ubuntu/ =~ os and File.exists?("#{tftproot}/#{os}/install/dists"))
-     node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["base"] = { "#{provisioner_web}/#{os}/install" => true }
-  when /^(suse)/ =~ os
-     node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["base"] = { "baseurl=#{provisioner_web}/#{os}/install" => true }
-  when /^(redhat|centos)/ =~ os
-    # Add base OS install repo for redhat/centos
-    if ::File.exists? "#{tftproot}/#{os}/install/repodata"
-       node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["base"] = { "baseurl=#{provisioner_web}/#{os}/install" => true }
-    elsif ::File.exists? "#{tftproot}/#{os}/install/Server/repodata"
-       node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["base"] = { "baseurl=#{provisioner_web}/#{os}/install/Server" => true }
+  ruby_block "Set up local base OS install repos for #{os}" do
+    block do
+      case
+      when (/^ubuntu/ =~ os and File.exists?("#{tftproot}/#{os}/install/dists"))
+        node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["base"] = { "#{provisioner_web}/#{os}/install" => true }
+      when /^(suse)/ =~ os
+        node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["base"] = { "baseurl=#{provisioner_web}/#{os}/install" => true }
+      when /^(redhat|centos)/ =~ os
+        # Add base OS install repo for redhat/centos
+        if ::File.exists? "#{tftproot}/#{os}/install/repodata"
+          node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["base"] = { "baseurl=#{provisioner_web}/#{os}/install" => true }
+        elsif ::File.exists? "#{tftproot}/#{os}/install/Server/repodata"
+          node.normal["crowbar"]["provisioner"]["server"]["repositories"][os]["base"] = { "baseurl=#{provisioner_web}/#{os}/install/Server" => true }
+        end
+      end
     end
   end
+end
+
+# Generate the appropriate pxe and uefi config files for discovery
+# These will only be used if we have not already discovered the system.
+
+package "syslinux"
+
+ruby_block "Install pxelinux.0" do
+  block do
+    ["share","lib"].each do |d|
+      next unless ::File.exists?("/usr/#{d}/syslinux/pxelinux.0")
+      ::Kernel.system("cp /usr/#{d}/syslinux/pxelinux.0 #{discover_dir}")
+    end
+  end
+  not_if do ::File.exists?("#{discover_dir}/pxelinux.0") end
 end
 
 bash "Install elilo as UEFI netboot loader" do
