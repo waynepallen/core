@@ -522,6 +522,12 @@ class Role < CrowbarProxy
 
 end
 
+class DeploymentRole < CrowbarProxy
+  def self.path
+    "api/v2/deployment_roles"
+  end
+end
+
 class NodeRole < CrowbarProxy
   def self.path
     "api/v2/node_roles"
