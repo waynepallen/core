@@ -26,7 +26,7 @@ Feature: Support UI
   Scenario: Find Mark in Log
     While local
     Given I mark the logs with "REMAIN CALM"
-    When I inspect the "/var/log/crowbar/development.log" for "MARK >>>>>"
+    When I inspect the log for "MARK >>>>>"
     Then I should grep "MARK >>>>>"
       And I should grep "REMAIN_CALM"
       And I should grep "<<<<< KRAM"
@@ -61,10 +61,10 @@ Feature: Support UI
 
   Scenario: Settings Change Visible Off
     Given I set {object:user} setting "debug" to "false"
-    When I go to the "docs/devguide.md" page
+    When I go to the "docs/devguide/README.md" page
     Then I should not see heading {bdd:crowbar.i18n.debug}
 
   Scenario: Settings Change Visible On
     Given I set {object:user} setting "debug" to "true"
-    When I go to the "docs/devguide.md" page
+    When I go to the "docs/devguide/README.md" page
     Then I should see heading {bdd:crowbar.i18n.debug}

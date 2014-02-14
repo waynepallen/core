@@ -66,6 +66,12 @@ BDD selects the `default.config` file automatically.  You can choose which confi
     <td>If undefined, this behavior is turned off.  If defined, BDD does a web request to URL with debug information to make it easier to find matching steps in the log.  For Crowbar, the url is `utils/marker`</td>
   </tr>
   <tr>
+    <td>marker_log/td>
+    <td>no</td>
+    <td>/var/log/crowbar/development.log</td>
+    <td>Should point to the path where you log API calls</td>
+  </tr>
+  <tr>
     <td>cli</td>
     <td>no</td>
     <td>undefined</td>
