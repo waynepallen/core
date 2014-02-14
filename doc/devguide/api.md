@@ -239,8 +239,10 @@ POST api/v2/node\_roles
 
 
 Now commit the snapshot to send it to the annealer - which will sort out the dependencies and push them to the node
+
 The snapshot_id reference can be read from the deployment instance
-PUT api/v2/snapshot/snapshot_id/commit
+
+	PUT api/v2/snapshot/snapshot_id/commit
 
 Using the API python bindings this looks like
 
