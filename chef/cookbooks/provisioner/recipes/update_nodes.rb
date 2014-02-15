@@ -49,8 +49,8 @@ new_clients = {}
   }
   Chef::Log.info("DHCP: #{mnode_name} Updating PXE and UEFI boot for bootenv #{bootenv}")
   # Default to creating appropriate boot config files for Sledgehammer.
-  case
-  when bootenv == "sledgehammer"
+  case bootenv
+  when "sledgehammer"
     pxe_params = node["crowbar"]["provisioner"]["server"]["sledgehammer_kernel_params"].split(' ')
     pxe_params << "crowbar.fqdn=#{mnode_name}"
     provisioner_bootfile mnode_name do
@@ -76,19 +76,27 @@ new_clients = {}
                 :v4_addr => node.address("admin",IP::IP4).addr
                 )
     end
-  when bootenv == "local"
+  when "local"
     provisioner_bootfile mnode_name do
       bootenv "sledgehammer"
       address v4addr
       action :remove
     end
-  when bootenv == "ubuntu-12.04-install"
-    provisioner_ubuntu mnode_name do
+  when "ubuntu-12.04-install"
+    provisioner_debian mnode_name do
+      distro "ubuntu"
       version "12.04"
       address v4addr
       target mnode_name
       action :add
     end
+  when "centos-6.5-install"
+    provisioner_redhat mnode_name do
+      distro "centos"
+      version "6.5"
+      address v4addr
+      target mnode_name
+      action :add
   else
     Chef::Log.info("Not messing with boot files for bootenv #{bootenv}")
   end
