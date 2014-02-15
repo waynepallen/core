@@ -97,6 +97,7 @@ new_clients = {}
       address v4addr
       target mnode_name
       action :add
+    end
   else
     Chef::Log.info("Not messing with boot files for bootenv #{bootenv}")
   end
