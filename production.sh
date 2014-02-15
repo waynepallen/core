@@ -81,6 +81,14 @@ provisioner_server_template="
   }
 }"
 
+provisioner_os_install_template='
+{"template": {
+  "crowbar": {
+    "target_os": "centos-6.5"
+    }
+  }
+}'
+
 admin_node="
 {
   \"name\": \"$FQDN\",
@@ -97,6 +105,7 @@ ip_re='([0-9a-f.:]+/[0-9]+)'
 # Update the provisioner server template to use whatever
 # proxy the admin node should be using.
 crowbar roles update provisioner-server "$provisioner_server_template"
+crowbar roles update provisioner-os-install "$provisioner_os_install_template"
 
 # Create a stupid default admin network
 crowbar networks create "$admin_net"
