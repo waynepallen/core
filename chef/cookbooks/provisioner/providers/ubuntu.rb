@@ -14,7 +14,7 @@
 #
 
 action :add do
-  os = "ubuntu-#{new_resource.version}"
+  os = "#{new_resource.distro}-#{new_resource.version}"
   proxy = node["crowbar"]["provisioner"]["server"]["proxy"]
   repos = node["crowbar"]["provisioner"]["server"]["repositories"][os]
   params = node["crowbar"]["provisioner"]["server"]["boot_specs"][os]
@@ -27,13 +27,19 @@ action :add do
   keys = node["crowbar"]["provisioner"]["server"]["access_keys"].values.sort.join($/)
   os_dir = "#{tftproot}/#{os}"
   mnode_name = new_resource.name
-  web_path = "#{provisioner_web}/#{os}"
+  node_dir = "#{tftproot}/nodes/#{mnode_name}"
+  web_path = "#{provisioner_web}/nodes/#{mnode_name}"
   crowbar_repo_web="#{web_path}/crowbar-extra"
   admin_web="#{web_path}/install"
-  append = "url=#{web_path}/#{mnode_name}.seed netcfg/get_hostname=#{mnode_name} #{params["kernel_params"]}"
+  append = "url=#{web_path}/seed netcfg/get_hostname=#{mnode_name} #{params["kernel_params"]}"
   v4addr = new_resource.address
 
-  template "#{os_dir}/#{mnode_name}.seed" do
+  directory node_dir do
+    action :create
+    recursive true
+  end
+
+  template "#{node_dir}/seed" do
     mode 0644
     owner "root"
     group "root"
@@ -48,7 +54,7 @@ action :add do
               :proxy => "http://#{proxy}/")
   end
 
-  template "#{os_dir}/#{mnode_name}-post-install.sh" do
+  template "#{node_dir}/post-install.sh" do
     mode 0644
     owner "root"
     group "root"
@@ -64,7 +70,7 @@ action :add do
               :web_path => web_path)
   end
 
-  template "#{os_dir}/crowbar_join.sh" do
+  template "#{node_dir}/crowbar_join.sh" do
     mode 0644
     owner "root"
     group "root"
