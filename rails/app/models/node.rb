@@ -261,6 +261,7 @@ class Node < ActiveRecord::Base
     self.alive = false
     self.bootenv = "sledgehammer"
     self.target = Role.where(:name => "crowbar-managed-node").first
+    self.save!
     self.reboot
   end
 
@@ -268,7 +269,20 @@ class Node < ActiveRecord::Base
     self.alive = false
     self.bootenv = "local"
     self.target = nil
+    self.save
     self.reboot
+  end
+
+  def redeploy!
+    Node.transaction do
+      self.bootenv = "sledgehammer"
+      node_roles.each do |nr|
+        nr.run_count = 0
+        nr.save!
+      end
+      self.save!
+      self.reboot
+    end
   end
 
   def target
