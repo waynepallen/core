@@ -18,8 +18,11 @@
 
 node.set["apache"]["listen_ports"] = [ node["crowbar"]["provisioner"]["server"]["web_port"], 8123 ]
 include_recipe "apache2"
+include_recipe "apache2::mod_ssl"
 include_recipe "apache2::mod_proxy"
 include_recipe "apache2::mod_proxy_http"
+include_recipe "apache2::mod_proxy_connect"
+apache_module "ssl"
 apache_module "cache"
 apache_module "disk_cache"
 
