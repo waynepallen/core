@@ -115,7 +115,7 @@ debs:
     - createrepo
     - dpkg-dev
     # To let us extract ISO images without loopback mounting them.
-    - libcdio-utils
+    - bsdtar
   build_pkgs:
     - bison
     - flex
@@ -194,6 +194,7 @@ rpms:
     repos:
       - rpm http://mirrors.servercentral.net/fedora/epel/6/i386/epel-release-6-8.noarch.rpm
       - rpm http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-redhat93-9.3-1.noarch.rpm
+      - bare bsdtar 20 http://download.opensuse.org/repositories/home:/AndreasStieger:/branches:/Archiving/CentOS_CentOS-6/
     build_pkgs:
       - libcurl-devel
       - yum-plugin-downloadonly
@@ -239,6 +240,7 @@ rpms:
     repos:
       - rpm http://mirrors.servercentral.net/fedora/epel/6/i386/epel-release-6-8.noarch.rpm
       - rpm http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-redhat93-9.3-1.noarch.rpm
+      - bare bsdtar 20 http://download.opensuse.org/repositories/home:/AndreasStieger:/branches:/Archiving/CentOS_CentOS-6/
     build_pkgs:
       - libcurl-devel
       - yum-plugin-downloadonly
@@ -392,7 +394,7 @@ rpms:
     - createrepo
     - dpkg-devel
     # To extract ISO images without needing a loopback mount.
-    - cdw
+    - bsdtar
   build_pkgs:
     - make
     - gcc

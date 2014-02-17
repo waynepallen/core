@@ -36,36 +36,27 @@ pxecfg_dir="#{discover_dir}/pxelinux.cfg"
 uefi_dir=discover_dir
 pxecfg_default="#{pxecfg_dir}/default"
 
-unless node["crowbar"]["provisioner"]["server"]["sledgehammer_kernel_params"]
-  # FIXME: What is the purpose of this, really? If pxecfg_default does not exist
-  # the root= parameters will not get appended to the kernel commandline. (Luckily
-  # we don't need those with the SLES base sledgehammer)
-  # Later on pxecfg_default will even be replace with a link to "discovery"
-  # Probably this pxecfg_default check can go a way and we can just unconditionally
-  # append the root= parameters?
-  # ANSWER:  This hackery exists to automatically do The Right Thing in handling
-  # CentOS 5 vs. CentOS 6 based sledgehammer images.
-  sledge_args = Array.new
-  sledge_args << "rootflags=loop"
-  sledge_args << "initrd=initrd0.img"
-  sledge_args << "root=live:/sledgehammer.iso"
-  sledge_args << "rootfstype=auto"
-  sledge_args << "ro"
-  sledge_args << "liveimg"
-  sledge_args << "rd_NO_LUKS"
-  sledge_args << "rd_NO_MD"
-  sledge_args << "rd_NO_DM"
-  if node["crowbar"]["provisioner"]["server"]["use_serial_console"]
-    sledge_args << "console=tty0 console=ttyS1,115200n8"
-  end
-  sledge_args << "provisioner.web=http://#{v4addr.addr}:#{web_port}"
-  # This should not be hardcoded!
-  sledge_args << "crowbar.web=http://#{v4addr.addr}:3000"
-  sledge_args << "crowbar.dns.domain=#{node["crowbar"]["dns"]["domain"]}"
-  sledge_args << "crowbar.dns.servers=#{node["crowbar"]["dns"]["nameservers"].join(',')}"
-
-  node.normal["crowbar"]["provisioner"]["server"]["sledgehammer_kernel_params"] = sledge_args.join(" ")
+# Build base sledgehammer kernel args
+sledge_args = Array.new
+sledge_args << "rootflags=loop"
+sledge_args << "initrd=initrd0.img"
+sledge_args << "root=live:/sledgehammer.iso"
+sledge_args << "rootfstype=auto"
+sledge_args << "ro"
+sledge_args << "liveimg"
+sledge_args << "rd_NO_LUKS"
+sledge_args << "rd_NO_MD"
+sledge_args << "rd_NO_DM"
+if node["crowbar"]["provisioner"]["server"]["use_serial_console"]
+  sledge_args << "console=tty0 console=ttyS1,115200n8"
 end
+sledge_args << "provisioner.web=http://#{v4addr.addr}:#{web_port}"
+# This should not be hardcoded!
+sledge_args << "crowbar.web=http://#{v4addr.addr}:3000"
+sledge_args << "crowbar.dns.domain=#{node["crowbar"]["dns"]["domain"]}"
+sledge_args << "crowbar.dns.servers=#{node["crowbar"]["dns"]["nameservers"].join(',')}"
+
+node.normal["crowbar"]["provisioner"]["server"]["sledgehammer_kernel_params"] = sledge_args.join(" ")
 append_line = node["crowbar"]["provisioner"]["server"]["sledgehammer_kernel_params"]
 
 # By default, install the same OS that the admin node is running
@@ -129,30 +120,38 @@ node["crowbar"]["provisioner"]["server"]["supported_oses"].each do |os,params|
   node.normal["crowbar"]["provisioner"]["server"]["available_oses"][os] = true
   node.normal["crowbar"]["provisioner"]["server"]["repositories"][os] = Mash.new
 
-  if File.file?("#{iso_dir}/#{params["iso_file"]}") &&
-      !File.file?("#{os_install_dir}/.#{params["iso_file"]}.crowbar_canary")
-    # Extract the ISO install image.
-    # Do so in such a way the we avoid using loopback mounts and get
-    # proper filenames in the end.
-    bash "Extract #{params["iso_file"]}" do
-      code <<EOC
+  # Extract the ISO install image.
+  # Do so in such a way the we avoid using loopback mounts and get
+  # proper filenames in the end.
+  bash "Extract #{params["iso_file"]}" do
+    code <<EOC
 set -e
 [[ -d "#{os_install_dir}.extracting" ]] && rm -rf "#{os_install_dir}.extracting"
 mkdir -p "#{os_install_dir}.extracting"
-while read fsize fname; do
-  [[ $fname = ${fname#/} ]] && continue
-  dname="#{os_install_dir}.extracting/${fname#/}"
-  [[ -d $dname ]] && continue
-  mkdir -p "${dname%/*}"
-  iso-read -i "#{iso_dir}/#{params["iso_file"]}" -e "$fname" -o "$dname"
-done < <(iso-info --no-header -f -i "#{iso_dir}/#{params["iso_file"]}" |tac)
+(cd "#{os_install_dir}.extracting"; bsdtar -x -f "#{iso_dir}/#{params["iso_file"]}")
 touch "#{os_install_dir}.extracting/.#{params["iso_file"]}.crowbar_canary"
 [[ -d "#{os_install_dir}" ]] && rm -rf "#{os_install_dir}"
 mv "#{os_install_dir}.extracting" "#{os_install_dir}"
 EOC
-    end
+    only_if do File.file?("#{iso_dir}/#{params["iso_file"]}") &&
+        !File.file?("#{os_install_dir}/.#{params["iso_file"]}.crowbar_canary") end
   end
 
+  # For CentOS and RHEL, we need to rewrite the package metadata
+  # to make sure it does not refer to packages that do not exist on the first DVD.
+  bash "Rewrite package repo metadata for #{params["iso_file"]}" do
+    cwd os_install_dir
+    code <<EOC
+set -e
+
+mv repodata/*comps*.xml ./comps.xml
+createrepo -g ./comps.xml .
+touch "repodata/.#{params["iso_file"]}.crowbar_canary"
+EOC
+    not_if do File.file?("#{os_install_dir}/repodata/.#{params["iso_file"]}.crowbar_canary") end
+    only_if do os =~ /^(redhat|centos)/ end
+  end
+  
   # Figure out what package type the OS takes.  This is relatively hardcoded.
   pkgtype = case
             when os =~ /^(ubuntu|debian)/ then "debs"
