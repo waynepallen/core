@@ -103,7 +103,8 @@ class BarclampChef::SoloJig < Jig
     node_out_json = File.join(local_tmpdir, "node-out.json")
     out,err,ok = nr.node.scp_from("/var/chef/node-out.json",local_tmpdir)
     unless ok.success?
-      Rails.logger.error("Chef Solo jig run for #{nr.name} did not copy attributes back #{res}")
+      Rails.logger.error("Chef Solo jig run for #{nr.name} did not copy attributes back")
+      nr.runlog = "Out: #{out}\nErr:#{err}"
       nr.state = NodeRole::ERROR
       return finish_run(nr)
     end
