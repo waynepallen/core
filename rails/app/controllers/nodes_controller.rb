@@ -79,10 +79,6 @@ class NodesController < ApplicationController
   def create
     params[:deployment_id] = Deployment.find_key(params[:deployment]).id if params.has_key? :deployment
     params[:deployment_id] ||= 1
-    # deal w/ hint shortcuts  (these are hardcoded but MUST match the imported Attrib list)
-    hint = JSON.parse(params[:hint] || "{}")
-    hint["network-admin"] = {"v4addr"=>params["ip"]} if params.has_key? :ip
-    hint["provisioner-repos"] = {"admin_mac"=>params["mac"]} if params.has_key? :mac
     params.require(:name)
     params.require(:deployment_id)
     @node = Node.create!(params.permit(:name,
@@ -97,6 +93,15 @@ class NodesController < ApplicationController
     unless hint.empty?
       @node.hint = hint
       @node.save!
+    n = Node.create! params
+
+    # deal w/ hint shortcuts  (these are hardcoded but MUST match the imported Attrib list)
+    hint = JSON.parse(params[:hint] || "{}")
+    hint["network-admin"] = {"v4addr"=>params["ip"]} if params.has_key? :ip
+    hint["discovery-client"] = params["mac"] if params.has_key? :mac
+    if hint != {}
+      n.hint = hint
+      n.save!
     end
     render api_show @node
   end
