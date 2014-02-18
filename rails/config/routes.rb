@@ -194,7 +194,9 @@ Crowbar::Application.routes.draw do
             delete "lock", :controller => "users", :action => "unlock"
             put "reset_password", :controller => "users", :action => "reset_password"
           end
+
           resources :dhcps
+
         end # version
       end # api
     end # id constraints

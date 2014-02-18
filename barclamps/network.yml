@@ -33,3 +33,7 @@ attribs:
   - name: 'switches'
     description: 'Connected Networking Switches'
     map: 'ohai/crowbar_ohai/switch_config'
+
+      - name: 'hint-admin-mac'
+        description: 'Hint for Admin MAC address'
+        map: 'admin_mac'
