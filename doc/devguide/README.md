@@ -23,8 +23,9 @@ The following steps are focused on Ubuntu 12.04.03.  Please extend for other pla
     1. SAMBA share: =sudo apt-get install samba=
     1. Passwordless sudo: =sudo sed -ie "s/%sudo\tALL=(ALL:ALL) ALL/%sudo ALL=(ALL) NOPASSWD: ALL/g" /etc/sudoers=
   1. Prep for docker 
-    1. Review [http://docs.docker.io/en/latest/installation/ubuntulinux/](may not be needed in future)
-    1. 'apt-get install git docker-lxc'
+    1. Review [http://docs.docker.io/en/latest/installation/ubuntulinux/]
+        * Using the recommended curl script is the easiest way to install docker
+    1. 'apt-get install git'
     1. allow docker without sudo: =sudo usermod -a -G docker crowbar=
     1. we recommend changing from AUFS to Device Mapper for storage (slower but more native)
        1. =sudo vi /etc/default/docker=
