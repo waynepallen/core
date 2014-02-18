@@ -79,98 +79,78 @@ class ApplicationController < ActionController::Base
     "application/vnd.crowbar.#{ type.to_s.downcase }.#{form}+json; version=2.0"
   end
 
+  def api_wrong_version(params)
+    {
+      :json=> { "message" => I18n.t('api.wrong_version', :version=>params[:version])},
+      :status => 400
+    }
+  end
+
+  def api_not_found(k,t)
+    { :json => {
+        :message => I18n.t('api.not_found', :id=>k, :type=>t.to_s)
+      },
+      :content_type=>cb_content_type(t, "error"),
+      :status => :not_found
+    }
+  end
+
+  def version_ok(params)
+    params[:version].eql?('v2')
+  end
+
   # formats API json output
   # using this makes it easier to update the API format for all models
   def api_index(type, list, link=nil)
-    if params[:version].eql?('v2')
-      return {:json=>list, :content_type=>cb_content_type(type, "list") }
-    else
-      return {
-        :json=> { "message" => I18n.t('api.wrong_version', :version=>params[:version])},
-        :status => 400
-      }
-    end
+    return api_wrong_version(params) unless version_ok(params)
+    return {:json=>list, :content_type=>cb_content_type(type, "list") }
   end
 
   # formats API json for output
   # using this makes it easier to update the API format for all models
   def api_show(type, type_class, key=nil, link=nil, o=nil)
-    if params[:version].eql?('v2')
-      # we've got information to move forward
-      key ||= o.id unless o.nil?
-      key ||= params[:id]
-      o ||= type_class.find_key key
-      if o
-        return {:json=>o, :content_type=>cb_content_type(type, "obj") }
-      else
-        return {
-          :json => {
-            :message => I18n.t('api.not_found', :id=>key, :type=>type.to_s)
-          },
-          :status => :not_found
-        }
-      end
-    else
-      return {:json => {
-          :message => I18n.t('api.wrong_version', :version=>params[:version])
-        },
-        :content_type=>cb_content_type(type, "error"),
-        :status => 400
-      }
-    end
+    return api_wrong_version(params) unless version_ok(params)
+    key ||= o.id unless o.nil?
+    key ||= params[:id]
+    o ||= type_class.find_key key
+    return api_not_found(key,type) unless o
+    return {:json=>o, :content_type=>cb_content_type(type, "obj") }
   end
 
   # formats API for delete
   # using this makes it easier to update the API format for all models
   def api_delete(type, key=nil)
-    if params[:version].eql?('v2')
-      key ||= params[:id]
-      type.destroy type.find_key(key)
-      return {:json => {
-          :message => I18n.t('api.deleted', :id=>key, :obj=>type)
-        },
-        :content_type=>cb_content_type(type, "empty")
-      }
-    else
-      return {:json => {
-          :message => I18n.t('api.wrong_version', :version=>params[:version])
-        },
-        :content_type=>cb_content_type(type, "error"),
-        :status => 400
-      }
-    end
+    return api_wrong_version(params) unless version_ok(params)
+    key ||= params[:id]
+    o = type.find_key(key)
+    type.destroy type.find_key(key)
+    return {:json => {
+        :message => I18n.t('api.deleted', :id=>key, :obj=>type)
+      },
+      :content_type=>cb_content_type(type, "empty")
+    }
   end
 
   def api_update(type, type_class, key=nil, o=nil)
+    return api_wrong_version(params) unless version_ok(params)
     key ||= params[:id]
     o ||= type_class.find_key key
-    if o
-      # Only try to update attributes that the object has and which have changed.
-      to_update = params.reject do |k,v|
-        (!o.has_attribute?(k)) ||  # Ignore things that are not attributes on this object.
-          k.to_sym == :id ||  # IDs can never be changed.
-          o[k] == v  # Ignore anything that has not changed.
-      end
-      o.update_attributes! to_update
-      return api_show type, type_class, nil, nil, o
-    else
-      return {:json => {
-          :mesasge => I18n.t('api.not_found', :id=>key, :type=>type.to_s)
-        },
-        :status => :not_found,
-        :content_type=>cb_content_type(type, "error")
-      }
+    return api_not_found(params,key,type) unless o
+    # Only try to update attributes that the object has and which have changed.
+    to_update = params.reject do |k,v|
+      (!o.has_attribute?(k)) ||  # Ignore things that are not attributes on this object.
+        k.to_sym == :id ||  # IDs can never be changed.
+        o[k] == v  # Ignore anything that has not changed.
     end
+    o.update_attributes! to_update
+    return api_show type, type_class, nil, nil, o
   end
 
   # formats API json output 
   # used for json output that is not mapped to a Crowbar model
   def api_array(json)
-    if params[:version].eql?('v2') 
-      return {:json=>json, :content_type=>cb_content_type("json", "array") }
-    else
-      return {:text=>I18n.t('api.wrong_version', :version=>params[:version])}
-    end
+    return api_wrong_version(params) unless version_ok(params)
+    return {:json=>json, :content_type=>cb_content_type("json", "array") }
   end
 
   def api_not_supported(verb, object)

@@ -27,6 +27,7 @@ export no_proxy="localhost,127.0.0.1,localaddress,.<%=@domain%>"
 provisioner="<%=@provisioner_web%>"
 crowbar="http://<%=@provisioner_name%>:3000"
 crowbar_v4="http://<%=@v4_addr%>:3000"
+chef_rpm=chef-11.10.0-1.el6.x86_64.rpm
 
 # Set up just enough infrastructure to let the jigs work.
 
@@ -51,10 +52,10 @@ gem install wsman
 gem install cstruct
 
 # Get the "right" version of Chef.  Eventually we should not hardcode this.
-[[ -f /tmp/chef-11.6.0-1.el6.x86_64.rpm ]] || (
+[[ -f /tmp/$chef_rpm ]] || (
     cd /tmp
-    curl -g -O "$provisioner/files/chef-11.6.0-1.el6.x86_64.rpm"
-    rpm -Uvh ./chef-11.6.0-1.el6.x86_64.rpm
+    curl -g -O "$provisioner/files/$chef_rpm"
+    rpm -Uvh "./$chef_rpm"
 )
 
 mkdir -p /root/.ssh

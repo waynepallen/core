@@ -14,6 +14,7 @@ if [[ ! $container = lxc ]]; then
     image_map["fedora"]="fedora:20"
     image_map["debian"]="debian:jessie"
     image="${image_map[$1]}"
+    tftproot="/tftpboot"
     if [[ ! $image ]]; then
         echo "$1 is not an image we can run on!"
         printf "Try one of: "
@@ -28,16 +29,17 @@ if [[ ! $container = lxc ]]; then
     fi
 
     # Check to see if we have a Sledgehammer image handy.
-    if [[ ! -f $HOME/.cache/opencrowbar/sledgehammer/tftpboot/initrd0.img ]]; then
+    if [[ ! -f $HOME/.cache/opencrowbar/tftpboot/discovery/initrd0.img ]]; then
         echo "You need to have a Sledgehammer image created before running a Docker admin node!"
         echo "Create the Sledgehammer image by running:"
         echo "$(readlink -f "${0%/*}/build_sledgehammer.sh")"
         exit 1
     fi
+
+    mkdir -p "$HOME/.cache/opencrowbar/tftpboot"
     
     docker_args=(-t -i -w /opt/opencrowbar/core -v "$PWD:/opt/opencrowbar/core")
-    docker_args+=(-v "$HOME/.cache/opencrowbar/sledgehammer/tftpboot/initrd0.img:/tftpboot/discovery/initrd0.img")
-    docker_args+=(-v "$HOME/.cache/opencrowbar/sledgehammer/tftpboot/vmlinuz0:/tftpboot/discovery/vmlinuz0")
+    docker_args+=(-v "$HOME/.cache/opencrowbar/tftpboot:$tftproot")
     docker_args+=(-e "OUTER_UID=$(id -u)")
     docker_args+=(-e "OUTER_GID=$(id -g)")
     [[ -f $HOME/.ssh/id_rsa.pub ]] && docker_args+=(-e "SSH_PUBKEY=$(cat "$HOME/.ssh/id_rsa.pub")")
@@ -115,4 +117,5 @@ mkdir -p /root/.ssh
 printf "%s\n" "$SSH_PUBKEY" >> /root/.ssh/authorized_keys
 
 [[ $1 ]] && "$@"
+. /etc/profile
 /bin/bash -i

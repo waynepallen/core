@@ -168,6 +168,7 @@ Crowbar::Application.routes.draw do
             put :reboot
             put :debug
             put :undebug
+            put :redeploy
           end
           resources :node_roles do
             put :retry

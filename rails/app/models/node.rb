@@ -33,7 +33,6 @@ class Node < ActiveRecord::Base
   # for to_api_hash
   API_ATTRIBUTES = ["id", "name", "description", "order", "admin", "available", "alive",
                     "allocated", "created_at", "updated_at"]
-
   #
   # Validate the name should unique (no matter the case)
   # and that it starts with a valid FQDN
@@ -240,10 +239,13 @@ class Node < ActiveRecord::Base
   end
 
   def discovery=(arg)
-    arg = JSON.parse(arg) unless arg.is_a? Hash
-    data = discovery.clone.merge arg
-    write_attribute("discovery",JSON.generate(data))
-    data
+    Node.transaction do
+      arg = JSON.parse(arg) unless arg.is_a? Hash
+      data = discovery.clone.merge arg
+      write_attribute("discovery",JSON.generate(data))
+      save!
+      return data
+    end
   end
 
   def discovery_update(val)
@@ -255,13 +257,14 @@ class Node < ActiveRecord::Base
   end
 
   def reboot
-    BarclampCrowbar::Jig.ssh("root@#{self.shortname} reboot")
+    ssh("reboot")
   end
   
   def debug
     self.alive = false
     self.bootenv = "sledgehammer"
     self.target = Role.where(:name => "crowbar-managed-node").first
+    self.save!
     self.reboot
   end
 
@@ -269,7 +272,20 @@ class Node < ActiveRecord::Base
     self.alive = false
     self.bootenv = "local"
     self.target = nil
+    self.save
     self.reboot
+  end
+
+  def redeploy!
+    Node.transaction do
+      self.bootenv = "sledgehammer"
+      node_roles.each do |nr|
+        nr.run_count = 0
+        nr.save!
+      end
+      self.save!
+      self.reboot
+    end
   end
 
   def target

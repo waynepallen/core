@@ -9,18 +9,21 @@
                         "kernel": "install/netboot/ubuntu-installer/amd64/linux",
                         "append": "debian-installer/locale=en_US.utf8 console-setup/layoutcode=us keyboard-configuration/layoutcode=us netcfg/dhcp_timeout=120 netcfg/choose_interface=auto root=/dev/ram rw quiet --",
                         "online_mirror": "http://us.archive.ubuntu.com/ubuntu/",
+                        "iso_file": "ubuntu-12.04.4-server-amd64.iso",
                         "codename": "precise"
                     },
                     "redhat-6.5": {
                         "initrd": "images/pxeboot/initrd.img",
                         "kernel": "images/pxeboot/vmlinuz",
+                        "iso_file": "RHEL6.4-20130130.0-Server-x86_64-DVD1.iso",
                         "append": "method=%os_install_site%"
                     },
                     "centos-6.5": {
                         "initrd": "images/pxeboot/initrd.img",
                         "kernel": "images/pxeboot/vmlinuz",
                         "append": "method=%os_install_site%",
-                        "online_mirror": "http://mirror.centos.org/centos/6/"
+                        "iso_file": "CentOS-6.5-x86_64-bin-DVD1.iso",
+                        "online_mirror": "http://mirrors.kernel.org/centos/6/"
                     },
                     "suse-11.2": {
                         "initrd": "boot/x86_64/loader/initrd",

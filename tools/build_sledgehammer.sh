@@ -31,7 +31,7 @@ export PATH="$PATH:/sbin:/usr/sbin:/usr/local/sbin"
 
 # Location for caches that should not be erased between runs
 CACHE_DIR="$HOME/.cache/opencrowbar/sledgehammer"
-SLEDGEHAMMER_PXE_DIR="$CACHE_DIR/tftpboot"
+SLEDGEHAMMER_PXE_DIR="$HOME/.cache/opencrowbar/tftpboot/discovery"
 CHROOT="$CACHE_DIR/chroot"
 SLEDGEHAMMER_LIVECD_CACHE="$CACHE_DIR/livecd_cache"
 

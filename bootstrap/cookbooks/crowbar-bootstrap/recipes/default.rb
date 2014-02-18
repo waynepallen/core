@@ -19,11 +19,6 @@ os_pkg_type = case node["platform"]
               else
                 raise "Cannot figure out what package type we should use!"
               end
-Chef::Log.debug("os_token: #{os_token}, os_pkg_type: #{os_pkg_type}")
-["http_proxy","https_proxy","no_proxy"].each do |p|
-  next unless ENV[p]
-  Chef::Log.info("Using #{p}='#{ENV[p]}'")
-end
 
 unless prereqs["os_support"].member?(os_token)
   raise "Cannot install crowbar on #{os_token}!  Can only install on one of #{prereqs["os_support"].join(" ")}"
@@ -33,7 +28,6 @@ tftproot = "/tftpboot"
 
 repos = []
 pkgs = []
-extra_files = []
 
 # Find all the upstream repos and packages we will need.
 if prereqs[os_pkg_type] && prereqs[os_pkg_type][os_token]
@@ -44,7 +38,6 @@ end
 repos << prereqs[os_pkg_type]["repos"]
 pkgs << prereqs[os_pkg_type]["build_pkgs"]
 pkgs << prereqs[os_pkg_type]["required_pkgs"]
-extra_files << prereqs["extra_files"]
 
 Chef::Log.debug(repos)
 Chef::Log.debug(pkgs)
@@ -56,12 +49,41 @@ pkgs.flatten!
 pkgs.compact!
 pkgs.uniq!
 pkgs.sort!
-extra_files.flatten!
-extra_files.compact!
-extra_files.uniq!
-extra_files.sort!
 
 Chef::Log.debug(repos)
+
+proxies = Hash.new
+["http_proxy","https_proxy","no_proxy"].each do |p|
+  next unless ENV[p] && !ENV[p].strip.empty?
+  Chef::Log.info("Using #{p}='#{ENV[p]}'")
+  proxies[p]=ENV[p].strip
+end
+unless proxies.empty?
+  # Hack up /etc/environment to hold our proxy environment info
+  template "/etc/environment" do
+    source "environment.erb"
+    variables(:values => proxies)
+  end
+
+  template "/etc/profile.d/proxy.sh" do
+    source "proxy.sh.erb"
+    variables(:values => proxies)
+  end
+
+  case node["platform"]
+  when "redhat","centos"
+    template "/etc/yum.conf" do
+      source "yum.conf.erb"
+      variables(
+                :distro => node["platform"],
+                :proxy => proxies["http_proxy"]
+                )
+    end
+    bash "Disable fastestmirrors plugin" do
+      code "sed -i '/enabled/ s/1/0/' /etc/yum/pluginconf.d/fastestmirror.conf"
+    end
+  end
+end
 
 file "/tmp/install_pkgs" do
   action :nothing
@@ -71,24 +93,6 @@ template "/tmp/required_pkgs" do
   source "required_pkgs.erb"
   variables( :pkgs => pkgs )
   notifies :create_if_missing, "file[/tmp/install_pkgs]",:immediately
-end
-
-
-extra_files.each do |f|
-  src, dest = f.strip.split(" ",2)
-  target = "#{tftproot}/files/#{dest}"
-  Chef::Log.info("Installing extra file '#{src}' into '#{target}'")
-  
-  directory target do
-    action :create
-    recursive true
-  end
-
-  bash "Fetch #{src}" do
-    code "curl -fgL -o '#{target}/#{src.split("/")[-1]}' '#{src}'"
-    not_if "test -f '#{target}/#{src.split("/")[-1]}'"
-  end
-
 end
 
 case node["platform"]
@@ -276,8 +280,19 @@ bash "create crowbar user for postgres" do
   not_if "sudo -H -u postgres -- psql postgres -tAc \"SELECT 1 FROM pg_roles WHERE rolname='crowbar'\" |grep -q 1"
 end
 
-["bundler","net-http-digest_auth","json","cstruct"].each do |g|
+["bundler","net-http-digest_auth","json","cstruct","builder"].each do |g|
   gem_package g
+end
+
+directory "#{tftproot}/gemsite/gems" do
+  action :create
+  recursive true
+end
+
+bash "Create skeleton local gemsite" do
+  cwd "#{tftproot}/gemsite"
+  code "gem generate_index"
+  not_if "test -d '#{tftproot}/gemsite/quick'"
 end
 
 user "crowbar" do

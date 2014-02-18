@@ -35,7 +35,7 @@ while [[ ! -f $VM_DIR/$VMID.killed ]]; do
     else
         # Otherwise, PXE boot the machine.
         update_vm_status "PXE booting node ($((count++)))"
-        if run_kvm -bootn -timeout 1200; then
+        if run_kvm -bootn; then
             kill_vm exited
         else
             update_vm_status "Node failed to deploy"
