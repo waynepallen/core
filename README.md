@@ -17,6 +17,8 @@ Crowbar documentation is distributed into multiple places under the /doc directo
 
 ## Short Term notes for running the OpenCrowbar in Docker
 
+This is the TL;DR version; the full version is [here](doc/devguide/docker-admin.md).
+
 1. Place the OS install ISOs for OSes you want to deploy on to slaves in
   `$HOME/.cache/opencrowbar/tftpboot/isos`.  We currently support:
   1. `CentOS-6.5-x86_64-bin-DVD1.iso`
