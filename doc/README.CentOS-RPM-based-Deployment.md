@@ -84,7 +84,8 @@ Machine requirements are
 14. Popup: "Writing storage configuration to disk", Click [Write changes to disk]
 15. Screen: "The default installation of CentOS is a minimum install ...", Select "Basic Server", Click [Next]
 16. The system will now install. When finished, Click [Reboot]
-17. Configure internet proxy access (where required) by setting
+
+Configure internet proxy access (where required) by setting
 
      #> echo "export http_proxy=http://10.208.64.95:3128" >> ~/.bash_profile
      #> echo "export https_proxy=http://10.208.64.95:3128" >> ~/.bash_profile
@@ -93,7 +94,7 @@ Machine requirements are
      #> echo "export HTTP_PROXY=http://10.208.64.95:3128" >> ~/.bash_profile
      #> . ~/.bash_profile
 
-    Verify proxy operation before proceeding.  An example of how this validation may be completed is shown here:
+Verify proxy operation before proceeding.  An example of how this validation may be completed is shown here:
 
      #> yum clean all
      #> yum makecache 
