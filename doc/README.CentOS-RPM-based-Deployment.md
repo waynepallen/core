@@ -86,12 +86,12 @@ Machine requirements are
 16. The system will now install. When finished, Click [Reboot]
 17. Configure internet proxy access (where required) by setting:
 
-     echo "export http_proxy=http://10.208.64.95:3128" &gt;&gt; ~/.bash_profile
-     echo "export https_proxy=http://10.208.64.95:3128" &gt;&gt; ~/.bash_profile
-     echo "export ftp_proxy=http://10.208.64.95:3128" &gt;&gt; ~/.bash_profile
-     echo "export HTTP_PROXY=http://10.208.64.95:3128" &gt>&gt; ~/.bash_profile
-     echo "export HTTP_PROXY=http://10.208.64.95:3128" &gt;&gt; ~/.bash_profile 
-     . ~/.bash_profile 
+     'echo "export http_proxy=http://10.208.64.95:3128" &gt;&gt; ~/.bash_profile'
+     'echo "export https_proxy=http://10.208.64.95:3128" &gt;&gt; ~/.bash_profile'
+     'echo "export ftp_proxy=http://10.208.64.95:3128" &gt;&gt; ~/.bash_profile'
+     'echo "export HTTP_PROXY=http://10.208.64.95:3128" &gt>&gt; ~/.bash_profile'
+     'echo "export HTTP_PROXY=http://10.208.64.95:3128" &gt;&gt; ~/.bash_profile' 
+     '. ~/.bash_profile' 
 
 Verify proxy operation before proceeding.  An example of how this validation may be completed is shown here:
 
