@@ -14,11 +14,11 @@ An outline is provided as a foundation for QA validation requirements for OpenCr
 
 Known limitations of the installation process, its sensitivities to updates and to upgrades is summarized.
 
-## Installation process:
+## Installation process
 
 Before commencing installation and configuration processing ensure that everything needed is available and that all remove resources that must be accessed are capable of being reached.
 
-### Pre-Requisites:
+### Pre-Requisites
 1. CentOS 6.5 x86_64 - download site:  
 2. You will need to know how to access the internet from your VM/Physical environment.  
   1. Proxy Services
@@ -27,7 +27,7 @@ Before commencing installation and configuration processing ensure that everythi
   2. Direct Connection - Ensure you have appropriate security setup per security guidelines in effect within your organization.
 
 ### Machine preparation
-Machine requirements are:
+Machine requirements are
 1. Memory: Min 4GB
 2. CPU Cores: 2 or more
 3. Network Interface Controllers: 2 preferred, 1 minimum (can use virtio if using a VM)
@@ -86,11 +86,11 @@ Machine requirements are:
 16. The system will now install. When finished, Click [Reboot]
 17. Configure internet proxy access (where required) by setting:
 
-     echo "export http_proxy=http://10.208.64.95:3128" >> ~/.bash_profile
-     echo "export https_proxy=http://10.208.64.95:3128" >> ~/.bash_profile
-     echo "export ftp_proxy=http://10.208.64.95:3128" >> ~/.bash_profile
-     echo "export HTTP_PROXY=http://10.208.64.95:3128" >> ~/.bash_profile
-     echo "export HTTP_PROXY=http://10.208.64.95:3128" >> ~/.bash_profile 
+     echo "export http_proxy=http://10.208.64.95:3128" &gt;&gt; ~/.bash_profile
+     echo "export https_proxy=http://10.208.64.95:3128" &gt;&gt; ~/.bash_profile
+     echo "export ftp_proxy=http://10.208.64.95:3128" &gt;&gt; ~/.bash_profile
+     echo "export HTTP_PROXY=http://10.208.64.95:3128" &gt>&gt; ~/.bash_profile
+     echo "export HTTP_PROXY=http://10.208.64.95:3128" &gt;&gt; ~/.bash_profile 
      . ~/.bash_profile 
 
 Verify proxy operation before proceeding.  An example of how this validation may be completed is shown here:
@@ -109,14 +109,15 @@ Follow the instructions at  https://www.centos.org/docs/5/html/yum/sn-yum-proxy-
      proxy_username=yum-user
      proxy_password=qwerty 
 
-== Do NOT attempt to update the system by executing "yum update" at this time - that will be done during installation of OpenCrowbar. ==
+**Do NOT attempt to update the system by executing "yum update" at this time - that will be done during installation of OpenCrowbar.**
 
-== Background information
+**Background information**
 The operating system just installed is without the ruby package.  This is by design since CentOS 6.5 ships with ruby-1.8.7 which can not be used with OpenCrowbar.  OpenCrowbar requires ruby-1.9.x or later. This requirement will be met wit locally built RPM packages that will be installed before OpenCrowbar is installed.
 Following system reboot, verify that there are two network interfaces, one on a network from which internet access is possible, the other which is private (may route to the internet, but is broadcast isolated from any up-stream network).
 
 ## OpenCrowbar installation
-== NOTE: This is preliminary information.  The specific steps outlined here will change soon and will need to be updated.
+
+**NOTE: This is preliminary information.**  The specific steps outlined here will change soon and will need to be updated.
 At this time the needed files may be downloaded from a CentOS 6.5 Development system. The ruby-2.0.0 and OpenCrowbar RPM packages, together with a helpful install script can be made available from such development platform. It is assumed that these RPM packages will be automatically built and made available from this system.
 
 Log into the CentOS 6.5 Admin node that was installed above, log in as the root user.
@@ -131,7 +132,7 @@ Change directory:
      #> cd ocb
      #> ./script/install.sh 
 
-Note: The contents of the ocb-install.sh file are:
+**Note:** The contents of the ocb-install.sh file are:
 
      #!/bin/bash
      cp -f .bash_profile /root/.bash_profile 
@@ -186,7 +187,6 @@ Connect to the IP address of the Admin node on port 3000 using a browser of choi
      Log in as user: crowbar
      Password: crowbar
 
-Enjoy!!!!
 
 ## QA Valdiation Requirements:
 Ok. So if the above was followed sequentually it is safe to assume that OpenCrowbar was found to be operational.  So what next?
@@ -205,11 +205,11 @@ Removal and installation dependencies need to be validated.  During the build pr
 
 #### Suggested validation steps:
 
-   1. Remove freshly installed RPMS:
+  1. Remove freshly installed RPMS:
 
      #> yum erase -y opencrowbar-core
 
-    All opencrowbar RPMs should be autoamtically removed.
+     All opencrowbar RPMs should be autoamtically removed.
 
   2. Re-install the RPMS:
 
@@ -217,7 +217,7 @@ Removal and installation dependencies need to be validated.  During the build pr
 
      The opencrowbar-core and the opencrowbar-openstack RPMS should BOTH be automatically installed.
 
-   3. Operate the webUI, then remove all RPMS:
+  3. Operate the webUI, then remove all RPMS:
 
      Operate the webUI following installation of the RPMS, then remove then as follows:
 
@@ -231,7 +231,8 @@ Removal and installation dependencies need to be validated.  During the build pr
 
      #> yum erase -y opencrowbar-core
 
-    This should succeed, together with removal of all opencrowbar component RPM packages.
+     This should succeed, together with removal of all opencrowbar component RPM packages.
+
 
 #### Updating (not Upgrading)
 
