@@ -237,50 +237,44 @@ POST api/v2/node\_roles
 
 	json = {"node\_id":"3", "role\_id":"3"}
 
-Creating the node\_role will create a snapshot which will default to the 'head' position of the list. Currently you 
-don't have a method to commit that directly. The POST to create the node_role does return the item that has been created 
-and in that json blob is the snapshot id that was created.
 
 Now commit the snapshot to send it to the annealer - which will sort out the dependencies and push them to the node
 
-PUT api/v2/snapshot/snapshot_id
+The snapshot_id reference can be read from the deployment instance
+
+	PUT api/v2/snapshot/snapshot_id/commit
 
 Using the API python bindings this looks like
 
 
-```
+````
 from api import cb2_Api
-import json
 
-class deploy_role()
+class main():
 
-	#create the session to the admin node
-	session = cb2_Api("192.168.124.10","3000","crowbar","crowbar")
-	
-	#get the details of the node we want to manipulate
-	single = session.get_node("d00-0c-29-07-a4-a8.crowbar.org")
-	
-	NodeID = str(single.id)
-	
-	#create a new deployment
-	deploymentdata = {"name":"ApiTestDeployment"}
-	
-	deployment = session.create_deployment(json.dumps(deploymentdata))
+    #create an api session
+    session = cb2_Api("192.168.124.10", "3000", "crowbar", "crowbar")
 
-	DeploymentID = str(deployment.id)
-	
-	#update the node with that deployment
-	node_json = json.dumps({"deployment_id":DeploymentID})
-	
-	session.update_node(node_json,node_id=NodeID)
-	
-	#create the node_role to bind the role and create the snapshot (using role 3 as an example)	
-	NodeRole = session.create_node_role(json.dumps({"node_id":NodeID,"role_id":"3"})) 
+    #create a new deployment    
+    deploy = Deployment()
+    deploy.name = 'ApiDeployment'
+    deploy = session.create(deploy)
+    
+    #get/set the target node    
+    targetNode = session.get(session.create(Node({"name":"nodename.domain.org"})))   
+    targetNode.deployment_id = deploy.id
+    node = session.update(targetNode)
+    
+    #create a node role & assign it to the node created above    
+    nodeRole = Node_Role()
+    nodeRole.node_id = targetNode.id
+    nodeRole.role_id = '6'
+    nodeRole = session.update(nodeRole)
+    
+    #commit the snapshot/proposal
+    snap = session.commit_snapshot(deploy.snapshot_id)
 
-	#and commit the snapshot	
-	session.commit_snapshot(str(NodeRole.snapshot_id))
-	
-	
+    #that's all folks
 
 ````
 
