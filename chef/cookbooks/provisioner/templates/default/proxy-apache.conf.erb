@@ -30,7 +30,8 @@
     ProxyRequests On
     ProxyVia On
     <% if @upstream_proxy != "" -%>
-    ProxyRemote http "<%= @upstream_proxy %>"
+    ProxyRemote * "<%= @upstream_proxy %>"
+    NoProxy <%= @no_proxy %>
     <% end -%>
     <Proxy *>
             AddDefaultCharset off

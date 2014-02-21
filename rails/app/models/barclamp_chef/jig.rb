@@ -40,7 +40,7 @@ class BarclampChef::Jig < Jig
       # If we did not find the role in question, then the chef
       # data from the barclamp has not been uploaded.
       # Do that here, and then set chef_role.
-      chef_path = "/opt/dell/barclamps/#{nr.role.barclamp.name}/chef"
+      chef_path = File.join(nr.barclamp.source_path, on_disk_name)
       unless File.directory?(chef_path)
         raise("No Chef data at #{chef_path}")
       end

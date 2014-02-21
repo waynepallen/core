@@ -1,14 +1,14 @@
 #!/bin/bash
 ### BEGIN INIT INFO
-# Provides:          crowbar-webserver
+# Provides:          opencrowbar-webserver
 # Required-Start:    $syslog $network $named
-# Should-Start:      xinetd chef-server
+# Should-Start:      xinetd postrgesql-9.3
 # Required-Stop:     $syslog $network $named
-# Should-Stop:       xinetd chef-server
+# Should-Stop:       xinetd postgresql-9.3
 # Default-Start:     3 5
 # Default-Stop:      0 1 2 6
-# Short-Description: Start the Crowbar Web application
-# Description:       Manages the Crowbar Web application
+# Short-Description: Start the OpenCrowbar Web application
+# Description:       Manages the OpenCrowbar Web application
 ### END INIT INFO
 
 PATH="/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin"

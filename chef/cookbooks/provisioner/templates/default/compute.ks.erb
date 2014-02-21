@@ -10,18 +10,13 @@ key --skip
 lang en_US.UTF-8
 keyboard us
 # crowbar
-<% if node[:provisioner][:default_password_hash] -%>
-rootpw --iscrypted <%= node[:provisioner][:default_password_hash] %>
-<% else -%>
-rootpw <%= node[:provisioner][:default_password] %>
-<% end -%>
+rootpw --iscrypted <%= node[:crowbar][:provisioner][:server][:default_password_hash] %>
 firewall --disabled
 authconfig --enableshadow --enablemd5
 selinux --disabled
 timezone --utc UTC
 bootloader --location=mbr --driveorder=sda --append="rhgb quiet"
 zerombr
-<% if node[:platform_version].to_f >= 6 -%>
 ignoredisk --only-use=sda
 clearpart --all --drives=sda
 part /boot --fstype ext4 --size=100 --ondisk=sda
@@ -30,28 +25,13 @@ part swap --recommended
 part pv.6 --size=1 --grow --ondisk=sda
 volgroup <%=@name.split('.')[0]%> --pesize=32768 pv.6
 logvol / --fstype ext4 --name=lv_root --vgname=<%=@name.split('.')[0]%> --size=1 --grow
-<% else -%>
-ignoredisk --drives=sdb,sdc,sdd,sde,sdf,sdg,sdh,sdi,sdj,sdk,sdl,sdm,sdn,sdo,sdp,sdq,sdr,sds,sdt,sdu,sdv,sdw,sdx,sdy,sdz,hdb,hdc,hdd,hde,hdf,hdg,hdh,hdi,hdj,hdk,hdl,hdm,hdn,hdo,hdp,hdq,hdr,hds,hdt,hdu,hdv,hdw,hdx,hdy,hdz
-clearpart --all --drives=sda
-part /boot --fstype ext3 --size=100 --ondisk=sda
-part swap --recommended
-part pv.6 --size=0 --grow --ondisk=sda
-volgroup <%=@name.split('.')[0]%> --pesize=32768 pv.6
-logvol / --fstype ext3 --name=lv_root --vgname=<%=@name.split('.')[0]%> --size=1 --grow
-<% end -%>
-
 text
 reboot
 
 %packages
 @base
 @core
-<% if node[:platform_version].to_f >= 6 -%>
 vim-enhanced
-<% else -%>
-@editors
-@text-internet
-<% end -%>
 keyutils
 trousers
 fipscheck
@@ -74,8 +54,6 @@ export PS4='${BASH_SOURCE}@${LINENO}(${FUNCNAME[0]}): '
 (cd /etc/yum.repos.d && rm *)
 <% end -%>
 
-HTTP_SERVER="<%= @admin_node_ip %>:<%= @web_port %>"
-IP="<%= @admin_node_ip %>"
 HOSTNAME=$(hostname)
 
 key_re='crowbar\.install\.key=([^ ]+)'
@@ -86,93 +64,72 @@ elif [[ -f /etc/crowbar.install.key ]]; then
     export CROWBAR_KEY="$(cat /etc/crowbar.install.key)"
 fi
 
-post_state() {
-  local curlargs=(-o "/var/log/$1-$2.json" --connect-timeout 60 -s \
-      -L -X POST --data-binary "{ \"name\": \"$1\", \"state\": \"$2\" }" \
-      -H "Accept: application/json" -H "Content-Type: application/json" \
-      --max-time 240)
-  [[ $CROWBAR_KEY ]] && curlargs+=(-u "$CROWBAR_KEY" --digest --anyauth)
-  curl "${curlargs[@]}" "http://$IP:3000/crowbar/crowbar/1.0/transition/default"
-}
-
 echo "proxy=<%=@proxy%>" >> /etc/yum.conf
 sed -i '/^enabled/ s/1/0/' /etc/yum/pluginconf.d/fastestmirror.conf
 echo "Setting up repositories"
-<% @repos.keys.sort.each do |repo|
-  case
-  when repo =~ /.*_online/
-    rpm_sources, bare_sources = @repos[repo].keys.sort.partition{|r|r =~ /^rpm /}
-    bare_sources.each do |source|
-      _, name, _, url = source.split
-      url = "baseurl=#{url}" if url =~ /^http/ -%>
-cat >/etc/yum.repos.d/crowbar-<%=repo%>.repo <<EOF
-[crowbar-<%=repo%>]
-name=Crowbar <%=repo%> Repo
-<%= url %>
+<% @repos.keys.sort.each do |repo| -%>
+  <% if repo == "online"
+       rpm_sources, bare_sources = @repos[repo].keys.sort.partition{|r|r =~ /^rpm /} -%>
+    <% bare_sources.each do |source|
+         _, name, _, url = source.split -%>
+cat >/etc/yum.repos.d/crowbar-<%=name%>.repo <<EOF
+[crowbar-<%=name%>]
+name=Crowbar <%=name%> Repo
+baseurl=<%= url %>
 gpgcheck=0
 EOF
-<%  end
-    rpm_sources.each do |repo|
-      url = repo.split(' ',2)[1]
-      file = url.split('/').last
-      file = file << ".rpm" unless file =~ /\.rpm$/ -%>
+    <% end -%>
+    <% rpm_sources.each do |repo|
+         url = repo.split(' ',2)[1]
+         file = url.split('/').last
+         file = file << ".rpm" unless file =~ /\.rpm$/ -%>
 (
-        export http_proxy=<%=@proxy%>
-        curl -o '/var/cache/<%=file%>' -L '<%=url%>'
-        rpm -Uvh '/var/cache/<%=file%>'
+export http_proxy=<%=@proxy%>
+curl -o '/var/cache/<%=file%>' -L '<%=url%>'
+rpm -Uvh '/var/cache/<%=file%>'
 )
-<%  end
-  else -%>
+    <% end -%>
+  <% else
+    url = @repos[repo].keys.first -%>
 cat >/etc/yum.repos.d/crowbar-<%=repo%>.repo <<EOF
 [crowbar-<%=repo%>]
 name=Crowbar <%=repo%> Repo
-<% @repos[repo].keys.sort.each do |url| -%>
 <%= url %>
-<% end -%>
 gpgcheck=0
 EOF
-<% end
-end %>
+  <% end -%>
+<% end -%>
 
 # Make sure we can install gems
 cat >/etc/gemrc <<EOF
-<% unless @online -%>
 :sources:
-- <%=@provisioner_web%>/gemsite/
+<% if @online -%>
+- http://rubygems.org/
 <% end -%>
+- <%=@provisioner_web%>/gemsite/
 gem: --no-ri --no-rdoc --bindir /usr/local/bin --http-proxy <%=@proxy%>
 EOF
-
-#"Blacklisting IPv6".
-echo "blacklist ipv6" >>/etc/modprobe.d/blacklist-ipv6.conf
-echo "options ipv6 disable=1" >>/etc/modprobe.d/blacklist-ipv6.conf
 
 rsyslog_dir="/etc/rsyslog.d"
 mkdir -p "$rsyslog_dir"
 echo '$IncludeConfig /etc/rsyslog.d/*.conf' >>/etc/rsyslog.conf
 if [ ! -f "$rsyslog_dir/10-crowbar-client.conf" ]; then
-    echo "*.* @@${IP}" > "$rsyslog_dir/10-crowbar-client.conf"
+    echo "*.* @@$<%= @admin_ip %>" > "$rsyslog_dir/10-crowbar-client.conf"
     if ! curl -f -s -o "$rsyslog_dir/00-crowbar-debug.conf" \
-        <%= @admin_web %>/rsyslog.d/00-crowbar-debug.conf
+        <%= @provisioner_web %>/rsyslog.d/00-crowbar-debug.conf
     then
         rm -f "$rsyslog_dir/00-crowbar-debug.conf"
     fi
 fi
 
-yum -y install screen
-
 mkdir -p /root/.ssh
-chmod 700 /root/.ssh
-if ! curl -s -o /root/.ssh/authorized_keys.wget \
-    http://$HTTP_SERVER/authorized_keys; then
-    rm -f /root/.ssh/authorized_keys.wget
-else
-    chmod 644 /root/.ssh/authorized_keys
-    cat /root/.ssh/authorized_keys.wget >>/root/.ssh/authorized_keys
-    rm -f /root/.ssh/authorized_keys.wget
-fi
+cat >/root/.ssh/authorized_keys <<EOF
+<%= @keys %>
+EOF
 
-curl -s -o /etc/init.d/crowbar_join.sh <%= @crowbar_join %>
+echo "PermitRootLogin without-password" >> /etc/ssh/sshd_config
+
+curl -s -o /etc/init.d/crowbar_join.sh "<%=@web_path%>/crowbar_join.sh"
 chmod +x /etc/init.d/crowbar_join.sh
 ln -s /etc/init.d/crowbar_join.sh /etc/rc3.d/S80crowbar
 ln -s /etc/init.d/crowbar_join.sh /etc/rc5.d/S80crowbar
@@ -181,10 +138,10 @@ ln -s /etc/init.d/crowbar_join.sh /etc/rc2.d/S80crowbar
 # boot to runlevel 3 by default
 sed -i -e '/initdefault/ s/5/3/' /etc/inittab
 
-sleep 30
-
-post_state $HOSTNAME "installed"
+curl -u "$CROWBAR_KEY" --digest -L -X PUT -d "bootenv=local" \
+    "http://<%=@admin_ip%>:3000/api/v2/nodes/$HOSTNAME"
 
 # Wait for DHCP to update - this is mainly for virtual environments or really large deploys
 sleep 30
+
 sync

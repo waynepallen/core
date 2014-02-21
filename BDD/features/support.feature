@@ -26,7 +26,7 @@ Feature: Support UI
   Scenario: Find Mark in Log
     While local
     Given I mark the logs with "REMAIN CALM"
-    When I inspect the "../rails/log/development.log" for "MARK >>>>>"
+    When I inspect the log for "MARK >>>>>"
     Then I should grep "MARK >>>>>"
       And I should grep "REMAIN_CALM"
       And I should grep "<<<<< KRAM"
@@ -45,29 +45,26 @@ Feature: Support UI
       And there are no localization errors
     
   Scenario: Settings Change False
-    Given I set {object:user} setting "doc_source" to "false"
+    Given I set {object:user} setting "doc_sources" to "false"
     When I go to the "utils/settings" page
-    Then I should see an input box with "false"
-      And I should see an input box with "doc_sources" 
+    Then I should see an input box "doc_sources" with "false"
 
   Scenario: Settings Change True
-    Given I set {object:user} setting "doc_source" to "true"
+    Given I set {object:user} setting "doc_sources" to "true"
     When I go to the "utils/settings" page
-    Then I should see an input box with "true"
-      And I should see an input box with "doc_sources" 
+    Then I should see an input box "doc_sources" with "true"
 
   Scenario: Settings Change not True
-    Given I set {object:user} setting "doc_source" to "foo"
+    Given I set {object:user} setting "doc_sources" to "foo"
     When I go to the "utils/settings" page
-    Then I should see an input box with "false"
-      And I should see an input box with "doc_sources" 
+    Then I should see an input box "doc_sources" with "false"
 
   Scenario: Settings Change Visible Off
     Given I set {object:user} setting "debug" to "false"
-    When I go to the "docs/devguide.md" page
+    When I go to the "docs/devguide/README.md" page
     Then I should not see heading {bdd:crowbar.i18n.debug}
 
   Scenario: Settings Change Visible On
     Given I set {object:user} setting "debug" to "true"
-    When I go to the "docs/devguide.md" page
+    When I go to the "docs/devguide/README.md" page
     Then I should see heading {bdd:crowbar.i18n.debug}

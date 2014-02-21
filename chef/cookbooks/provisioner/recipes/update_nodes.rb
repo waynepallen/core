@@ -18,10 +18,12 @@ web_port = node["crowbar"]["provisioner"]["server"]["web_port"]
 use_local_security = node["crowbar"]["provisioner"]["server"]["use_local_security"]
 provisioner_web=node["crowbar"]["provisioner"]["server"]["webserver"]
 provisioner_addr = node["crowbar"]["provisioner"]["server"]["v4addr"]
+provisioner_port = node["crowbar"]["provisioner"]["server"]["web_port"] 
 proxy=node["crowbar"]["provisioner"]["server"]["proxy"]
 os_token="#{node[:platform]}-#{node[:platform_version]}"
 tftproot = node["crowbar"]["provisioner"]["server"]["root"]
 discover_dir="#{tftproot}/discovery"
+node_dir="#{tftproot}/nodes"
 pxecfg_dir="#{discover_dir}/pxelinux.cfg"
 uefi_dir=discover_dir
 pxecfg_default="#{pxecfg_dir}/default"
@@ -47,23 +49,51 @@ new_clients = {}
   }
   Chef::Log.info("DHCP: #{mnode_name} Updating PXE and UEFI boot for bootenv #{bootenv}")
   # Default to creating appropriate boot config files for Sledgehammer.
-  case
-  when bootenv == "sledgehammer"
+  case bootenv
+  when "sledgehammer"
+    pxe_params = node["crowbar"]["provisioner"]["server"]["sledgehammer_kernel_params"].split(' ')
+    pxe_params << "crowbar.fqdn=#{mnode_name}"
     provisioner_bootfile mnode_name do
-      kernel_params "#{node["crowbar"]["provisioner"]["server"]["sledgehammer_kernel_params"]} crowbar.fqdn=#{mnode_name}"
+      kernel_params pxe_params.join(" ")
       address v4addr
       bootenv "sledgehammer"
       action :add
     end
-  when bootenv == "local"
+    # Generate an appropriate control.sh for the system.
+    directory "#{node_dir}/#{mnode_name}" do
+      action :create
+      recursive true
+    end
+    template "#{node_dir}/#{mnode_name}/control.sh" do
+      source "control.sh.erb"
+      mode "0755"
+      variables(:provisioner_name => node.name,
+                :online => node["crowbar"]["provisioner"]["server"]["online"],
+                :domain => domain_name,
+                :provisioner_web => provisioner_web,
+                :proxy => node["crowbar"]["provisioner"]["server"]["proxy"],
+                :keys => (node["crowbar"]["provisioner"]["server"]["access_keys"] rescue Hash.new).values.sort.join($/),
+                :v4_addr => node.address("admin",IP::IP4).addr
+                )
+    end
+  when "local"
     provisioner_bootfile mnode_name do
       bootenv "sledgehammer"
       address v4addr
       action :remove
     end
-  when bootenv == "ubuntu-12.04-install"
-    provisioner_ubuntu mnode_name do
+  when "ubuntu-12.04-install"
+    provisioner_debian mnode_name do
+      distro "ubuntu"
       version "12.04"
+      address v4addr
+      target mnode_name
+      action :add
+    end
+  when "centos-6.5-install"
+    provisioner_redhat mnode_name do
+      distro "centos"
+      version "6.5"
       address v4addr
       target mnode_name
       action :add

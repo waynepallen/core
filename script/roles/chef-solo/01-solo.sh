@@ -3,7 +3,8 @@
 if ! which chef-client; then
     if [[ -f /etc/redhat-release || -f /etc/centos-release ]]; then
         yum -y makecache
-        yum install -y chef
+        yum install -y chef ruby rubygems ruby-devel
+        gem install cstruct
     elif [[ -d /etc/apt ]]; then
         apt-get -y update
         # Our chef package does not need ruby, but it does need the cstruct gem.

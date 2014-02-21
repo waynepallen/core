@@ -1,7 +1,7 @@
 #### Contents of the preconfiguration file (for &releasename;)
 ### Localization
 # Locale sets language and country.
-d-i debian-installer/locale string c.utf8
+d-i debian-installer/locale string en_US.utf8
 
 # Keyboard selection.
 # Disable automatic (interactive) keymap detection.
@@ -398,6 +398,4 @@ xserver-xorg xserver-xorg/config/monitor/mode-list \
 # packages and run commands in the target system.
 #d-i preseed/late_command string apt-install zsh; in-target chsh -s /bin/zsh
 
-d-i preseed/late_command string wget <%=@web_path%>/<%=@name%>-post-install.sh -O /target/net-post-install.sh ; chmod +x /target/net-post-install.sh ; /target/net-post-install.sh
-
-
+d-i preseed/late_command string wget <%=@web_path%>/post-install.sh -O /target/net-post-install.sh ; chmod +x /target/net-post-install.sh ; /target/net-post-install.sh

@@ -90,9 +90,7 @@ when "ubuntu","debian"
       group "root"
       mode 0644
       source "dhcpd.conf.erb"
-      variables(:options => d_opts,
-                :provisioner_ip => address,
-                :provisioner_port => provisioner_port)
+      variables(:options => d_opts)
       notifies :restart, "service[dhcp3-server]"
     end
     template "/etc/default/dhcp3-server" do
@@ -118,9 +116,7 @@ when "redhat","centos"
     group "root"
     mode 0644
     source "dhcpd.conf.erb"
-    variables(:options => d_opts,
-              :provisioner_ip => address,
-              :provisioner_port => provisioner_port)
+    variables(:options => d_opts)
     notifies :restart, "service[dhcp3-server]"
   end
 
@@ -139,9 +135,7 @@ when "suse"
     group "root"
     mode 0644
     source "dhcpd.conf.erb"
-    variables(:options => d_opts,
-              :provisioner_ip => address,
-              :provisioner_port => provisioner_port)
+    variables(:options => d_opts)
     notifies :restart, "service[dhcp3-server]"
   end
 
@@ -153,22 +147,6 @@ when "suse"
     variables(:interfaces => intfs)
     notifies :restart, "service[dhcp3-server]"
   end
-end
-
-service "dhcp3-server" do
-  case node[:platform]
-  when "redhat", "centos", "suse"
-    service_name "dhcpd" 
-  when "ubuntu"
-    case node[:lsb][:codename]
-    when "maverick"
-      service_name "dhcp3-server"
-    when "natty", "oneiric", "precise"
-      service_name "isc-dhcp-server"
-    end
-  end
-  supports :restart => true, :status => true, :reload => true
-  action [ :enable, :start ]
 end
 
 domain_name = (node[:crowbar][:dns][:domain] || node[:domain] rescue node[:domain])
@@ -202,4 +180,20 @@ dhcp_subnet IP.coerce(net_pools[0]["first"]).network do
             "option domain-name-servers #{nameserver}",
             "default-lease-time #{lease_time}",
             "max-lease-time #{lease_time * 3}"]
+end
+
+service "dhcp3-server" do
+  case node[:platform]
+  when "redhat", "centos", "suse"
+    service_name "dhcpd" 
+  when "ubuntu"
+    case node[:lsb][:codename]
+    when "maverick"
+      service_name "dhcp3-server"
+    when "natty", "oneiric", "precise"
+      service_name "isc-dhcp-server"
+    end
+  end
+  supports :restart => true, :status => true, :reload => true
+  action [ :enable, :start ]
 end

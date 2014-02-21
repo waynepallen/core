@@ -25,12 +25,50 @@ online = node[:crowbar][:provisioner][:server][:online] rescue nil
 proxy = node[:crowbar][:provisioner][:server][:proxy]
 webserver = node[:crowbar][:provisioner][:server][:webserver]
 
+# Once the local proxy service is set up, we need to use it.
+proxies = {
+  "http_proxy" => "http://#{proxy}",
+  "https_proxy" => "http://#{proxy}",
+  "no_proxy" => (["127.0.0.1","::1"] + node.all_addresses.map{|a|a.network.to_s}.sort).join(",")
+}
+
 template "/etc/gemrc" do
   variables(:online => online,
             :webserver => webserver,
             :proxy => proxy)
 end
 
+# Set up proper environments and stuff
+template "/etc/environment" do
+  source "environment.erb"
+  variables(:values => proxies)
+end
+
+template "/etc/profile.d/proxy.sh" do
+  source "proxy.sh.erb"
+  variables(:values => proxies)
+end
+
+case node["platform"]
+when "ubuntu","debian"
+  template "/etc/apt/apt.conf.d/00-proxy" do
+    source "apt-proxy.erb"
+    variables(:proxy => proxy)
+  end
+when "redhat","centos"
+  bash "add yum proxy" do
+    code <<EOC
+grep -q -F 'proxy=http://#{proxy}' /etc/yum.conf && exit 0
+if ! grep -q '^proxy=http' /etc/yum.conf; then
+  echo 'proxy=http://#{proxy}' >> /etc/yum.conf
+else
+    sed -i '/^proxy/ s@http://.*@http://#{proxy}@' /etc/yum.conf
+fi
+EOC
+  end
+else
+  raise "Cannot handle configuring the proxy for OS #{node["platform"]}"
+end
 unless repositories
   Chef::Log.info("Provisioner: No repositories for #{os_token}")
 end
@@ -43,10 +81,6 @@ when "ubuntu","debian"
   file "/etc/apt/sources.list" do
     action :delete
   end unless online
-  template "/etc/apt/apt.conf.d/00-proxy" do
-    source "apt-proxy.erb"
-    variables(:proxy => proxy)
-  end
   repositories.each do |repo,urls|
     case
     when repo == "base"
@@ -54,7 +88,7 @@ when "ubuntu","debian"
         variables(:urls => urls)
         notifies :create, "file[/tmp/.repo_update]", :immediately
       end
-    when repo =~ /.*_online/
+    when repo =~ /.*online/
       template "/etc/apt/sources.list.d/20-barclamp-#{repo}.list" do
         source "10-crowbar-extra.list.erb"
         variables(:urls => urls)
@@ -78,27 +112,33 @@ when "redhat","centos"
     code "yum clean expire-cache"
     action :nothing
   end
-  bash "add yum proxy" do
-    code "echo proxy=http://#{proxy} >> /etc/yum.conf"
-    not_if "grep -q '^proxy=http' /etc/yum.conf"
-  end
   bash "Disable fastestmirror plugin" do
     code "sed -i '/^enabled/ s/1/0/' /etc/yum/pluginconf.d/fastestmirror.conf"
     only_if "test -f /etc/yum/pluginconf.d/fastestmirror.conf"
   end
-  bash "Reenable main repos" do
-    code "yum -y reinstall centos-release"
-    not_if "test -f /etc/yum.repos.d/CentOS-Base.repo"
-    notifies :create, "file[/tmp/.repo_update]", :immediately
-  end if online && (node[:platform] == "centos")
-  template "/etc/yum.repos.d/crowbar-base.repo" do
-    source "yum-base.repo.erb"
-    variables(:os_token => os_token, :webserver => webserver)
-    notifies :create, "file[/tmp/.repo_update]", :immediately
+  if online && (node[:platform] == "centos")
+    bash "Reenable main repos" do
+      code "yum -y reinstall centos-release"
+      not_if "test -f /etc/yum.repos.d/CentOS-Base.repo"
+      notifies :create, "file[/tmp/.repo_update]", :immediately
+    end
+    file "/etc/yum.repos.d/crowbar-base.repo" do
+      action :delete
+    end
+  else
+    template "/etc/yum.repos.d/crowbar-base.repo" do
+      source "yum-base.repo.erb"
+      variables(:os_token => os_token, :webserver => webserver)
+      notifies :create, "file[/tmp/.repo_update]", :immediately
+    end
+    bash "Disable online repos" do
+      code "rm -f /etc/yum.repos.d/CentOS-*.repo"
+      only_if "test -f /etc/yum.repos.d/CentOS-Base.repo"
+    end
   end
   repositories.each do |repo,urls|
     case
-    when repo =~ /.*_online/
+    when repo =~ /.*online/
       rpm_sources, bare_sources = urls.keys.partition{|r|r =~ /^rpm /}
       bare_sources.each do |source|
         _, name, _, url = source.split
@@ -114,11 +154,11 @@ when "redhat","centos"
         file = url.split('/').last
         file = file << ".rpm" unless file =~ /\.rpm$/
         bash "fetch /var/cache/#{file}" do
-          not_if "test -f '/var/cache/#{file}'"
+          not_if "test -f '/var/cache/#{file}' "
           code <<EOC
 export http_proxy=http://#{proxy}
 curl -o '/var/cache/#{file}' -L '#{url}'
-rpm -Uvh '/var/cache/#{file}'
+rpm -Uvh '/var/cache/#{file}' || :
 EOC
           notifies :create, "file[/tmp/.repo_update]", :immediately
         end

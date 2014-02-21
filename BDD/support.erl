@@ -29,6 +29,10 @@ step(_Global, {step_given, {_Scenario, _N}, ["I set",user,"setting",Key,"to",Val
   URI = eurl:path([g(setting), Key, Value]),
   eurl:put_post(URI, "{}", put);
 
+step(_Given, {step_when, {_Scenario, _N}, ["I inspect the logs for",Mark]}) -> 
+  Path = bdd_utils:config(marker_log, "/var/log/crowbar/development.log"),
+  step(_Given, {step_when, {_Scenario, _N}, ["I inspect the",Path,"for",Mark]});
+
 step(_Given, {step_when, {_Scenario, _N}, ["I inspect the",Path,"for",Mark]}) -> 
   Lines = bdd_utils:config(tail_lines, 100),
   Cmd = "tail -n " ++ integer_to_list(Lines) ++ " '" ++ Path ++ "' | grep '" ++ Mark ++ "'",

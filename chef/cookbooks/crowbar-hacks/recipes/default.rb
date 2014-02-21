@@ -88,28 +88,29 @@ if File.exists?("/sys/firmware/efi")
       end
     end
   end
-  if bootargs["Entries"][bootargs["BootCurrent"]]["Device"] =~ /[\/)]MAC\(/i
-    macaddr = bootargs["Entries"][bootargs["BootCurrent"]]["Device"].match(/[\/)]MAC\(([0-9a-f]+)/i)[1]
-    bootargs["LastNetBootMac"] = ''
-    6.times do |i|
-      bootargs["LastNetBootMac"] << "#{macaddr[(i*2),2]}:"
+  unless bootargs.empty? || bootargs["Entries"].empty?
+    if bootargs["Entries"][bootargs["BootCurrent"]]["Device"] =~ /[\/)]MAC\(/i
+      macaddr = bootargs["Entries"][bootargs["BootCurrent"]]["Device"].match(/[\/)]MAC\(([0-9a-f]+)/i)[1]
+      bootargs["LastNetBootMac"] = ''
+      6.times do |i|
+        bootargs["LastNetBootMac"] << "#{macaddr[(i*2),2]}:"
+      end
+      bootargs["LastNetBootMac"].chop!
     end
-    bootargs["LastNetBootMac"].chop!
-  end
-  node.normal[:crowbar_wall] ||= Mash.new
-  node.normal[:crowbar_wall][:uefi] ||= Mash.new
-  node.normal[:crowbar_wall][:uefi][:boot] = bootargs
-  bootargs["BootOrder"].each do |e|
-    next if bootargs["Entries"][e]["Active"]
-    Chef::Log.info("Activating UEFI boot entry #{sprintf('%x',e)}: #{bootargs["Entries"][e]["Description"]}")
-    ::Kernel.system("efibootmgr -a -b #{sprintf('%x',e)}")
-  end
+    node.normal[:crowbar_wall] ||= Mash.new
+    node.normal[:crowbar_wall][:uefi] ||= Mash.new
+    node.normal[:crowbar_wall][:uefi][:boot] = bootargs
+    bootargs["BootOrder"].each do |e|
+      next if bootargs["Entries"][e]["Active"]
+      Chef::Log.info("Activating UEFI boot entry #{sprintf('%x',e)}: #{bootargs["Entries"][e]["Description"]}")
+      ::Kernel.system("efibootmgr -a -b #{sprintf('%x',e)}")
+    end
   neworder = sort_boot_order(bootargs,node[:provisioner_state])
-  if neworder != bootargs["BootOrder"]
-    Chef::Log.info("Change UEFI Boot Order: #{node[:provisioner_state]} #{bootargs["BootOrder"].inspect} => #{neworder.inspect}")
-    ::Kernel.system("efibootmgr -o #{neworder.map{|e|sprintf('%x',e)}.join(',')}")
-    bootargs["OldBootOrder"] = bootargs["BootOrder"]
-    bootargs["BootOrder"] = neworder
+    if neworder != bootargs["BootOrder"]
+      Chef::Log.info("Change UEFI Boot Order: #{node[:provisioner_state]} #{bootargs["BootOrder"].inspect} => #{neworder.inspect}")
+      ::Kernel.system("efibootmgr -o #{neworder.map{|e|sprintf('%x',e)}.join(',')}")
+      bootargs["OldBootOrder"] = bootargs["BootOrder"]
+      bootargs["BootOrder"] = neworder
+    end
   end
-
 end

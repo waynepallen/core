@@ -19,11 +19,12 @@ os_pkg_type = case node["platform"]
               else
                 raise "Cannot figure out what package type we should use!"
               end
-Chef::Log.debug("os_token: #{os_token}, os_pkg_type: #{os_pkg_type}")
 
 unless prereqs["os_support"].member?(os_token)
   raise "Cannot install crowbar on #{os_token}!  Can only install on one of #{prereqs["os_support"].join(" ")}"
 end
+
+tftproot = "/tftpboot"
 
 repos = []
 pkgs = []
@@ -47,11 +48,51 @@ repos.uniq!
 pkgs.flatten!
 pkgs.compact!
 pkgs.uniq!
+pkgs.sort!
 
 Chef::Log.debug(repos)
 
+proxies = Hash.new
+["http_proxy","https_proxy","no_proxy"].each do |p|
+  next unless ENV[p] && !ENV[p].strip.empty?
+  Chef::Log.info("Using #{p}='#{ENV[p]}'")
+  proxies[p]=ENV[p].strip
+end
+unless proxies.empty?
+  # Hack up /etc/environment to hold our proxy environment info
+  template "/etc/environment" do
+    source "environment.erb"
+    variables(:values => proxies)
+  end
+
+  template "/etc/profile.d/proxy.sh" do
+    source "proxy.sh.erb"
+    variables(:values => proxies)
+  end
+
+  case node["platform"]
+  when "redhat","centos"
+    template "/etc/yum.conf" do
+      source "yum.conf.erb"
+      variables(
+                :distro => node["platform"],
+                :proxy => proxies["http_proxy"]
+                )
+    end
+    bash "Disable fastestmirrors plugin" do
+      code "sed -i '/enabled/ s/1/0/' /etc/yum/pluginconf.d/fastestmirror.conf"
+    end
+  end
+end
+
 file "/tmp/install_pkgs" do
   action :nothing
+end
+
+template "/tmp/required_pkgs" do
+  source "required_pkgs.erb"
+  variables( :pkgs => pkgs )
+  notifies :create_if_missing, "file[/tmp/install_pkgs]",:immediately
 end
 
 case node["platform"]
@@ -83,11 +124,13 @@ when "centos","redhat","suse","opensuse","fedora"
         ignore_failure true
         notifies :create_if_missing, "file[/tmp/install_pkgs]",:immediately
       end
-      remote_file "/tmp/#{rpm_file}" do
-        source rdest
-        use_conditional_get true
+
+      bash "Fetch #{rpm_file}" do
+        code "curl -fgL -o '/tmp/#{rpm_file}' '#{rdest}'"
+        not_if "test -f '/tmp/#{rpm_file}'"
         notifies :run, "bash[Install #{rpm_file}]",:immediately
       end
+
     when "bare"
       rname, rprio, rurl = rdest.split(" ",3)
       template "#{repofile_path}/crowbar-#{rname}.repo" do
@@ -126,6 +169,80 @@ bash "Install required files" do
        else raise "Don't know how to install required files for #{node["platform"]}'"
        end
   only_if do ::File.exists?("/tmp/install_pkgs") end
+end
+
+directory "/var/run/sshd" do
+  mode 0755
+  owner "root"
+  recursive true
+end
+
+bash "Regenerate Host SSH keys" do
+  code "ssh-keygen -q -b 2048 -P '' -f /etc/ssh/ssh_host_rsa_key"
+  not_if "test -f /etc/ssh/ssh_host_rsa_key"
+end
+
+# We need Special Hackery to run sshd in docker.
+if ENV["container"] == "lxc"
+  service "ssh" do
+    service_name "sshd" if node["platform"] == "centos"
+    start_command "/usr/sbin/sshd"
+    stop_command "pkill -9 sshd"
+    status_command "pgrep sshd"
+    restart_command "pkill -9 sshd && /usr/sbin/sshd"
+    action [:start]
+  end
+else
+  service "ssh" do
+    service_name "sshd" if node["platform"] == "centos"
+    action [:enable, :start]
+  end
+end
+
+directory "/root/.ssh" do
+  action :create
+  recursive true
+  owner "root"
+  mode 0755
+end
+
+directory "/home/crowbar/.ssh" do
+  action :create
+  owner "crowbar"
+  group "crowbar"
+  mode 0755
+end
+
+bash "Regenerate Crowbar SSH keys" do
+  code "su -l -c 'ssh-keygen -q -b 2048 -P \"\" -f /home/crowbar/.ssh/id_rsa' crowbar"
+  not_if "test -f /home/crowbar/.ssh/id_rsa"
+end
+
+bash "Enable root access" do
+  cwd "/root/.ssh"
+  code <<EOC
+cat authorized_keys /home/crowbar/.ssh/id_rsa.pub >> authorized_keys.new
+sort -u <authorized_keys.new >authorized_keys
+rm authorized_keys.new
+EOC
+end
+
+template "/home/crowbar/.ssh/config" do
+  source "ssh_config.erb"
+  owner "crowbar"
+  group "crowbar"
+  mode 0644
+end
+
+template "/etc/ssh/sshd_config" do
+  source "sshd_config.erb"
+  action :create
+  notifies :restart, 'service[ssh]', :immediately
+end
+
+template "/etc/sudoers.d/crowbar" do
+  source "crowbar_sudoer.erb"
+  mode 0440
 end
 
 pg_conf_dir = "/var/lib/pgsql/data"
@@ -167,8 +284,19 @@ bash "create crowbar user for postgres" do
   not_if "sudo -H -u postgres -- psql postgres -tAc \"SELECT 1 FROM pg_roles WHERE rolname='crowbar'\" |grep -q 1"
 end
 
-["bundler","net-http-digest_auth","json"].each do |g|
+["bundler","net-http-digest_auth","json","cstruct","builder"].each do |g|
   gem_package g
+end
+
+directory "#{tftproot}/gemsite/gems" do
+  action :create
+  recursive true
+end
+
+bash "Create skeleton local gemsite" do
+  cwd "#{tftproot}/gemsite"
+  code "gem generate_index"
+  not_if "test -d '#{tftproot}/gemsite/quick'"
 end
 
 user "crowbar" do

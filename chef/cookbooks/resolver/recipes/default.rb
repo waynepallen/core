@@ -18,6 +18,8 @@
 # limitations under the License.
 #
 
+return if node[:crowbar_ohai][:in_docker]
+
 dns_list = (node[:crowbar][:dns][:nameservers] rescue nil) ||
   (node[:crowbar][:dns][:server][:forwarders] rescue [])
 

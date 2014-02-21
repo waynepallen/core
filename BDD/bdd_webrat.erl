@@ -117,6 +117,17 @@ step(Result, {step_then, {_Scenario, _N}, ["I should see an input box with",Inpu
     _ -> false
   end;
 
+step(Result, {step_then, {_Scenario, _N}, ["I should see an input box",ID,"with",Input]}) ->
+  R = eurl:get_result(Result, http, "text/html"), 
+  {ok, Rex} = re:compile("<input\ (.+?)id=\""++ID++"\"(.+?)value=\""++Input++"\"(.+?)>", [multiline, dotall, {newline , anycrlf}]),
+  M = re:run(R#http.data, Rex),
+  try M of
+    {match, _} -> true;
+    _ -> false
+  catch
+    _ -> false
+  end;
+
 step(Result, {step_then, {_Scenario, _N}, ["I should not see heading", Text]}) 
   -> step(Result, {step_then, _N, ["I should see heading", Text]}) =:= false;
 

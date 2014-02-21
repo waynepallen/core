@@ -14,6 +14,7 @@
 #
 
 require 'digest/md5'
+require 'open3'
 
 class Node < ActiveRecord::Base
 
@@ -28,11 +29,10 @@ class Node < ActiveRecord::Base
   # Make sure we have names that are legal
   # requires at least three domain elements "foo.bar.com", cause the admin node shouldn't
   # be a top level domain ;p
-  FQDN_RE = /(?=^.{1,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.){2,}(?:[a-zA-Z]{2,})$)/
+  FQDN_RE = /^([a-zA-Z0-9_\-]{1,63}\.){2,}(?:[a-zA-Z]{2,})$/
   # for to_api_hash
   API_ATTRIBUTES = ["id", "name", "description", "order", "admin", "available", "alive",
                     "allocated", "created_at", "updated_at"]
-
   #
   # Validate the name should unique (no matter the case)
   # and that it starts with a valid FQDN
@@ -43,7 +43,7 @@ class Node < ActiveRecord::Base
 
   # TODO: 'alias' will move to DNS BARCLAMP someday, but will prob hang around here a while
   validates_uniqueness_of :alias, :case_sensitive => false, :message => I18n.t("db.notunique", :default=>"Name item must be unique")
-  validates_format_of :alias, :with=>/^([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$/, :message => I18n.t("db.fqdn", :default=>"Name must be a fully qualified domain name.")
+  validates_format_of :alias, :with=>/^[A-Za-z0-9\-]*[A-Za-z0-9]$/, :message => I18n.t("db.fqdn", :default=>"Alias is not valid.")
   validates_length_of :alias, :maximum => 100
 
   has_and_belongs_to_many :groups, :join_table => "node_groups", :foreign_key => "node_id"
@@ -94,6 +94,29 @@ class Node < ActiveRecord::Base
   def status
     s = []
     node_roles.each { |nr| s[nr.id] = nr.status if nr.error?  }
+  end
+
+  def shortname
+    self.name.split('.').first
+  end
+
+  def login
+    "root@#{shortname}"
+  end
+
+  def ssh(cmd)
+    out,err,stat = Open3.capture3("ssh -l root #{address.addr} -- #{cmd}")
+    [out, err, stat]
+  end
+
+  def scp_from(remote_src, local_dest, opts="")
+    out,err,stat = Open3.capture3("scp #{opts} root@[#{address.addr}]:#{remote_src} #{local_dest}")
+    [out,err,stat]
+  end
+
+  def scp_to(local_src, remote_dest, opts="")
+    out,err,stat = Open3.capture3("scp #{opts} #{local_src} root@[#{address.addr}]:#{remote_dest}")
+    [out,err,stat]
   end
 
   def self.name_hash
@@ -216,10 +239,13 @@ class Node < ActiveRecord::Base
   end
 
   def discovery=(arg)
-    arg = JSON.parse(arg) unless arg.is_a? Hash
-    data = discovery.clone.merge arg
-    write_attribute("discovery",JSON.generate(data))
-    data
+    Node.transaction do
+      arg = JSON.parse(arg) unless arg.is_a? Hash
+      data = discovery.clone.merge arg
+      write_attribute("discovery",JSON.generate(data))
+      save!
+      return data
+    end
   end
 
   def discovery_update(val)
@@ -231,13 +257,14 @@ class Node < ActiveRecord::Base
   end
 
   def reboot
-    BarclampCrowbar::Jig.ssh("root@#{self.name} reboot")
+    ssh("reboot")
   end
   
   def debug
     self.alive = false
     self.bootenv = "sledgehammer"
     self.target = Role.where(:name => "crowbar-managed-node").first
+    self.save!
     self.reboot
   end
 
@@ -245,7 +272,20 @@ class Node < ActiveRecord::Base
     self.alive = false
     self.bootenv = "local"
     self.target = nil
+    self.save
     self.reboot
+  end
+
+  def redeploy!
+    Node.transaction do
+      self.bootenv = "sledgehammer"
+      node_roles.each do |nr|
+        nr.run_count = 0
+        nr.save!
+      end
+      self.save!
+      self.reboot
+    end
   end
 
   def target
@@ -297,7 +337,7 @@ class Node < ActiveRecord::Base
     return false if alive == false
     return true unless Rails.env == "production"
     a = address
-    return true if a && BarclampCrowbar::Jig.ssh("root@#{a.addr} -- echo alive")[1]
+    return true if a && self.ssh("echo alive")[2].success?
     self[:alive] = false
     save!
     false
@@ -308,8 +348,8 @@ class Node < ActiveRecord::Base
   def after_save_handler
     return unless changed?
     Rails.logger.info("Node: calling all role on_node_change hooks for #{name}")
-    Role.all_cohorts do |r|
-      #Rails.logger.debug("\tNode: calling role #{r.name} for #{name}")
+    Role.all_cohorts.each do |r|
+      Rails.logger.info("Node: Calling #{r.name} on_node_change for #{self.name}")
       r.on_node_change(self)
     end
     if changes["available"] || changes["alive"]
@@ -342,8 +382,10 @@ class Node < ActiveRecord::Base
   # Call the on_node_delete hooks.
   def tear_down_roles
     # do the low cohorts last
-    Role.all_cohorts_desc do |r|
+    Rails.logger.info("Node: calling all role on_node_delete hooks for #{name}")
+    Role.all_cohorts_desc.each do |r|
       begin
+        Rails.logger.info("Node: Calling #{r.name} on_node_delete for #{self.name}")
         r.on_node_delete(self)
       rescue Exception => e
         Rails.logger.error "node #{name} attempting to cleanup role #{r.name} failed with #{e.message}"
@@ -362,7 +404,9 @@ class Node < ActiveRecord::Base
     # Call all role on_node_create hooks with ourself.
     # These should happen synchronously.
     # do the low cohorts first
-    Role.all_cohorts do |r|
+    Rails.logger.info("Node: calling all role on_node_create hooks for #{name}")
+    Role.all_cohorts.each do |r|
+      Rails.logger.info("Node: Calling #{r.name} on_node_create for #{self.name}")
       r.on_node_create(self)
     end
   end

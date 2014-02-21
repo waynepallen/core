@@ -44,7 +44,7 @@ class Barclamp < ActiveRecord::Base
 
   def self.import(bc_name="crowbar", bc=nil, source_path=nil)
     barclamp = Barclamp.find_or_create_by_name(bc_name)
-    source_path ||= File.join(Rails.root, '..')
+    source_path ||= File.expand_path(File.join(Rails.root, '..'))
     bc_file = File.expand_path(File.join(source_path, bc_name)) + '.yml'
 
     # load JSON
@@ -99,8 +99,9 @@ class Barclamp < ActiveRecord::Base
                                 :commit      => gitcommit )
         subm.save!
       end
-
-      Barclamp.import name, nil, File.join(source_path, 'barclamps')
+      subm_file = File.join(source_path,"barclamps","#{name}.yml")
+      next unless File.exists?(subm_file)
+      Barclamp.import name, YAML.load_file(subm_file), source_path
 
     end if bc["barclamps"]
 
@@ -108,17 +109,20 @@ class Barclamp < ActiveRecord::Base
     # Jigs are now late-bound, so we just load everything.
     bc['roles'].each do |role|
       role_name = role["name"]
-      role_jig = role["jig"]
+      role_jig = Jig.where(:name => role["jig"]).first
+      rt = role['type']
+      role_type = (rt.constantize ? rt : nil) rescue nil
       prerequisites = role['requires'] || []
       wanted_attribs = role['wants-attribs'] || []
       flags = role['flags'] || []
       description = role['description'] || role_name.gsub("-"," ").titleize
-      template = File.join source_path, role_jig || "none", 'roles', role_name, 'role-template.json'
+      template = File.join source_path, role_jig.on_disk_name || "none", 'roles', role_name, 'role-template.json'
+      Rails.logger.info("Import: Loading role #{role_name} template from #{template}")
       # roles data import
       ## TODO: Verify that adding the roles will not result in circular role dependencies.
       r = nil
       Role.transaction do
-        r = Role.find_or_create_by_name(:name=>role_name, :jig_name => role_jig, :barclamp_id=>barclamp.id)
+        r = Role.find_or_create_by_name(:name=>role_name, :jig_name => role_jig.name, :barclamp_id=>barclamp.id)
         r.update_attributes(:description=>description,
                             :barclamp_id=>barclamp.id,
                             :template=>(IO.read(template) rescue "{}"),
@@ -128,7 +132,8 @@ class Barclamp < ActiveRecord::Base
                             :discovery=>flags.include?('discovery'),
                             :server=>flags.include?('server'),
                             :destructive=>flags.include?('destructive'),
-                            :cluster=>flags.include?('cluster'))
+                            :cluster=>flags.include?('cluster'),
+                            :type=>role_type)
         RoleRequire.where(:role_id=>r.id).delete_all
         RoleRequireAttrib.where(:role_id => r.id).delete_all
         r.save!

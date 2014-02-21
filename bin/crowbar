@@ -449,6 +449,14 @@ class Node < CrowbarProxy
     self
   end
 
+  def do_redeploy(*rest)
+    obj, res = REST.put("#{self.class.path}/#{id}/redeploy")
+    raise("#{name} could not be redeployed") if res != 200
+    @blob = obj
+    self
+  end
+
+
   def do_noderoles(*rest)
     objs,res = REST.get("#{self.class.path}/#{id}/node_roles")
     raise("Could not get noderoles for node #{name}") if res >= 300
@@ -514,7 +522,18 @@ class Role < CrowbarProxy
 
 end
 
-class NodeRole < CrowbarProxy; end
+class DeploymentRole < CrowbarProxy
+  def self.path
+    "api/v2/deployment_roles"
+  end
+end
+
+class NodeRole < CrowbarProxy
+  def self.path
+    "api/v2/node_roles"
+  end
+end
+
 class Snapshot < CrowbarProxy
 
   def name
@@ -548,7 +567,7 @@ class Attrib < CrowbarProxy; end
 
 class Network < CrowbarProxy
   def self.path
-    "network/api/v2/networks"
+    "api/v2/networks"
   end
 end
 

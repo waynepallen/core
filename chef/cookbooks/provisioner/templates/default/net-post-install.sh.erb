@@ -67,16 +67,6 @@ cat >/target/etc/gemrc <<EOF
 gem: --no-ri --no-rdoc --bindir /usr/local/bin --http-proxy <%=@proxy%>
 EOF
 
-mkdir -p /target/root/.ssh
-chmod 700 /target/root/.ssh
-if ! wget -O /target/root/.ssh/authorized_keys.wget -q <%=@provisioner_web%>/authorized_keys; then
-    rm -f /target/root/.ssh/authorized_keys.wget
-else
-    chmod 644 /target/root/.ssh/authorized_keys
-    cat /target/root/.ssh/authorized_keys.wget >>/target/root/.ssh/authorized_keys
-    rm -f /target/root/.ssh/authorized_keys.wget
-fi
-
 wget -q <%=@web_path%>/crowbar_join.sh -O- > /target/etc/init.d/crowbar_join.sh
 
 cat > /target/update_system2.sh <<"EOF"
