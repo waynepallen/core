@@ -127,7 +127,7 @@ chroot_install() {
 cleanup() {
     set +e
     # Make sure that the loopback kernel module is loaded.
-    [[ -d /sys/module/loop ]] || sudo modprobe loop
+    [[ -e /dev/loop0 ]] || sudo modprobe loop
 
     while read line; do
         sudo losetup -d "${line%%:*}"
