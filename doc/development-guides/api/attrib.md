@@ -2,7 +2,7 @@
 
 Attribute APIs are used to manage attributes tracked by the CMDB system
 
-> To prevent Rails name collisions, Crowbar uses 'Attrib' instead of Attribute.
+> To prevent Rails name collisions, OpenCrowbar uses 'Attrib' instead of Attribute.
 
 #### Attrib CRUD
 

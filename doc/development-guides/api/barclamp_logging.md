@@ -1,6 +1,6 @@
 ### Logging Barclamp API extensions
 
-Barclamps are the core modulization for Crowbar.  For that reason, the API for barclamps is more limited because changes to barclamps can cause breaking changes to the framework.
+Barclamps are the core modulization for OpenCrowbar.  For that reason, the API for barclamps is more limited because changes to barclamps can cause breaking changes to the framework.
 
 #### Export
 
@@ -9,6 +9,6 @@ Barclamps are the core modulization for Crowbar.  For that reason, the API for b
   <tr><td> GET </td><td> /logging/v2/barclamps/export  </td><td> none  </td><td> creates logs as an artifact </td><td> - </td></tr> 
 </table>
 
-The Logging Barclamp supports the ability to consolidate and roll-up the logs in Crowbar using this API call.
+The Logging Barclamp supports the ability to consolidate and roll-up the logs in OpenCrowbar using this API call.
 
 To retrieve the logs, you must visit.... TBD

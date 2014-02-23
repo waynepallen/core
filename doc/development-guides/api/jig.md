@@ -1,14 +1,14 @@
 ### Jig (aka CMDB interface) APIs
 
-Jigs are the interface between Crowbar and doing work in the infrastructure.
+Jigs are the interface between OpenCrowbar and doing work in the infrastructure.
 
 #### System Jigs
 
-Crowbar has three built-in jigs
+OpenCrowbar has three built-in jigs
 
 * Script - uses SSH to perform operations on nodes.  This is used for bootstrapping actions that install the agents for other Jigs.  Not activated in development mode.
-* Noop (no operation) - takes internal actions in Crowbar only.  Used when database updates or coordination points are needed that have no external action.
-* Test - used by the test infrastructure to validate Crowbar logic when no phyiscal infrastructure is available.  Not activited in production mode.
+* Noop (no operation) - takes internal actions in OpenCrowbar only.  Used when database updates or coordination points are needed that have no external action.
+* Test - used by the test infrastructure to validate OpenCrowbar logic when no phyiscal infrastructure is available.  Not activited in production mode.
 
 #### API Actions
 

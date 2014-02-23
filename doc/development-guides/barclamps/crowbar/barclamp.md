@@ -1,4 +1,4 @@
-### Crowbar Barclamp
+### OpenCrowbar Barclamp
 
-The Crowbar Barclamp is the central barclamp for the Crowbar UI and API.
+The OpenCrowbar Barclamp is the central barclamp for the OpenCrowbar UI and API.
 

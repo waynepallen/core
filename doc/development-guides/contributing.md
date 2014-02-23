@@ -1,4 +1,4 @@
-## Contributing to Crowbar
+## Contributing to OpenCrowbar
 
 Before [submitting pull requests]
 (https://help.github.com/articles/using-pull-requests), please ensure you are
@@ -10,10 +10,10 @@ covered by a [CLA](CLA.md).
    * For bugs & minor items (20ish lines), we can accept the request at our
      discretion
    * UI strings are localized (only EN file needs to be updated)
-   * Does not inject vendor information (Name or Product) into Crowbar expect
+   * Does not inject vendor information (Name or Product) into OpenCrowbar expect
      where relevant to explain utility of push (e.g.: help documentation &
      descriptions).
-   * Passes code review by Dell Crowbar team reviewer
+   * Passes code review by Dell OpenCrowbar team reviewer
    * Does not degrade the security model of the product
    * Items requiring more scrutiny, including signing CLA
       * Major changes
@@ -50,74 +50,21 @@ covered by a [CLA](CLA.md).
    * For non-DellCloudEdge barclamps &ndash; no rules!
    * Eventually, we would expect that a pull request would be built and tested
      in our CI system before the push can be accepted
-
+'
 #### Feature Progression
 
-The following table shows the progression of new feature additions to Crowbar.
+The following table shows the progression of new feature additions to OpenCrowbar.
 The purpose of this list is to help articulate how new features appear in
-Crowbar and when they are considered core.
+OpenCrowbar and when they are considered core.
 
-<table border=1>
-  <thead>
-    <tr>
-      <th align="center"><em>Phase   </em></th>
-      <th align="center"><em>Comments</em></th>
-      <th align="center"><em>Roadmap </em></th>
-      <th align="center"><em>Support </em></th>
-      <th align="center"><em>On Trunk</em></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center">Proposed</td>
-      <td align="center">Conceptual ideas and suggestions for Crowbar
-        functionality that have not been implemented as code</td>
-      <td align="center">May be shown</td>
-      <td align="center">None</td>
-      <td align="center">N/A</td>
-    </tr>
-    <tr>
-      <td align="center">Proof of Concept</td>
-      <td align="center">Initial code showing partial functionality for
-        feature</td>
-      <td align="center">Optionally Identified</td>
-      <td align="center">Negative Test (Does not impact core)</td>
-      <td align="center">No (on branch)</td>
-    </tr>
-    <tr>
-      <td align="center">Incubated</td>
-      <td align="center">Base functional code allowing use of feature to
-        demonstrate value</td>
-      <td align="center">Identified</td>
-      <td align="center">Negative Test (Does not impact core)</td>
-      <td align="center">No (on branch)</td>
-    </tr>
-    <tr>
-      <td align="center">Stable</td>
-      <td align="center">Base functional code is available for use in select
-        builds</td>
-      <td align="center">Included</td>
-      <td align="center">Validated by QA, No Support</td>
-      <td align="center">Yes</td>
-    </tr>
-    <tr>
-      <td align="center">Core</td>
-      <td align="center">Feature code integrated into operations of Crowbar in
-        fundamental way</td>
-      <td align="center">Central</td>
-      <td align="center">Validated by QA, Current Version Support</td>
-      <td align="center">Yes</td>
-    </tr>
-    <tr>
-      <td align="center">Supported</td>
-      <td align="center">Same as core, but available with commercial
-        support</td>
-      <td align="center">Central</td>
-      <td align="center">Backwards Support via Patches</td>
-      <td align="center">Yes &amp; Maintained on Branches</td>
-    </tr>
-  </tbody>
-</table>
+| Phase | Comments | Roadmap | Support | On Trunk |
+|-----------|:-------------------------------------|:---------------------|:---------------|:-----------|
+| Proposed | Conceptual ideas and suggestions for OpenCrowbar functionality that have not been implemented as code | May be shown | None | N/A |
+| Proof of Concept | Initial code showing partial functionality for feature | Optionally Identified | Negative Test (Does not impact core) | No (on branch) |
+| Incubated | Base functional code allowing use of feature to demonstrate value | Identified | Negative Test (Does not impact core) | No (on branch) |
+| Stable | Base functional code is available for use in select builds | Included | Validated by QA, No Support | Yes|
+| Core | Feature code integrated into operations of OpenCrowbar in fundamental way | Central | Validated by QA, Current Version Support | Yes |
+| Supported | Same as core, but available with commercial support | Central | Backwards Support via Patches | Yes &amp; Maintained on Branches |
 
 Note: Features are NOT required to progress through all these phases!
 Architectural changes may skip ahead based on their level of impact and

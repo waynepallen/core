@@ -3,14 +3,14 @@
 There are 3 basic objects that everything else in OpenCrowbar relies
 on -- node objects, roles, and noderole objects.
 
-* Node objects encapsulate machine-specific state -- they have unique
+* **Node objects** encapsulate machine-specific state -- they have unique
 programmatically generated names (which must also be the machine's FQDN
-in DNS), track whether Crowbar is allowed to manage the machine, and track
+in DNS), track whether OpenCrowbar is allowed to manage the machine, and track
 whether the machine is alive and reachable. In the OCB framework,
 nodes are things that a jig performs operations on as directed by a
 role through a noderole.
 
-* Roles are the primary unit of functionality in OCB -- they provide
+* **Roles** are the primary unit of functionality in OCB -- they provide
 the code that the jigs use to effect change on the nodes in accordance
 with the desired state stored in the noderole graph. Roles form a
 dependency graph of their own (roles must declare what other roles
@@ -19,9 +19,9 @@ do things to a node, and roles can have flags that affect how the
 annealer will handle certian aspects of building the noderole graph
 and initial node bootstrap.
 
-* Noderoles represent a binding of a role to a node.  Each noderole
+* **Noderoles** represent a binding of a role to a node.  Each noderole
 tracks any state that needs to communicated from the user or the
-Crowbar framework to a node (and vice versa), and the overall noderole
+OpenCrowbar framework to a node (and vice versa), and the overall noderole
 graph determines both the order in which roles are enacted on nodes
 and what attributes are visible from other noderoles when the noderole
 runs.
@@ -31,15 +31,15 @@ help keep cluster administrators from dying of information overload
 when staring at a noderole graph with 10,000 edges.  These are
 deployments, deployment roles, and snapshots.
 
-* A deployment is an administratively convenient logical grouping of
+* A **deployment** is an administratively convenient logical grouping of
 nodes along with a set of default role configurations (the deployment
 roles) relevant to whatever workload is being run in the
 deployment. Deployments all have a parent deployment except for the
-system deployment, which Crowbar manages and which is where all
+system deployment, which OpenCrowbar manages and which is where all
 newly-discovered nodes wind up. Nodes belong to deployments, which
 helps control how the noderole graph is built.
 
-* A snapshot consists of a collection of node-role bindings created in a
+* A **snapshot** consists of a collection of node-role bindings created in a
 particular deployment.  A deployment has a linear history of
 snapshots, and each snapshot can be proposed (in which case the user
 can edit noderole attributes and state, and the annealer will ignore
@@ -48,10 +48,10 @@ and the annealer can use the noderoles), and archived (where the
 noderoles are not editable and are ignored by the annealer).
 
 Additionally, we have barclamps to group together logically related
-roles, glue the roles into the Crowbar API and Web UI, and contain any
+roles, glue the roles into the OpenCrowbar API and Web UI, and contain any
 jig-specific files that the roles require.
 
-## Roles, in a little more detail: ##
+## Roles, in a little detail: ##
 
 Roles have a lot to do.  Their dependency graph is used a template to
 build the noderole DAG, they need to provide their jig with all the
@@ -124,7 +124,7 @@ after Rails saves any changes to a node object.
 
 ### Role Flags: ###
 
-Right now, roles have 4 flags that the Crowbar framework knows how to
+Right now, roles have 4 flags that the OpenCrowbar framework knows how to
 handle:
 
 1. Discovery, which means that this role will be automatically bound
@@ -132,7 +132,7 @@ to all non-admin nodes when the node is freshly-created if the role's
 jig is active.
 2. Bootstrap, which means that this role will be automatically bound
 to all freshly-created admin nodes.  This flag is primarily used by
-the Crowbar framework to bootstrap the initial Crowbar admin node into
+the OpenCrowbar framework to bootstrap the initial OpenCrowbar admin node into
 existence.
 3. Implicit, which signals that this role can be implicitly created
 and bound to a node as part of the dependency resolution process, and
@@ -178,7 +178,7 @@ This function will need to grow more ornate when we want to start
 supporting more than just the system deployment -- right now it will
 not respect deployment-level scoping.  Adding it is a fairly
 straightforward extension to the tests in step 4.  This function is
-also arguably one of the more critical pieces of code in the Crowbar
+also arguably one of the more critical pieces of code in the OpenCrowbar
 framework -- it determines the shape and connectedness of the noderole
 graph, and hence it plays a large part in determining whether what we
 are deploying makes sense.
@@ -190,7 +190,7 @@ are deploying makes sense.
 3. A blob of JSON that the user can edit.  This blob is seeded from
 the deployment role data, which in turn is seeded from the role
 template
-4. A blob of data that the Crowbar framework can edit.  This is used
+4. A blob of data that the OpenCrowbar framework can edit.  This is used
 by the roles to pass system-generated data to the jigs, and is usually
 seeded by one of the noderole events.
 5. A blob of data that we get back at the end of a jig run.
@@ -255,10 +255,10 @@ that is what winds up on the noderole's wall.
 
 ## Aliveness and availability: ##
 
-Nodes in the Crowbar framework have two related flags that control
+Nodes in the OpenCrowbar framework have two related flags that control
 whether the annealer can operate on them.
 
-Aliveness is under the control of the Crowbar framework and
+Aliveness is under the control of the OpenCrowbar framework and
 encapsulates the framework's idea of whether any given node is
 manageable or not.  If a node is pingable and can be SSH'ed into as
 root without a password using the credentials of the root user on
@@ -274,8 +274,8 @@ noderole dependency graph to any child noderoles.
 Nodes will also mark themselves as alive and dead in the course of
 their startup and shutdown routines.
 
-Availability is under the control of the Crowbar cluster
-administrators, and should be used by them to tell Crowbar that it
+Availability is under the control of the OpenCrowbar cluster
+administrators, and should be used by them to tell OpenCrowbar that it
 should stop managing noderoles on the node.  When a node is not
 available, the annealer will not try to perform any jig runs on a
 node, but it will leave the state of the noderoles alone.
@@ -285,7 +285,7 @@ operations on it.
 
 ## Delayed Jobs and Queuing: ##
 
-The Crowbar framework runs all jig actions in the background using
+The OpenCrowbar framework runs all jig actions in the background using
 delayed_jobs + a thin queuing layer that ensures that only one task is
 running on a node at any given time.  For now, we limit ourselves to
 having up to 10 tasks running in the background at any given time,
@@ -366,7 +366,7 @@ that noderole before committing the deployment.
 The semi-astute observer will have noticed some obvious bugs and race
 conditions in the above sequence of steps.  These have been left in
 place in the interest of expediency and as learning oppourtunities for
-others who need to get familiar with the Crowbar codebase.
+others who need to get familiar with the OpenCrowbar codebase.
 
 ## Installation Wizard: ##
 

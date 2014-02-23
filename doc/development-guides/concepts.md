@@ -1,60 +1,51 @@
-# Crowbar Concepts 
+# OpenCrowbar Concepts
 
 ## The operations challenge
 
-A deployment framework is key to solving the problems of deploying,
-configuring, and scaling open source clusters for cloud computing.
+A deployment framework is key to solving the problems of deploying, configuring, and scaling open source clusters for cloud computing.
 
-Deploying an open source cloud can be a complex undertaking. If you’re
-using manual processes, you could spend days or even weeks working to
-get your cloud up and running. And even then, your cloud never sits
-still—it’s always on an upgrade or improvement path. You need to
-continually deploy new servers, add management capabilities, and track
-the upstream releases, while keeping the cloud running, and providing
-reliable services to end users.
+Deploying an open source cloud can be a complex undertaking. Manual processes, can take days or even weeks working to get a cloud fully operational. Eeven then, a cloud is never static, in the real world cloud solutions are constantly on an upgrade or improvement path. There is continuous need tp deploy new servers, add management capabilities, and track the upstream releases, while keeping the cloud running, and providing reliable services to end users. Service continuity requirements dictate a need for automation and orchestation.  There is no other way to reduce the cost while improving the uptime reliability of a cloud.
 
-These were among the challenges that drove the development of the Crowbar
-software framework from it's roots as an [OpenStack](http://OpenStack.org)
-installer into a much broader orchestration tool.  Because of this evolution,
-Crowbar has a number of architectural features to address these
-challenges:
+These were among the challenges that drove the development of the OpenCrowbar software framework from it's roots as an [OpenStack](http://OpenStack.org) installer into a much broader orchestration tool.  Because of this evolution, OpenCrowbar has a number of architectural features to address these challenges:
 
 * Abstraction Around Orchestration
 
-    Crowbar is designed to simplify the operations of large scale cloud
+    OpenCrowbar is designed to simplify the operations of large scale cloud
     infrastructure by providing a higher level abstraction on top of
     existing configuration management and orchestration tools based on
     a layered deployment model.
 
 * Web Architecture
 
-    Crowbar is implemented as a web application server, with a full user
-    interface and a REST API.
+    OpenCrowbar is implemented as a web application server, with a full user
+    interface and a predictable and consistent REST API.
 
-* Platform Agnostic 
+* Platform Agnostic Implementation
 
-    Crowbar is designed to be platform and operating system agnostic.
+    OpenCrowbar is designed to be platform and operating system agnostic.
     It supports discovery and provisioning from a bare metal state,
     including hardware configuration, updating and configuring BIOS and
     BMC boards, and operating system installation. Multiple operating
-    systems and heterogenous operating systems are supported. 
+    systems and heterogenous operating systems are supported. OpenCrowbar
+    enables use of time-honored tools, industry standard tools, and any
+    form of scriptable facility to perform its state transition operations.
 
 * Modular Architecture
 
-    Crowbar is designed around modular plugins called BarClamps, which
-    allow for extensibility and customization while encapsulating 
+    OpenCrowbar is designed around modular plugins called BarClamps. 
+    Barclamps allow for extensibility and customization while encapsulating
     layers of deployment in manageable units.
 
-* State Management Engine
+* State Tansition Management Engine
 
-    The core of Crowbar is based on a state machine that tracks nodes,
+    The core of OpenCrowbar is based on a state machine that tracks nodes,
     roles, and their relationships in groups called deployments. The
     state machine is responsible for analyzing dependencies and scheduling
-    state transitions.
+    state transition operations (transitions).
 
 * Data model 
 
-    Crowbar uses a dedicated database to track system state and data.
+    OpenCrowbar uses a dedicated database to track system state and data.
     As discovery and deployment progresses, system data is collected
     and made available to other components in the system.  Individual
     components can access and update this data, reducing dependencies
@@ -63,16 +54,9 @@ challenges:
 
 * Network Abstraction
 
-    Crowbar is designed to support a flexible network abstraction,
+    OpenCrowbar is designed to support a flexible network abstraction,
     where pyhsical interfaces, BMC's, VLANS, binding, teaming,and other low level
     features are mapped to logical conduits, which can be referenced by other
     components.  Networking configurations can be created dynamically to adapt
-    to changing infrastructure. 
-
-* Testing and Simulation 
-
-    The Crowbar framework includes an integrated testing and simulation
-    system that simplified development and testing of the core framework and 
-    plug in components.
-
-
+    to changing infrastructure.
+"concepts.md" 67L, 3174C                        

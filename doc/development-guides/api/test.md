@@ -1,6 +1,6 @@
 # Test APIs
 
-Crowbar provides a comprehensive testing framework.  While we make every effort to use the API for all test functions, some activities require speciailized testing hooks.  It is not desired to change primary APIs to serve testing use-cases; consequently, the API has a reserved area for specialized test interfaces.
+OpenCrowbar provides a comprehensive testing framework.  While we make every effort to use the API for all test functions, some activities require speciailized testing hooks.  It is not desired to change primary APIs to serve testing use-cases; consequently, the API has a reserved area for specialized test interfaces.
 
 WARNING: The Test APIs (=/api/test/...=) are considered to be tightly coupled to the code base and have *no contract* for consistency between versions.
 
