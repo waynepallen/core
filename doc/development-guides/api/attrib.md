@@ -16,13 +16,9 @@ Returns list of Attrib id:names in the system
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> GET  </td>
-  <td> /2.0/crowbar/2.0/attrib </td>
-  <td> - </td>
-  <td> - </td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET | /2.0/crowbar/2.0/attrib | - | - | |
 
 
 **Output:**
@@ -42,13 +38,9 @@ Details:
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> GET  </td>
-  <td> /2.0/crowbar/2.0/attrib/[id] </td>
-  <td> id is the Attrib ID or name. </td>
-  <td> -  </td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET | /2.0/crowbar/2.0/attrib/[id] | id is the Attrib ID or name. | - | |
 
 
 **Output:**
@@ -78,13 +70,9 @@ Creates a new Attrib
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> POST  </td>
-  <td> /2.0/crowbar/2.0/attrib/ </td>
-  <td> json definition (see Attrib Show) </td>
-  <td> must be a legal object </td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| POST | /2.0/crowbar/2.0/attrib/ | json definition (see Attrib Show) | must be a legal object |
 
 **Input:**
 
@@ -106,13 +94,9 @@ Deletes an Attrib
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> DELETE  </td>
-  <td> /2.0/crowbar/2.0/attrib/[id] </td>
-  <td> Database ID or name </td>
-  <td> must be an existing object ID </td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| DELETE | /2.0/crowbar/2.0/attrib/[id] | Database ID or name | must be an existing object ID | |
 
 No body.
 
