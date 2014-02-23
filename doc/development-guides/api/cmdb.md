@@ -38,7 +38,7 @@ Details:
 
 **Input:**
 
-| Verb | URL | Options | Returns | Comments |2yy
+| Verb | URL | Options | Returns | Comments |
 |:------|:-----------------------|--------|--------|:----------------|
 | GET | /2.0/crowbar/2.0/cmdb/[id] | id is the cmdb ID or name. | - | |
 

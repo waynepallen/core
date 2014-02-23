@@ -14,13 +14,9 @@ Returns list of group id:names in the system
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> GET  </td>
-  <td> /2.0/crowbar/2.0/group </td>
-  <td> - </td>
-  <td> - </td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET  | /2.0/crowbar/2.0/group | - | - | |
 
 
 **Output:**
@@ -40,13 +36,9 @@ Details:
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> GET  </td>
-  <td> /2.0/crowbar/2.0/group/[id] </td>
-  <td> id is the group ID or name. </td>
-  <td> -  </td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET  | /2.0/crowbar/2.0/group/[id] | id is the group ID or name. | -  |
 
 
 **Output:**
@@ -76,13 +68,9 @@ Creates a new group
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> POST  </td>
-  <td> /2.0/crowbar/2.0/node/ </td>
-  <td> json definition (see Node Show) </td>
-  <td> must be a legal object </td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| POST  | /2.0/crowbar/2.0/node/ | json definition (see Node Show) | must be a legal object |
 
 **Input:**
 
@@ -109,13 +97,9 @@ Deletes a group
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> DELETE  </td>
-  <td> /2.0/crowbar/2.0/group/[id] </td>
-  <td> Database ID or name </td>
-  <td> must be an existing object ID </td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| DELETE  | /2.0/crowbar/2.0/group/[id] | Database ID or name | must be an existing object ID |
 
 No body.
 
@@ -137,29 +121,12 @@ On success, They all return the same result as the Show method
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> GET  </td>
-  <td> /2.0/crowbar/2.0/group/[group-id]/node </td>
-  <td> none </td>
-  <td> json list of nodes (see below) </td>
-  <td> Shows nodes that below to group </td></tr>
-<tr><td> POST </td>
-  <td> /2.0/crowbar/2.0/group/[group-id]/node/[node-id] </td>
-  <td> none </td>
-  <td> json definition (see Node Show) </td>
-  <td> Add node to group </td></tr>
-<tr><td> PUT  </td>
-  <td> /2.0/crowbar/2.0/group/[group-id]/node/[node-id] </td>
-  <td> none </td>
-  <td> json definition (see Group Node Show) </td>
-  <td> Move Node from Group 1 to Group 2 </td></tr>
-<tr><td> DELETE </td>
-  <td> /2.0/crowbar/2.0/group/[group-id]/node/[node-id] </td>
-  <td> none </td>
-  <td> json definition (see Node Show) </td>
-  <td> Removes a node from an existing group </td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET  | /2.0/crowbar/2.0/group/[group-id]/node | none | json list of nodes (see below) | Shows nodes that below to group |
+| POST | /2.0/crowbar/2.0/group/[group-id]/node/[node-id] | none | json definition (see Node Show) | Add node to group |
+| PUT  | /2.0/crowbar/2.0/group/[group-id]/node/[node-id] | none | json definition (see Group Node Show) | Move Node from Group 1 to Group 2 |
+| DELETE | /2.0/crowbar/2.0/group/[group-id]/node/[node-id] | none | json definition (see Node Show) | Removes a node from an existing group |
 
 > _Note_: Move a node from an existing group to an another group _in the same category_.  This is effectively a combined delete/add action.
 
