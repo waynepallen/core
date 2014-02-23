@@ -16,7 +16,7 @@ Inside the template:
       1. change the name of the file to match the workload
       1. change the class and barclamp name to match the workload
 1. correct file names that are workload specific
-  1. rename the =/doc/license/ocbtemplate.md= file with the name of your workload.md
-  1. rename the =/barclamps/ocbtemplate.yml= file with the name of your workload.yml
-  1. rename the =/BDD/features/ocbtemplate.feature= file with the name of your workload.feature
-  1. rename the =/roles/ocbtemplate-base/= directory with the name of your name of your workload-base
+  1. rename the _/doc/license/ocbtemplate.md_ file with the name of your workload.md
+  1. rename the _/barclamps/ocbtemplate.yml_ file with the name of your workload.yml
+  1. rename the _/BDD/features/ocbtemplate.feature_ file with the name of your workload.feature
+  1. rename the _/roles/ocbtemplate-base/_ directory with the name of your name of your workload-base

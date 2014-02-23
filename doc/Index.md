@@ -24,19 +24,19 @@ There are a number of documents that may be helpful. The following is a guide to
   1. Overview of the OpenCrowbar Software Installation - [Directory Layout](./OpenCrowbar-DirectoryLayout.md)
   1. OpenCrowbar Key Design [Concepts](./development-guides/concepts.md)
       1. More detailed [OpenCrowbar Design Information](./development-guides/OCB-DesignInfo.md)
-           1. [Application Program Interface (API)](./devlopment-guides/api.md)
+           1. [Application Program Interface (API)](./development-guides/api.md)
            1. [Barclamp](./development-guides/barclamps.md) Information
               1. About building a [New Barclamp](./development-guides/new_barclamp.md)
               1. The [Crowbar](./development-guides/barclamps/crowbar.md)  barclamp suite
            1. [Database](./development-guides/database.md) storage infrastructure for OpenCrowbar
-           1. [Jig](./devlopment-guides/concepts/jigs.md) Design Information
+           1. [Jig](./development-guides/concepts/jigs.md) Design Information
       1. Description of the design [model](./development-guides/concepts/model.md)
       1. User Interface Information:
            1. [Localization](./development-guides/ui/localization.md)
            1. [Navigation](./development-guides/ui/navigation.md)
            1. [Tips and Tricks](./development-guides/ui/tips_and_tricks.md)
   1. Testing and Validation:
-      1. [Behaviorally Defined Design](./deverlopment-guides/testing/bdd.md)
+      1. [Behaviorally Defined Design](./development-guides/testing/bdd.md)
       1. [Simulation](./development-guides/testing/simulator.md)
       1. [Smoke Testing](./development-guides/workflow/smoketesting.md)
   1. Discovery Agent (Sledgehammer) [Hooks](./development-guides/workflow/sledgehammer-hooks.md)
