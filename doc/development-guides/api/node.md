@@ -1,6 +1,6 @@
 ### Node APIs
 
-Node APIs are used to manage nodes (servers) within the Crowbar system
+Node APIs are used to manage nodes (servers) within the OpenCrowbar system
 
 #### Node Show (all)
 

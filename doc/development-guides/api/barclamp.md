@@ -1,6 +1,6 @@
 ### Barclamp APIs
 
-Barclamps are the core modulization for Crowbar.  For that reason, the API for barclamps is more limited because changes to barclamps can cause breaking changes to the framework.
+Barclamps are the core modulization for OpenCrowbar.  For that reason, the API for barclamps is more limited because changes to barclamps can cause breaking changes to the framework.
 
 #### Barclamp List
 

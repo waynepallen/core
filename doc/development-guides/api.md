@@ -1,6 +1,6 @@
-## Crowbar API
+## OpenCrowbar API
 
-This document is the reference guide for the OpenCrowbar API
+This document is the reference guide for the OpenCrowbar API.  Additional information is provided in the [API](./development-guide/api) directory.
 
 ### Using the API
 
@@ -60,12 +60,12 @@ API callers may bypass the login screen and use digest authentication for all re
 
 #### Common API URL Patterns:
 
-Crowbar uses a versioned URL pattern.  Version in the URL allows the barclamp to offer an API contract independent of Crowbar.  By convention, resources names are pluralized in the API.  For example, the API will use =nodes= instead of =node= in paths.
+OpenCrowbar uses a versioned URL pattern.  Version in the URL allows the barclamp to offer an API contract independent of OpenCrowbar.  By convention, resources names are pluralized in the API.  For example, the API will use =nodes= instead of =node= in paths.
 
 * UI URLs: _these are less documented, unsupported for external use, and do not include a version number_.  Do not use these for API calls!
 
 * Base Form: `[workload | api]/[version]/[resources]/[id]`
-  * version - version of Crowbar framework being used (v2 for this guide)
+  * version - version of OpenCrowbar framework being used (v2 for this guide)
   * workload - workload (aka barclamp) that owns the requested activity.  Framework uses 'api'
   * bc_version - the version of the barclamp being used. 
   * key_word - groups the API into different categories
@@ -93,7 +93,7 @@ Crowbar uses a versioned URL pattern.  Version in the URL allows the barclamp to
      * POST - used to create new state (propose a snapshot)
      * DELETE - Unlink/Deactivate/Dequeue
 
-In general, Crowbar REST pattern uses the 4 HTTP verbs as follows:
+In general, OpenCrowbar REST pattern uses the 4 HTTP verbs as follows:
 
    * GET to retrieve information 
    * PUT to transform or change existing data  
@@ -102,7 +102,7 @@ In general, Crowbar REST pattern uses the 4 HTTP verbs as follows:
 
 ### Expected Fields
 
-By convention, most Crowbar models have the same fields.
+By convention, most OpenCrowbar models have the same fields.
 
 * id - database assigned role, number
 * name - resource name, often a natural key with enforced uniqueness
@@ -116,7 +116,7 @@ By convention, most Crowbar models have the same fields.
 
 ### API Headers & Response Patterns
 
-The Crowbar REST API uses HTTP "content-type" metadata header tags to help clients quickly identify the information being returned by the API.
+The OpenCrowbar REST API uses HTTP "content-type" metadata header tags to help clients quickly identify the information being returned by the API.
 
 The API adds ="application/vnd.crowbar.[type].[form]+json; version=2.0"= to the content-type tag.
 
@@ -140,28 +140,14 @@ The following table should be populated for all API calls:
 
 #### API Actions
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Comments </th></tr>
-<tr><td> GET  </td>
-  <td> api/v2/resources </td>
-  <td> List </td></tr>
-<tr><td> GET  </td>
-  <td> api/v2/resources/:id </td>
-  <td> Specific Item </td></tr>
-<tr><td> PUT  </td>
-  <td> api/v2/resources/:id </td>
-  <td> Update Item </td></tr>
-<tr><td> POST  </td>
-  <td> api/v2/resources </td>
-  <td> Create Item </td></tr>
-<tr><td> DELETE  </td>
-  <td> api/v2/resources/:id </td>
-  <td> Delete Item </td></tr>
-<tr><td> VARIOUS  </td>
-  <td> api/v2/resources/:id/extra </td>
-  <td> Special Ops </td></tr>
-
-</table>
+| Verb | URL | Comments |
+|:----------|:------------------------------|:---------|
+| GET | api/v2/resources | List |
+| GET | api/v2/resources/:id | Specific Item |
+| PUT | api/v2/resources/:id  | Update Item |
+| POST | api/v2/resources | Create Item |
+| DELETE | api/v2/resources/:id | Delete Item |
+| VARIOUS | api/v2/resources/:id/extra | Special Ops |
 
 ### JSON Output Example:
 
@@ -187,28 +173,23 @@ The following table should be populated for all API calls:
 ### Node Create Example:
 
 Node JSON Data: /tmp/node_sample.json
-```
-{
-  "admin": false,
-  "alias": "newtest",
-  "alive": true,
-  "allocated": false,
-  "available": true,
-  "bootenv": "local",
-  "description": "Testing Only - should be automatically removed",
-  "hint": "{}",
-  "name": "newtest.cr0wbar.com",
-  "order": 100
-}
-
-```
+    {
+      "admin": false,
+      "alias": "newtest",
+      "alive": true,
+      "allocated": false,
+      "available": true,
+      "bootenv": "local",
+      "description": "Testing Only - should be automatically removed",
+      "hint": "{}",
+      "name": "newtest.cr0wbar.com",
+      "order": 100
+    1}
 
 Curl command to create the node:
-```
-judd@cb2dev2ubuntu:~$ curl --digest -u 'developer:Cr0wbar!' --data @/temp/node_samples.json -H "Content-Type:application/json" --url http://127.0.0.1:3000/api/v2/nodes
 
-{"admin":false,"alias":"simaa","alive":true,"allocated":false,"available":true,"bootenv":"local","created_at":"2013-12-21T05:49:00Z","deployment_id":1,"description":"devBDD Testing Only - should be automatically removed","discovery":{},"hint":"{}","id":41,"name":"simaa.cr0wbar.com","order":100,"target_role_id":null,"updated_at":"2013-12-21T05:49:00Z"}judd@cb2dev2ubuntu:~$ 
-```
+   \#> curl --digest -u 'developer:Cr0wbar!' --data @/temp/node_samples.json -H "Content-Type:application/json" --url http://127.0.0.1:3000/api/v2/nodes
+   {"admin":false,"alias":"simaa","alive":true,"allocated":false,"available":true,"bootenv":"local","created_at":"2013-12-21T05:49:00Z","deployment_id":1,"description":"devBDD Testing Only - should be automatically removed","discovery":{},"hint":"{}","id":41,"name":"simaa.cr0wbar.com","order":100,"target_role_id":null,"updated_at":"2013-12-21T05:49:00Z"}
 
 ### Some workflow examples
 
@@ -221,21 +202,18 @@ You need to know the following information to start this
 
 Start by creating the deployment
 
-POST api/v2/deployments 
-
-	json = {"name":"this is a new deployment"}
+> POST api/v2/deployments 
+>	json = {"name":"this is a new deployment"}
 
 Update the target node with the new deployment that you just created
 
-PUT api/v2/node/node name
-
-	json = {"deployment_id":"3"}
+> PUT api/v2/node/node name
+>	json = {"deployment_id":"3"}
 
 Create a node-role to link the node and the role you wish to push
 
-POST api/v2/node\_roles 
-
-	json = {"node\_id":"3", "role\_id":"3"}
+> POST api/v2/node\_roles 
+>	json = {"node\_id":"3", "role\_id":"3"}
 
 Creating the node\_role will create a snapshot which will default to the 'head' position of the list. Currently you 
 don't have a method to commit that directly. The POST to create the node_role does return the item that has been created 
@@ -243,44 +221,34 @@ and in that json blob is the snapshot id that was created.
 
 Now commit the snapshot to send it to the annealer - which will sort out the dependencies and push them to the node
 
-PUT api/v2/snapshot/snapshot_id
+> PUT api/v2/snapshot/snapshot_id
 
-Using the API python bindings this looks like
+Here is and example of the use of these API python bindings:
 
+     from api import cb2_Api
+     import json
 
-```
-from api import cb2_Api
-import json
-
-class deploy_role()
+     class deploy_role()
 
 	#create the session to the admin node
 	session = cb2_Api("192.168.124.10","3000","crowbar","crowbar")
 	
 	#get the details of the node we want to manipulate
 	single = session.get_node("d00-0c-29-07-a4-a8.crowbar.org")
-	
 	NodeID = str(single.id)
 	
 	#create a new deployment
 	deploymentdata = {"name":"ApiTestDeployment"}
-	
 	deployment = session.create_deployment(json.dumps(deploymentdata))
-
 	DeploymentID = str(deployment.id)
 	
 	#update the node with that deployment
 	node_json = json.dumps({"deployment_id":DeploymentID})
-	
 	session.update_node(node_json,node_id=NodeID)
-	
+        
 	#create the node_role to bind the role and create the snapshot (using role 3 as an example)	
 	NodeRole = session.create_node_role(json.dumps({"node_id":NodeID,"role_id":"3"})) 
 
 	#and commit the snapshot	
 	session.commit_snapshot(str(NodeRole.snapshot_id))
-	
-	
-
-````
 

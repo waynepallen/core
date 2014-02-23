@@ -30,10 +30,11 @@ readonly currdir="$PWD"
 export PATH="$PATH:/sbin:/usr/sbin:/usr/local/sbin"
 
 # Location for caches that should not be erased between runs
-CACHE_DIR="$HOME/.cache/opencrowbar/sledgehammer"
-SLEDGEHAMMER_PXE_DIR="$HOME/.cache/opencrowbar/tftpboot/discovery"
-CHROOT="$CACHE_DIR/chroot"
-SLEDGEHAMMER_LIVECD_CACHE="$CACHE_DIR/livecd_cache"
+[[ $CACHE_DIR ]] || CACHE_DIR="$HOME/.cache/opencrowbar/sledgehammer"
+[[ $SLEDGEHAMMER_PXE_DIR ]] || SLEDGEHAMMER_PXE_DIR="$HOME/.cache/opencrowbar/tftpboot/discovery"
+[[ $CHROOT ]] || CHROOT="$CACHE_DIR/chroot"
+[[ $SLEDGEHAMMER_LIVECD_CACHE ]] || SLEDGEHAMMER_LIVECD_CACHE="$CACHE_DIR/livecd_cache"
+[[ $SYSTEM_TFTPBOOT_DIR ]] || SYSTEM_TFTPBOOT_DIR="/mnt/tftpboot"
 
 CROWBAR_DIR="${0%/*}"
 
@@ -126,7 +127,7 @@ chroot_install() {
 cleanup() {
     set +e
     # Make sure that the loopback kernel module is loaded.
-    [[ -d /sys/module/loop ]] || sudo modprobe loop
+    [[ -e /dev/loop0 ]] || sudo modprobe loop
 
     while read line; do
         sudo losetup -d "${line%%:*}"
@@ -288,14 +289,14 @@ cat >> "$CHROOT/mnt/make_sledgehammer" <<EOF
 set -e
 cd /mnt
 livecd-creator --config=sledgehammer.ks --cache=./cache -f sledgehammer
-rm -fr /mnt/tftpboot
+rm -fr $SYSTEM_TFTPBOOT_DIR
 livecd-iso-to-pxeboot sledgehammer.iso
 rm /mnt/sledgehammer.iso
 EOF
 in_chroot ln -s /proc/self/mounts /etc/mtab
 in_chroot /mnt/make_sledgehammer
 mkdir -p "$SLEDGEHAMMER_PXE_DIR"
-cp -af "$CHROOT/mnt/tftpboot/"* "$SLEDGEHAMMER_PXE_DIR"
-in_chroot rm -rf /mnt/tftpboot
+cp -af "$CHROOT$SYSTEM_TFTPBOOT_DIR/"* "$SLEDGEHAMMER_PXE_DIR"
+in_chroot rm -rf $SYSTEM_TFTPBOOT_DIR
 
 [[ -f $SLEDGEHAMMER_PXE_DIR/initrd0.img ]]
