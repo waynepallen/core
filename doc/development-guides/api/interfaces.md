@@ -6,7 +6,6 @@ Lists the current networks.
 
 **Input:**
 
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
 | Verb | URL | Options | Returns | Comments |
 |:------|:-----------------------|--------|--------|:----------------|
 | GET   | api/v2/interfaces | N/A | JSON array of Interface Mappings | |
@@ -15,7 +14,9 @@ Lists the current networks.
 
 Data:
 
-For POST/PUT use the following JSON ={"pattern"=>"node type", "bus_order"=>"0000:00/0000:00:01 | 0000:00/0000:00:03 | etc"}=
+For POST/PUT use the following
+
+    JSON ={"pattern"=>"node type", "bus_order"=>"0000:00/0000:00:01 | 0000:00/0000:00:03 | etc"}=
 
 Notes:
 

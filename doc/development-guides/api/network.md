@@ -20,6 +20,7 @@ Lists the current networks.
 > There are helpers on the POST method that allow you to create ranges and routers when you create the network. 
 
 Sample:
+
     {
       "name":       "networkname",
       "deployment": "deploymentname",
@@ -51,7 +52,6 @@ Allocates a free IP address in a network.
 
 Deallocates a used IP address in a network.
 
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
 | Verb | URL | Options | Returns | Comments |
 |:------|:-----------------------|--------|--------|:----------------|
 |DELETE | api/v2/networks/deallocate_ip/[network_id]/[node_id] | id: Database ID or name of proposal<br>network_id: Database ID or name of network<br>node_id: Database ID or name of node | HTTP error code 200 on success | |
