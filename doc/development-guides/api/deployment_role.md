@@ -6,25 +6,13 @@ Unlike node-roles, they do not store any inbound or system data.
 
 #### API Actions
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Comments </th></tr>
-<tr><td> GET  </td>
-  <td> api/v2/deployment_roles </td>
-  <td> List </td></tr>
-<tr><td> GET  </td>
-  <td> api/v2/deployment_roles/:id </td>
-  <td> Specific Item </td></tr>
-<tr><td> PUT  </td>
-  <td> api/v2/deployment_roles/:id </td>
-  <td> Update Item </td></tr>
-<tr><td> POST  </td>
-  <td> api/v2/deployment_roles </td>
-  <td> Create Item </td></tr>
-<tr><td> DELETE  </td>
-  <td> - </td>
-  <td> NOT SUPPORTED </td></tr>
-
-</table>
+| Verb | URL | Comments |
+|:------|:-----------------------|:----------------|
+| GET  | api/v2/deployment_roles | List |
+| GET  | api/v2/deployment_roles/:id | Specific Item |
+| PUT  | api/v2/deployment_roles/:id | Update Item |
+| POST  | api/v2/deployment_roles | Create Item |
+| DELETE  | - | NOT SUPPORTED |
 
 The API includes shortcuts for 
 

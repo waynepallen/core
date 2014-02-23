@@ -6,10 +6,9 @@ Barclamps are the core modulization for OpenCrowbar.  For that reason, the API f
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-  <tr><td> GET </td><td> /crowbar/v2/barclamps  </td><td> none  </td><td> All barclamps </td><td> - </td></tr> 
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET | /crowbar/v2/barclamps | none | All barclamps | - | 
 
 **Output:**
 
@@ -17,19 +16,17 @@ Barclamps are the core modulization for OpenCrowbar.  For that reason, the API f
 
 Provides the list of supported resources for the API
 
-<table border=1>
-  <tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-  <tr><td> GET  </td><td> /[:barclamp]/v2/catalog </td><td> none  </td><td> Actions List </td><td> - </td></tr> 
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET | /[:barclamp]/v2/catalog | none | Actions List | - | 
 
 #### Barclamp Template
 
 **Input:**
 
-<table border=1>
-  <tr><th> Verb </th><th> URL                      </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-  <tr><td> GET  </td><td> /[:barclamp]/v2/template   </td><td> none   </td><td> Redirects to Template Instance </td><td> - </td></tr> 
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET | /[:barclamp]/v2/template | none | Redirects to Template Instance | - | 
 
 This will redirect to the Instance used for the template.
 
