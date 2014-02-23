@@ -28,37 +28,15 @@ Instances can only be created by
 
 #### API Actions
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Comments </th></tr>
-<tr><td> GET  </td>
-  <td> api/v2/snapshots </td>
-  <td> List </td></tr>
-<tr><td> GET  </td>
-  <td> api/v2/snapshots/:id </td>
-  <td> Specific Item </td></tr>
-<tr><td> PUT  </td>
-  <td> api/v2/snapshots/:id </td>
-  <td> Update Item </td></tr>
-<tr><td> POST  </td>
-  <td> api/v2/snapshots </td>
-  <td> Create Item </td></tr>
-<tr><td> DELETE  </td>
-  <td> - </td>
-  <td> NOT SUPPORTED </td></tr>
-<tr><td> PUT  </td>
-  <td> api/v2/snapshots/:id/propose </td>
-  <td> Creates a new snapshot as the Deployment Head </td></tr>
-<tr><td> PUT  </td>
-  <td> api/v2/snapshots/:id/commit </td>
-  <td> Commits snapshot for action by the Annealer </td></tr>
-<tr><td> PUT  </td>
-  <td> api/v2/snapshots/:id/recall </td>
-  <td> Interrupts the Annealer </td></tr>
-<tr><td> GET  </td>
-  <td> api/v2/snapshots/:id/node_roles </td>
-  <td> Shows the node-roles for a snapshot </td></tr>
-<tr><td> GET  </td>
-  <td> api/v2/snapshots/:id/graph </td>
-  <td> Shows the node-role relationships for a snapshot.  Used for the UI Graph</td></tr>
-
-</table>
+| Verb | URL | Comments |
+|:------|:-----------------------|:----------------|
+| GET  |api/v2/snapshots |List |
+| GET  |api/v2/snapshots/:id |Specific Item |
+| PUT  |api/v2/snapshots/:id |Update Item |
+| POST  |api/v2/snapshots |Create Item |
+| DELETE  |- |NOT SUPPORTED |
+| PUT  |api/v2/snapshots/:id/propose |Creates a new snapshot as the Deployment Head |
+| PUT  |api/v2/snapshots/:id/commit |Commits snapshot for action by the Annealer |
+| PUT  |api/v2/snapshots/:id/recall |Interrupts the Annealer |
+| GET  |api/v2/snapshots/:id/node_roles |Shows the node-roles for a snapshot |
+| GET  |api/v2/snapshots/:id/graph |Shows the node-role relationships for a snapshot.  Used for the UI Graph|

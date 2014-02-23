@@ -8,10 +8,9 @@ WARNING: The Test APIs (=/api/test/...=) are considered to be tightly coupled to
 
 ## Load Node Data from File (api/test/nodes/[:id]?source)
 
-<table border=1>
-  <tr><th> Verb </th><th> URL                       </th><th> Comments </th></tr>
-  <tr><td> PUT  </td><td> /api/test/node/[:id]      </td><td> returns Node json </td></tr> 
-</table>
+| Verb | URL | Comments |
+|:-----|:---------------------|:---------------------|
+| PUT  | /api/test/node/[:id] | returns Node json | 
 
 Options
    * source = specify the file to be loaded.  All files should be in the =[app base]/test/data= path.

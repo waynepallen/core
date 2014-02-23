@@ -12,25 +12,11 @@ OpenCrowbar has three built-in jigs
 
 #### API Actions
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Comments </th></tr>
-<tr><td> GET  </td>
-  <td> api/v2/jigs </td>
-  <td> List </td></tr>
-<tr><td> GET  </td>
-  <td> api/v2/jigs/:id </td>
-  <td> Specific Item </td></tr>
-<tr><td> PUT  </td>
-  <td> api/v2/jigs/:id </td>
-  <td> Update Item </td></tr>
-<tr><td> POST  </td>
-  <td> api/v2/jigs </td>
-  <td> Create Item </td></tr>
-<tr><td> DELETE  </td>
-  <td> api/v2/jigs/:id </td>
-  <td> Delete Item </td></tr>
-<tr><td> VARIOUS  </td>
-  <td> api/v2/jigs/:id/extra </td>
-  <td> Special Ops </td></tr>
-
-</table>
+| Verb | URL | Comments |
+|:------|:-----------------------|:----------------|
+| GET  |api/v2/jigs |List |
+| GET  |api/v2/jigs/:id |Specific Item |
+| PUT  |api/v2/jigs/:id |Update Item |
+| POST  |api/v2/jigs |Create Item |
+| DELETE  |api/v2/jigs/:id |Delete Item |
+| VARIOUS  |api/v2/jigs/:id/extra |Special Ops |

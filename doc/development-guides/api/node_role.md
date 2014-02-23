@@ -12,25 +12,13 @@ NodeRole does not have a natural key, so you must reference them them by ID or u
 
 #### API Actions
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Comments </th></tr>
-<tr><td> GET  </td>
-  <td> api/v2/node_roles </td>
-  <td> List </td></tr>
-<tr><td> GET  </td>
-  <td> api/v2/node_roles/:id </td>
-  <td> Specific Item </td></tr>
-<tr><td> PUT  </td>
-  <td> api/v2/node_roles/:id </td>
-  <td> Update Item </td></tr>
-<tr><td> POST  </td>
-  <td> api/v2/node_roles </td>
-  <td> Create Item </td></tr>
-<tr><td> DELETE  </td>
-  <td> - </td>
-  <td> NOT SUPPORTED </td></tr>
-
-</table>
+| Verb | URL | Comments |
+|:------|:-----------------------|:----------------|
+| GET  |api/v2/node_roles |List |
+| GET  |api/v2/node_roles/:id |Specific Item |
+| PUT  |api/v2/node_roles/:id |Update Item |
+| POST  |api/v2/node_roles |Create Item |
+| DELETE  |- |NOT SUPPORTED |
 
 You must create a NodeRole in order to attach a Node to a Deployment!
 

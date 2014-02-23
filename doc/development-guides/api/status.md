@@ -12,11 +12,10 @@ Returns JSON for node status.  Includes hash of all nodes to help detect changes
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> GET  </td><td> /status/2.0/node </td><td> none </td><td> All nodes </td><td> Used by Dashboard </td><td> 
-<tr><td> GET  </td><td> /status/2.0/node/[id] </td><td> id is the node ID or name. Used by Node details </td><td> - </td><tr>
-<table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET  |/status/2.0/node |none |All nodes |Used by Dashboard |
+| GET  |/status/2.0/node/[id] |id is the node ID or name. Used by Node details |- </td><tr>
 
 **Output:**
 
