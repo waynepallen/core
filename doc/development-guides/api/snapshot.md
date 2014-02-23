@@ -2,7 +2,7 @@
 
 Snapshots are really a time captured Deployment and effectly refect the a Deployment state.
 
-Snapshots have 3 primary states:
+####Snapshots have 3 primary states:
 
 | STATE | DESCRIPTION |
 |:-----------|:----------------------------------------------------------------|
@@ -18,10 +18,10 @@ that are primarily for consumption by the UI:
 |ACTIVE | Is when all of the noderoles in a COMMITTED snapshot are in the ACTIVE state, and
 |ERROR| Noderole in a COMMITTED snapshot is in the ERROR state.|
 
-State transitions for snapshots:
+####State transitions for snapshots:
 
 | TRANSITION | DESCRIPTION |
-|:---------------------------|:------------------------------------------------|
+|:-------------------------------|:--------------------------------------------|
 |(previous snapshot) -> PROPOSED | The previous snapshot is set to ARCHIVED. The new snapshot gets a copy of all the noderoles in the previous snapshot, which will have the same data and the same states as the old ones.|
 |PROPOSED -> COMMITTED | All PROPOSED noderoles in the snapshot are transitioned to TODO or BLOCKED, depending on whether or not they have any non-active parents. The only way to go from proposed to committed is via the commit method for the snapshot.|
 |COMMITTED -> PROPOSED | The only way to go from COMMITTED to PROPOSED is via the snapshot recall method.|
