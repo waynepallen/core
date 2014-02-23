@@ -4,4 +4,4 @@ The Chef Jig in the Chef Barclamp allows OpenCrowbar to get data from Chef (inbo
 
 #### Adding Chef Jig into a dev system
 
-bundle exec rake crowbar:chef:inject_conn url=http://127.0.0.1:4000 name=admin key_file=/etc/chef/client.pem
+    bundle exec rake crowbar:chef:inject_conn url=http://127.0.0.1:4000 name=admin key_file=/etc/chef/client.pem
