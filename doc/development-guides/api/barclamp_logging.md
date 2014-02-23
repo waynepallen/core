@@ -4,10 +4,9 @@ Barclamps are the core modulization for OpenCrowbar.  For that reason, the API f
 
 #### Export
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-  <tr><td> GET </td><td> /logging/v2/barclamps/export  </td><td> none  </td><td> creates logs as an artifact </td><td> - </td></tr> 
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET | /logging/v2/barclamps/export | none | creates logs as an artifact | - | 
 
 The Logging Barclamp supports the ability to consolidate and roll-up the logs in OpenCrowbar using this API call.
 
