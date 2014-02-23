@@ -11,7 +11,9 @@ discussion and makes it possible to update the design based on learning
 and new viewpoints.
 
 Currently, I’ve stripped out a lot of legacy code and
-rebuilt the very basics of the model we discussed.  See [DIA file](crowbar_model.dia)
+rebuilt the very basics of the model we discussed.  See
+![DIA file (image)](crowbar_model_discussion.png "Crowbar Model Discussion")
+
 
 This file is located at:
 https://github.com/crowbar/barclamp-crowbar/blob/master/doc/devguide/model/crowbar_model.dia
@@ -20,6 +22,9 @@ https://github.com/crowbar/barclamp-crowbar/blob/master/doc/devguide/model/crowb
 ### Script Jig
 
 In the next weeks, we are taking the first steps to define the Jig model API and test it using the Script jig.  Here are some initial thoughts:
+
+The script jig is described here:
+![Script Jig Design (image)](crowbar_jig_classes.png "The Script Jig Model")
 
 * The Script jig is built into the Crowbar barclamp.
 * New nodes will be added to the system via the API (POST v2/nodes) not from the jigs
