@@ -8,12 +8,11 @@ Lists the current ranges for a network.
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> GET  </td><td>network/api/v2/networks/[network]/ranges</td><td>N/A</td><td>JSON array of ranges</td><td></td></tr>
-<tr><td> GET  </td><td>network/api/v2/networks/[network]/ranges/[range]</td><td></td><td>Details of the network in JSON format</td><td></td></tr>
-<tr><td> POST  </td><td>network/api/v2/networks/[network]/ranges</td><td> json definition (see Node Show) </td><td> must be a legal object </td></tr>
-<tr><td> PUT  </td><td>network/api/v2/networks/[network]/ranges/[range]</td><td></td><td></td><td></td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET   | network/api/v2/networks/[network]/ranges | N/A | JSON array of ranges | |
+| GET   | network/api/v2/networks/[network]/ranges/[range] |  | Details of the network in JSON format | |
+| POST   | network/api/v2/networks/[network]/ranges |  json definition (see Node Show)  |  must be a legal object |
+| PUT   | network/api/v2/networks/[network]/ranges/[range] |  |  | |
 
 You cannot delete a range at this time.  You must delete the entire network.

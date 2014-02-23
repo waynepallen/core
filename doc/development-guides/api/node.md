@@ -8,10 +8,9 @@ Node APIs are used to manage nodes (servers) within the OpenCrowbar system
 
 
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> GET  </td><td> /2.0/crowbar/2.0/node</td><td> no options </td><td> Specialized return </td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET   |  /2.0/crowbar/2.0/node |  no options  |  Specialized return |
 
 
 **Output:**
@@ -30,11 +29,9 @@ Details:
 **Input:**
 
 
-
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> GET  </td><td> /2.0/crowbar/2.0/node/[id]</td><td> id is the node ID or name. </td><td>   </td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET   |  /2.0/crowbar/2.0/node/[id] |  id is the node ID or name.  |    |
 
 
 **Output:**
@@ -62,10 +59,9 @@ Creates a new node
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> POST  </td><td> /2.0/crowbar/2.0/node </td><td> json definition (see Node Show) </td><td> must be a legal object </td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| POST   |  /2.0/crowbar/2.0/node  |  json definition (see Node Show)  |  must be a legal object |
 
 **Input:**
 
@@ -87,10 +83,9 @@ Deletes a node
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> DELETE  </td><td> /2.0/crowbar/2.0/node/[id] </td><td> Database ID or name </td><td> must be an existing object ID </td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| DELETE   |  /2.0/crowbar/2.0/node/[id]  |  Database ID or name  |  must be an existing object ID |
 
 No body.
 
@@ -110,34 +105,13 @@ Typically, attribute data is populated by the CMDB system(s) based on the associ
 
 #### Associations
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> GET </td>
-  <td> /2.0/crowbar/2.0/node/[id]/attribute </td>
-  <td> none </td>
-  <td> List of attribute IDs and names assigned to node</td>
-  <td></td></tr>
-<tr><td> GET </td>
-  <td> /2.0/crowbar/2.0/node/[id]/attribute/[id] </td>
-  <td> none </td>
-  <td> Last 100 readings (Event ID + Value) </td>
-  <td></td></tr>
-<tr><td> POST </td>
-  <td> /2.0/crowbar/2.0/node/[id]/attribute/[id] </td>
-  <td> none </td>
-  <td> Link Attribute to Node </td>
-  <td></td></tr>
-<tr><td> PUT </td>
-  <td> /2.0/crowbar/2.0/node/[id]/attribute/[id] </td>
-  <td> none </td>
-  <td> 405 error - Not enabled </td>
-  <td></td></tr>
-<tr><td> DELETE </td>
-  <td> /2.0/crowbar/2.0/node/[id]/attribute/[id] </td>
-  <td> none </td>
-  <td> Break association and remove data </td>
-  <td></td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET |/2.0/crowbar/2.0/node/[id]/attribute |none |List of attribute IDs and names assigned to node| |
+| GET |/2.0/crowbar/2.0/node/[id]/attribute/[id] |none |Last 100 readings (Event ID + Value) | |
+| POST |/2.0/crowbar/2.0/node/[id]/attribute/[id] |none |Link Attribute to Node | |
+| PUT |/2.0/crowbar/2.0/node/[id]/attribute/[id] |none |405 error - Not enabled | |
+| DELETE |/2.0/crowbar/2.0/node/[id]/attribute/[id] |none |Break association and remove data | |
 
 
 
