@@ -10,8 +10,8 @@ Snapshots are really a time captured Deployment and effectly refect the a Deploy
 |COMMITTED:| When a snapshot is in committed, userdata in node roles cannot be edited, the annealer will transition any nodes in TODO, and hooks will be called for any state transitions.|
 |ARCHIVED: | Snapshots in archived state will be ignored by the annealer and by just about everything. Eventually you will be able to look through them to satisfy your curiosity about the past states of the cluster.|
 
-There are two other states that are substates of the COMMITTED state
-that are primarily for consumption by the UI:
+####Substates of the COMMITTED state:
+These sub-states are primarily for consumption by the UI.
 
 | SUB-STATE | DESCRIPTION |
 |:-----------|:----------------------------------------------------------------|
@@ -30,7 +30,8 @@ that are primarily for consumption by the UI:
 The system deployment is super-special in that its snapshots can not
 be transitioned to PROPOSED.
 
-Instances can only be created by
+####Instances:
+Instances can only be created by:-
 
 1. Cloning the template instance using barclamp.create_proposal (see Barclamp/Config)
 2. Editing an existing configuration which clones from the active instance
