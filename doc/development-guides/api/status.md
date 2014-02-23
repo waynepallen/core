@@ -15,7 +15,7 @@ Returns JSON for node status.  Includes hash of all nodes to help detect changes
 | Verb | URL | Options | Returns | Comments |
 |:------|:-----------------------|--------|--------|:----------------|
 | GET  |/status/2.0/node |none |All nodes |Used by Dashboard |
-| GET  |/status/2.0/node/[id] |id is the node ID or name. Used by Node details |- </td><tr>
+| GET  |/status/2.0/node/[id] |id is the node ID or name. Used by Node details |- |
 
 **Output:**
 
