@@ -11,7 +11,9 @@ discussion and makes it possible to update the design based on learning
 and new viewpoints.
 
 Currently, I’ve stripped out a lot of legacy code and
-rebuilt the very basics of the model we discussed.  See DIA file
+rebuilt the very basics of the model we discussed.  See [DIA file](crowbar_model.dia)
+
+This file is located at:
 https://github.com/crowbar/barclamp-crowbar/blob/master/doc/devguide/model/crowbar_model.dia
 
 

@@ -1,6 +1,6 @@
 ## OpenCrowbar API
 
-This document is the reference guide for the OpenCrowbar API.  Additional information is provided in the [API](./development-guide/api) directory.
+This document is the reference guide for the OpenCrowbar API.  Additional information is provided in the [API](./api) directory.
 
 ### Using the API
 
