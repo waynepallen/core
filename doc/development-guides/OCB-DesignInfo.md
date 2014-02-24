@@ -98,17 +98,16 @@ by providing
 You can provide event hooks on your roles that work with noderoles at
 6 points in their lifecycle:
 
-on\_proposed, on\_todo, on\_blocked, on\_transition, on\_error, and
-on\_active.
+* on\_proposed
+* on\_todo
+* on\_blocked
+* on\_transition
+* on\_error
+* on\_active
 
 Each method will be called with the noderole that just completed its
 state transition after the noderole has transitioned to the state, and
-all of its child noderoles have had their state updated accordingly --
-for an example, the network barclamp provides an override to
-on_proposed that automatically allocates an IP address when a role for
-a network is bound to a node:
-
-<https://github.com/crowbar/barclamp-network/blob/master/crowbar_engine/barclamp_network/app/models/barclamp_network/role.rb>
+all of its child noderoles have had their state updated accordingly.
 
 ### Node Events: ###
 
