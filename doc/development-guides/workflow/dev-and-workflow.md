@@ -50,20 +50,20 @@ default.
 
 ###Initial Setup:
 
- 1: Clone the OpenCrowbar repository from you preferred upstream fork of
+  1. Clone the OpenCrowbar repository from you preferred upstream fork of
     OpenCrowbar.  If you are not sure where to clone from, use
     https://github.com/opencrowbar/core.git
 
 Regular Development:
 
- 1: Run _git pull_ against your upstream repositories.
+  1. Run _git pull_ against your upstream repositories.
     a: Git will fetch all changes from all upstream remotes for all
        repositories.
- 2: Hack/build/test/commit.
- 3: Run _git push_ to back up your changes.  This force-pushes your
+  2. Hack/build/test/commit.
+  3. Run _git push_ to back up your changes.  This force-pushes your
     changes to your personal forks of the crowbar repositories on
     Github.
- 4: If you are not ready to create a pull request for your changes, go
+  4. If you are not ready to create a pull request for your changes, go
     to 1.
 
 ###Collaborating on a Feature:
