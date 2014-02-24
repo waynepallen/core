@@ -52,7 +52,7 @@ The key is the user name and the rest of the required fields are:
 
 When the barclamp is committed, it uses a custom apply_roles function to ensure that the barclamps listed in the instances variable are created and committed.
 
-Once running, the barclamp provides the global transition function that calls other barclamps as nodes transition. The barclamp is also responsible for creating new nodes, assigning them a temporary name. The deployer will change these things if needed later in the node life cycle. The transition function will also add the crowbar config to the admin node as it transitions through the =discovered= state.
+Once running, the barclamp provides the global transition function that calls other barclamps as nodes transition. The barclamp is also responsible for creating new nodes, assigning them a temporary name. The deployer will change these things if needed later in the node life cycle. The transition function will also add the crowbar config to the admin node as it transitions through the __discovered__ state.
 
 When starting a barclamp, use the following steps.
 
