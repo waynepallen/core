@@ -26,9 +26,3 @@ Inside the i18n file, you'll provide a simple YML hash for translations.
         nodes_description: Infrastructure Components
 
 Reminder: encode your translations in quotes if you need to use : or ' marks!
-
-#### Crowbar 1.0 note
-
-We no longer support storing localization strings in the crowbar.yml
-meta data file.  This was not scaling so we dropped it like a rotten
-tomato in the Heinz ketchup factory.
