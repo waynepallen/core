@@ -55,7 +55,7 @@ generated from the github branch to the upstream branch that the code changes ar
 * Clone the OpenCrowbar repository from you preferred upstream fork of OpenCrowbar.  
 If you are not sure where to clone from, use https://github.com/opencrowbar/core.git
 
-Regular Development:
+####Regular Development:
 
   1. Run _git pull_ against your upstream repositories.
     a: Git will fetch all changes from all upstream remotes for all repositories.
@@ -65,7 +65,7 @@ Regular Development:
 
 ###Collaborating on a Feature:
 
-Make Feature available for fetch:
+####Make Feature available for fetch:
 Add documentation here.
 
 Grabbing a feature and starting to hack on it:
@@ -77,9 +77,13 @@ Merging changes from parent into feature/<featurename>
   1. Commit your current work to your local repo. git commit -am 'cool message'
   2. Run _git push personal master_  returns the name of the parent of your working copy.
 
-
 ####Ready for pull request:
-Put docs here.
+  1. make your change and commit it: 'git commit -a -m "helpful info"'
+  1. get the latest code from origin: 'git fetch'
+  1. sync your code into the trunk: 'git rebase'
+     1. you may have to merge changes using 'git add [file]' and 'git rebase --continue--'
+  1. push your change to your personal repo in a branch: 'git push personal master:[my-pull-request-branch]'
+  1. from your Github fork UI, create a pull request from my-pull-request-branch
 
 ####Review pull request:
 Put docs here.
