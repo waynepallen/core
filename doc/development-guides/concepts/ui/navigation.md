@@ -34,8 +34,4 @@ Remember:
       end
     end
 
-#### Crowbar 1.0 note
 
-We no longer support storing navigation strings in the crowbar.yml
-meta data file.  This approach made difficult to upgrade and maintain.
-The new approach is also difficult to maintain but easier to upgrade.
