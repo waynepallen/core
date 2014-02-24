@@ -50,9 +50,8 @@ default.
 
 ###Initial Setup:
 
-  1. Clone the OpenCrowbar repository from you preferred upstream fork of
-    OpenCrowbar.  If you are not sure where to clone from, use
-    https://github.com/opencrowbar/core.git
+* Clone the OpenCrowbar repository from you preferred upstream fork of OpenCrowbar.  
+If you are not sure where to clone from, use https://github.com/opencrowbar/core.git
 
 Regular Development:
 
@@ -73,36 +72,30 @@ Add documentation here.
 
 Grabbing a feature and starting to hack on it:
 
- 1: Normal _git pull_ will make the feature available in your
-     local repo.
+* Normal _git pull_ will make the feature available in your local repo.
 
 Merging changes from parent into feature/<featurename>
 
- 1: Commit your current work to your local repo. git commit -am 'cool message'
- 2: Run _git push personal master_  returns the name of your working copy's parent.
+  1. Commit your current work to your local repo. git commit -am 'cool message'
+  2. Run _git push personal master_  returns the name of your working copy's parent.
 
 
-Ready for pull request:
+####Ready for pull request:
 Put docs here.
 
-Review pull request:
+####Review pull request:
+Put docs here.
 
-  See README.dev-and-code-review
+####Release Workflows:
+Put docs here.
 
-Release Workflows:
-
-Getting a list of known releases:
+####Getting a list of known releases:
 Add docs here.
 
-Getting the release you are currently on:
+####Getting the release you are currently on:
 Add docs here.
 
-Switching to a different release:
-
- 1: Run dev switch <release name>
-    a: dev will verify that the barclamp repositories are "clean", and
-       it will refuse to do anything if they are not.
-    b: dev will checkout the appropriate master branch for the release
-       in all the barclamps.
+####Switching to a different release:
+Add docs here.
 
 All other commands operate just on your local repository.
