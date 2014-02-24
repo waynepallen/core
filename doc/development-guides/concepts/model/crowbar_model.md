@@ -1,4 +1,4 @@
-#### Experimental Crowbar Model
+#### Experimental OpenCrowbar Model
 
 ![Crowbar Model (image)](crowbar_model.png "Crowbar Model")
 
