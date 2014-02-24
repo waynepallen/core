@@ -223,8 +223,8 @@ ACTIVE.
 
 The annealer looks for noderoles in TODO that meet the following
 conditions:
-1. The jig that is associated with the noderole via the role half of
-the binding is active,
+
+1. The jig that is associated with the noderole via the role half of the binding is active,
 2. The snapshot that the noderole belongs to is COMMITTED,
 3. The node that the noderole binds to is alive and available,
 4. There is no noderole for that node that is in TRANSITION
@@ -367,14 +367,6 @@ conditions in the above sequence of steps.  These have been left in
 place in the interest of expediency and as learning oppourtunities for
 others who need to get familiar with the OpenCrowbar codebase.
 
-## Installation Wizard: ##
+## Bootstrapping OpenCrowbar: ##
 
-We have a shiny installation that you can use to finish bootstrapping
-your admin node.  To use it, pass the --wizard flag after your FQDN to
-/opt/dell/bin/install-crowbar when setting up the admin node, and the
-install script will not automatically create an admin network or an
-entry for the admin node, and logging into the web UI will let you
-customize things before creating the initial admin node entry and
-committing the system deployment.
-
-Once we get closer to releasing OCB, --wizard will become the default.
+Put docs here.
