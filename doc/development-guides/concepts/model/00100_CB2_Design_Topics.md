@@ -1,10 +1,10 @@
-## CB2 Design Topics
+## OpenCrowbar Design Topics
 
 _this is intermediate information, not final docs_
 
 Last Updated: 7/5/2013 by Rob Hirschfeld
 
-We’re working on core CB2 functions as per the design discussion
+We’re working on core OpenCrowbar functions as per the design discussion
 from last week.  Our objective is to code incrementally to validate the
 design.  I believe this approach gives the community concrete examples for
 discussion and makes it possible to update the design based on learning
@@ -13,11 +13,6 @@ and new viewpoints.
 Currently, I’ve stripped out a lot of legacy code and
 rebuilt the very basics of the model we discussed.  See
 ![DIA file (image)](crowbar_model_discussion.png "Crowbar Model Discussion")
-
-
-This file is located at:
-https://github.com/crowbar/barclamp-crowbar/blob/master/doc/devguide/model/crowbar_model.dia
-
 
 ### Script Jig
 
