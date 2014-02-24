@@ -7,12 +7,12 @@ For convenience the OpenCrowbar method for initiating and controlling a node-rol
 
 OpenCrowbar must have 1 or more Jigs that preform the work of OpenCrowbar of node-role state transition operations, known as **Jobs**.
 
-For initial OpenCrowbar work, the primary **Jigs** inclide:
+##For initial OpenCrowbar work, the primary **Jigs** inclide:
 * the **Chef** jig in Barclamp-Chef
 * the **script** jig in Barclamp-Script
 * the **noop** jig in Barclamp-Noop
 
-JIG semantic standard operations:
+##JIG semantic standard operations:
 
 1. A jig can create roles for operation
 1. A jig can set attributes for operations
