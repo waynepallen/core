@@ -19,14 +19,14 @@ class SnapshotsController < ApplicationController
     @list = Snapshot.order("id DESC").all
     respond_to do |format|
       format.html { }
-      format.json { render api_index :snapshot, @list }
+      format.json { render api_index Snapshot, @list }
     end
   end
 
   def show
+    @snapshot = Snapshot.find_key params[:id]
     respond_to do |format|
       format.html {
-        @snapshot = Snapshot.find_key params[:id]
         @roles = @snapshot.deployment_roles.sort{|a,b|a.role.cohort <=> b.role.cohort}
         # alpha lists by ID
         @nodes = Node.order("name ASC").select do |n|
@@ -34,33 +34,28 @@ class SnapshotsController < ApplicationController
           (n.node_roles.where(:snapshot_id => @snapshot.id).count > 0)
         end
       }
-      format.json { render api_show :snapshot, Snapshot }
+      format.json { render api_show @snapshot }
     end
   end
 
   def create
-    unless Rails.env.development?
-      render  api_not_supported("post", "snapshot")
-    else
-      r = Snapshot.create! params
-      render api_show :snapshot, Snapshot, nil, nil, r
-    end
+    params.require(:snapshot_id)
+    @snapshot = Snapshot.create! params.permit(:snapshot_id,
+                                               :name,
+                                               :description)
+    render api_show @snapshot
   end
 
   def update
-    unless Rails.env.development?
-      render  api_not_supported("delete", "snapshot")
-    else
-      render api_update :snapshot, Snapshot
-    end
+    @snapshot = Snapshot.find_key params[:id]
+    @snapshot.update_attributes!(params.permit(:name,:description))
+    render api_show @snapshot
   end
 
   def destroy
-    unless Rails.env.development?
-      render  api_not_supported("delete", "snapshot")
-    else
-      render api_delete Snapshot
-    end
+    @snapshot = Snapshot.find_key params[:id]
+    @snapshot.destroy
+    render api_delete @snapshot
   end
 
   def anneal
@@ -68,12 +63,11 @@ class SnapshotsController < ApplicationController
     @list = NodeRole.peers_by_state(@snapshot, NodeRole::TRANSITION).order("cohort,id")
     respond_to do |format|
       format.html {  }
-      format.json { render api_index :node_roles, @list }
+      format.json { render api_index NodeRole, @list }
     end
   end
 
   def cohorts
-
     @snapshot = Snapshot.find_key params[:snapshot_id]
     respond_to do |format|
       format.html {
@@ -92,7 +86,7 @@ class SnapshotsController < ApplicationController
     @snapshot = Snapshot.find_key params[:snapshot_id]
     respond_to do |format|
       format.html {  }
-      format.json { 
+      format.json {
         graph = []
         @snapshot.node_roles.each do |nr|
           vertex = { "id"=> nr.id, "name"=> "#{nr.node.alias}: #{nr.role.name}", "data"=> {"$color"=>"#83548B"}, "$type"=>"square", "$dim"=>15, "adjacencies" =>[] }
@@ -103,7 +97,7 @@ class SnapshotsController < ApplicationController
         end
         render :json=>graph.to_json, :content_type=>cb_content_type(:list) 
       }
-    end    
+    end
   end
 
   def propose
@@ -111,16 +105,16 @@ class SnapshotsController < ApplicationController
     new_snap = snap.propose params[:name]
     respond_to do |format|
       format.html { redirect_to snapshot_path(new_snap.id) }
-      format.json { render api_show :snapshot, Snapshot, nil, nil, new_snap }
+      format.json { render api_show new_snap }
     end
   end
 
-  def commit 
+  def commit
     snap = Snapshot.find_key params[:snapshot_id]
     snap.commit
     respond_to do |format|
       format.html { redirect_to snapshot_path(snap.id) }
-      format.json { render api_show :snapshot, Snapshot, nil, nil, snap }
+      format.json { render api_show snap }
     end
   end
 
@@ -129,8 +123,8 @@ class SnapshotsController < ApplicationController
     snap.recall
     respond_to do |format|
       format.html { redirect_to snapshot_path(snap.id) }
-      format.json { render api_show :snapshot, Snapshot, nil, nil, snap }
-    end      
+      format.json { render api_show snap }
+    end
   end
 
 end

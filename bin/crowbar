@@ -40,6 +40,19 @@ def debug(foo)
   STDERR.puts("DEBUG: #{foo}") if $debug
 end
 
+def maybe_json_die(json,code)
+  case
+  when code < 300 then return
+  when (code == 404) || (code == 409)
+    STDERR.puts(JSON.pretty_generate(json))
+    exit 1
+  else
+    STDERR.puts(JSON.pretty_generate(json))
+    STDERR.puts("Return code: #{code}")
+    raise ""
+  end
+end
+
 #
 # Parsing options can be added by adding to this list before calling opt_parse
 #
@@ -324,7 +337,7 @@ class CrowbarProxy
     case
     when blob.is_a?(String) || blob.is_a?(Integer)
       @blob,res = REST.get("#{self.class.path}/#{blob}")
-      raise("Failed to get #{self.class.name} object id #{blob}") if res != 200
+      maybe_json_die(@blob,res)
     when blob.is_a?(Hash) && blob["id"]
       @blob = blob
     else
@@ -336,7 +349,7 @@ class CrowbarProxy
   # List things.
   def self.list(*rest)
     objs, res = REST.get(path)
-    raise("Failed to get a list of #{name} objects") if res != 200
+    maybe_json_die(objs,res)
     objs.map{|o| self.new(o)}
   end
 
@@ -344,7 +357,7 @@ class CrowbarProxy
   # The server side will handle all sanity checking.
   def self.create_Json(data, *rest)
     obj, res = REST.post(path,data)
-    raise("Failed to create a new #{name} object") if res >= 300
+    maybe_json_die(obj,res)
     self.new(obj)
   end
 
@@ -387,7 +400,7 @@ class CrowbarProxy
   # Reload this thing.
   def reload
     @blob,res = REST.get("#{self.class.path}/#{id}")
-    raise("Failed to reload #{self.class.name} object id #{id}") if res >= 300
+    maybe_json_die(@blob,res)
     self
   end
 
@@ -395,7 +408,7 @@ class CrowbarProxy
   # Save the updated version we get back.
   def do_update_Json(data, *rest)
     obj, res = REST.put("#{self.class.path}/#{id}",data)
-    raise("Failed to update #{self.class.name} object id #{id}") if res >= 300
+    maybe_json_die(obj,res)
     @blob = obj
     self
   end
@@ -403,7 +416,7 @@ class CrowbarProxy
   # Destroy this thing.
   def do_destroy(*rest)
     obj,res = REST.delete("#{self.class.path}/#{id}")
-    raise("Failed to destroy #{self.class.name} object named #{id}") if res >= 300
+    maybe_json_die(obj,res)
     obj
   end
 
@@ -430,28 +443,28 @@ class Node < CrowbarProxy
 
   def do_reboot(*rest)
     obj, res = REST.put("#{self.class.path}/#{id}/reboot")
-    raise("Could not reboot #{name}") if res >= 300
+    maybe_json_die(obj,res)
     @blob = obj
     self
   end
 
   def do_debug(*rest)
     obj, res = REST.put("#{self.class.path}/#{id}/debug")
-    raise("#{name} could not be put into debug mode") if res != 200
+    maybe_json_die(obj,res)
     @blob = obj
     self
   end
 
   def do_undebug(*rest)
     obj, res = REST.put("#{self.class.path}/#{id}/undebug")
-    raise("#{name} could not be taken out of debug mode") if res != 200
+    maybe_json_die(obj,res)
     @blob = obj
     self
   end
 
   def do_redeploy(*rest)
     obj, res = REST.put("#{self.class.path}/#{id}/redeploy")
-    raise("#{name} could not be redeployed") if res != 200
+    maybe_json_die(obj,res)
     @blob = obj
     self
   end
@@ -459,19 +472,19 @@ class Node < CrowbarProxy
 
   def do_noderoles(*rest)
     objs,res = REST.get("#{self.class.path}/#{id}/node_roles")
-    raise("Could not get noderoles for node #{name}") if res >= 300
+    maybe_json_die(objs,res)
     objs.map{|o|NodeRole.new(o)}
   end
 
   def do_attribs(*rest)
     objs,res = REST.get("#{self.class.path}/#{id}/attribs")
-    raise("Could not get attribs for node #{name}") if res >= 300
+    maybe_json_die(objs,res)
     objs.map{|o|Attrib.new(o)}
   end
 
   def do_move_to_Deployment(deploy,*rest)
     obj,res = REST.put("#{self.class.path}/#{id}/move/#{deploy.id}")
-    raise("Unable to move #{deploy.name} claim #name}") if res >= 300
+    maybe_json_die(obj,res)
     Node.new(obj)
   end
 end
@@ -502,7 +515,7 @@ class Deployment < CrowbarProxy
 
   def do_nodes(*rest)
     objs,res = REST.get("#{self.class.path}/#{id}/nodes")
-    raise("Unable to get node list for deployment #{name}") if res >= 300
+    maybe_json_die(objs,res)
     objs.map{|o|Node.new(o)}
   end
 
@@ -516,7 +529,7 @@ class Role < CrowbarProxy
 
   def do_bind_to_Node(node, *rest)
     obj,res = REST.post("#{NodeRole.path}",JSON.generate({:node_id => node.id, :role_id => id}))
-    raise("Unable to bind role #{name} to node #{node.name}") if res >= 300
+    maybe_json_die(obj,res)
     NodeRole.new(obj)
   end
 
@@ -542,21 +555,21 @@ class Snapshot < CrowbarProxy
 
   def do_propose(*rest)
     obj,res = REST.put("#{self.class.path}/#{id}/propose")
-    raise("#{name} could not be put into proposed!") if res >= 300
+    maybe_json_die(obj,res)
     @blob = obj
     self
   end
 
   def do_commit(*rest)
     obj,res = REST.put("#{self.class.path}/#{id}/commit")
-    raise("#{name} could not be committed!") if res >= 300
+    maybe_json_die(obj,res)
     @blob = obj
     self
   end
 
   def do_recall(*rest)
     obj,res = REST.put("#{self.class.path}/#{id}/recall")
-    raise("#{name} could not be recalled") if res >= 300
+    maybe_json_die(obj,res)
     @blob = obj
     self
   end

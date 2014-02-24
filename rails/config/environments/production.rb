@@ -29,6 +29,7 @@ Crowbar::Application.configure do
 
   # Disable request forgery protection in test environment
   config.action_controller.allow_forgery_protection    = true
+  config.eager_load = true
 
   # See everything in the log (default is :info)
   config.log_level = :debug

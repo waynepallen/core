@@ -17,7 +17,6 @@ require 'json'
 
 class DeploymentRole < ActiveRecord::Base
 
-  attr_accessible :id, :role_id, :snapshot_id
   after_create :role_create_hook
   before_destroy  :role_delete_hook
 

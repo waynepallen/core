@@ -19,10 +19,7 @@ class BarclampProvisioner::DhcpsController < ::ApplicationController
   def index
     # we need to get the database
     begin
-      deploy = Deployment.system_root.first
-      admin = Node.admin.first
-      role = Role.find_key 'provisioner-dhcp-database'
-      nr = NodeRole.snap_node_role(deploy.head, admin, role).first
+      nr = Node.admin.first.node_roles.where(:name => 'provisioner-dhcp-database').first
       if params.key? :id
         node = Node.find_key params[:id]
         entries = nr.sysdata['crowbar']['dhcp']['clients'][node.name]

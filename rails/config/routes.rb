@@ -63,7 +63,7 @@ Crowbar::Application.routes.draw do
   # UI only functionality to help w/ visualization
   scope 'dashboard' do
     get 'list(/:deployment)'  => 'dashboard#list', :as => :bulk_edit
-    put 'list'                => 'dashboard#list', :as => :bulk_edit
+    put 'list'                => 'dashboard#list', :as => :bulk_update
     get 'layercake'           => 'dashboard#layercake', :as => :layercake
   end
   
@@ -78,8 +78,8 @@ Crowbar::Application.routes.draw do
     get 'restart/:id'   => 'support#restart', :as => :restart
     get 'digest'        => "support#digest"
     get 'fail'          => "support#fail"
-    match 'settings(/:id/:value)' => "support#settings", :as => :utils_settings
-    match "bootstrap"     => "support#bootstrap", :as => :bootstrap
+    get 'settings(/:id/:value)' => "support#settings", :as => :utils_settings
+    get "bootstrap"     => "support#bootstrap", :as => :bootstrap
     namespace :scaffolds do
       resources :attribs do as_routes end
       resources :barclamps do as_routes end
@@ -108,7 +108,7 @@ Crowbar::Application.routes.draw do
     get 'get_cli', :controller => 'support', :action => 'get_cli'
   end
 
-  devise_for :users, { :path_prefix => 'my', :module => :devise, :class_name=> 'Crowbar::User' }
+  devise_for :users, { :path_prefix => 'my', :module => :devise, :class_name=> 'User' }
   resources :users, :except => :new
 
   # API routes (must be json and must prefix v2)()
@@ -151,7 +151,7 @@ Crowbar::Application.routes.draw do
             resources :network_ranges
             resources :network_routers, :as => :network_routers_api
             member do
-              match 'ip'
+              match 'ip', via: [:get, :delete]
               post 'allocate_ip'
               get 'allocations'
             end
@@ -194,10 +194,7 @@ Crowbar::Application.routes.draw do
             delete "lock", :controller => "users", :action => "unlock"
             put "reset_password", :controller => "users", :action => "reset_password"
           end
-
-          #provisioner          
-          get 'dhcp(/:id)' => 'Dhcps#index'
-
+          resources :dhcps
         end # version
       end # api
     end # id constraints

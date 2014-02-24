@@ -10,7 +10,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.
+# limitations under the License.1
 #
 #
 class JigsController < ApplicationController
@@ -18,32 +18,34 @@ class JigsController < ApplicationController
   def index
     respond_to do |format|
       format.html { @jigs = Jig.order('"order"') } # show.html.erb
-      format.json { render api_index :jig, Jig.all }
+      format.json { render api_index Jig, Jig.all }
     end
   end
 
   def show
     respond_to do |format|
-      format.html { @jig = Jig.find_key params[:id] }
-      format.json { render api_show :jig, Jig }
+      @jig = Jig.find_key params[:id]
+      format.html {  }
+      format.json { render api_show @jig }
     end
   end
 
   def create
-    unless Rails.env.development?
-      render  api_not_supported("post", "jig")
-    else
-      j = Jig.create! params
-      render api_show :jig, Jig, nil, nil, j
-    end
-  end  
-  
+    params.require(:name)
+    @jig = Jig.create! params.permit(:name,
+                                     :description,
+                                     :active,
+                                     :client_role_name,
+                                     :server,
+                                     :client_name,
+                                     :key)
+    render api_show @jig
+  end
+
   def update
-    unless Rails.env.development?
-      render  api_not_supported("post", "jig")
-    else
-      render api_update :jig, Jig
-    end
+    @jig = Jig.find_key(params[:id])
+    @jig.update_attributes!(params.permit(:description,:active,:server,:client_name,:key))
+    render api_show @jig
   end
 
   def destroy

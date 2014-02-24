@@ -15,7 +15,6 @@
 
 class RoleRequireAttrib < ActiveRecord::Base
 
-  attr_accessible :id, :role_id, :attrib_name, :attrib_at
   belongs_to      :role
   has_one         :attrib,      :class_name => "Attrib", :foreign_key => "name", :primary_key => "attrib_name"
 

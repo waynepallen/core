@@ -38,6 +38,8 @@ fi
 # Set domainname (for dns)
 echo "$DOMAINNAME" > /etc/domainname
 
+set -e
+set -x
 admin_net='
 {
   "name": "admin",
@@ -135,7 +137,7 @@ for net in "${nets[@]}"; do
     net=${BASH_REMATCH[1]}
     # Make this more complicated and exact later.
     ip addr add "$net" dev eth0 || :
-    echo "${net%/*} $FQDN" >> /etc/hosts
+    echo "${net%/*} $FQDN" >> /etc/hosts || :
 done
 
 # Mark the node as alive.

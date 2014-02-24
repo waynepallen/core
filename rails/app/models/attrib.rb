@@ -15,10 +15,6 @@
 
 class Attrib < ActiveRecord::Base
 
-  before_create :create_type_from_name
-
-  attr_accessible :barclamp_id, :role_id, :type, :name, :description, :order, :map     # core relationship
-
   belongs_to      :role
   belongs_to      :barclamp
 
@@ -37,8 +33,7 @@ class Attrib < ActiveRecord::Base
   end
 
   def self.get(name, from, source=:discovery)
-    attrib = ( name.is_a?(ActiveRecord::Base) ? name : Attrib.find_key(name) )
-    attrib.get(from, source)
+    (name.is_a?(ActiveRecord::Base) ? name : Attrib.find_key(name)).get(from, source)
   end
 
   # Get the attribute value from the passed object.
@@ -114,8 +109,7 @@ class Attrib < ActiveRecord::Base
   end
 
   def self.set(name, to, value, type)
-    a = Attrib.find_key name
-    a.set(to,value,type)
+    Attrib.find_key(name).set(to,value,type)
   end
 
   private
@@ -123,32 +117,6 @@ class Attrib < ActiveRecord::Base
   # used to create a mapping for discovery values from the map
   def map_set_value(map,value)
     return ( map =~ /^([^\/]*)\/(.*)/ ? { $1 => map_set_value($2, value)} : { map => value } )
-  end
-
-
-  # This method ensures that we have a type defined for
-  def create_type_from_name
-    raise "attribs require a name" if self.name.nil?
-    # remove the redundant part of the name (if any)
-    name = self.name.gsub('-','_').camelize
-    # Find the proper class to use to instantiate this attribute
-    # 1. If the barclamp provides a specific class for this attribute, use it.
-    # 2. Otherwise fall back on attrib class that the jig provides.
-    # 3. Finally, fall back on the generic Attrib class.
-    klassnames = []
-    klassnames << "Barclamp#{self.barclamp.name.camelize}::Attrib::#{name}" if self.barclamp_id
-    klassnames << "#{self.role.jig.type}Attrib" if self.role_id && (Jig.where(:name => role.jig_name).count > 0)
-    klassnames << "Attrib"
-    klassnames.each do |t|
-      if (t.constantize rescue nil)
-        Rails.logger.info("Attrib: Using #{t} for #{self.name}")
-        self.type = t
-        return
-      else
-        Rails.logger.info("Attrib: #{t} cannot be used for #{self.name}")
-      end
-    end
-    raise "Cannot find the appropriate class for attribute #{self.name}"
   end
 
   # If we were asked to do something with an attribute on a node,

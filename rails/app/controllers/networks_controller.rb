@@ -15,57 +15,77 @@
 class NetworksController < ::ApplicationController
   respond_to :html, :json
 
-  add_help(:show,[:deployment_id, :network_id],[:get])
+  add_help(:show,[:network_id],[:get])
   def show
     @network = Network.find_key params[:id]
     respond_to do |format|
       format.html { }
-      format.json { render api_show :network, Network, nil, nil, @network }
+      format.json { render api_show @network }
     end
   end
-  
+
   def index
     @networks = Network.all
     respond_to do |format|
       format.html {}
-      format.json { render api_index :network, @networks }
+      format.json { render api_index Network, @networks }
     end
   end
 
   def create
 
     # cleanup inputs
-    params[:use_vlan] = true if params[:vlan].to_int > 0 rescue false 
+    params[:use_vlan] = true if params[:vlan].to_int > 0 rescue false
     params[:vlan] ||= 0
     params[:use_team] = true if params[:team].to_int > 0 rescue false
     params[:team_mode] ||= 5
-    params[:use_bridge] = true if params[:use_bridge].to_int > 0 rescue false
+    params[:use_bridge] = true
     params[:deployment_id] = Deployment.find_key(params[:deployment]).id if params.has_key? :deployment
+    params[:deployment_id] ||= 1
+    params.require(:name)
+    params.require(:conduit)
+    params.require(:deployment_id)
     Network.transaction do
-      @network = Network.create! params
-      # make it easier to batch create
+      @network = Network.create! params.permit(:name,
+                                               :conduit,
+                                               :deployment_id,
+                                               :vlan,
+                                               :use_vlan,
+                                               :use_bridge,
+                                               :team_mode,
+                                               :use_team,
+                                               :v6prefix)
+      # make it easier to batch create ranges with a network
       if params.key? :ranges
         ranges = params[:ranges].is_a?(String) ? JSON.parse(params[:ranges]) : params[:ranges]
         ranges.each do |range|
           range[:network_id] = @network.id
-          NetworkRange.create! range
+          range_params = ActionController::Parameters.new(range)
+          range_params.require(:name)
+          range_params.require(:network_id)
+          range_params.require(:first)
+          range_params.require(:last)
+          NetworkRange.create! range_params.permit(:name,:network_id,:first,:last)
         end
         params.delete :ranges
       end
 
-      # make it easier to batch create
+      # make it easier to batch create routers with a network
       if params.key? :router
         router = router.is_a?(String) ? JSON.parse(params[:router]) : params[:router]
         router[:network_id] = @network.id
-        Router.create! router
+        router_params = ActionController::Parameters.new(router)
+        router_params.require(:network_id)
+        router_params.require(:address)
+        router_params.require(:pref)
+        Router.create! router_params.permit(:network_id,:address,:pref)
         params.delete :router
       end
-
     end
 
     respond_to do |format|
       format.html { redirect_to :action=>:index }
-      format.json { render api_show :network, Network, @network.id.to_s, nil, @network }
+      format.json { render api_show @network }
     end
 
   end
@@ -92,39 +112,25 @@ class NetworksController < ::ApplicationController
   add_help(:update,[:id, :conduit,:team_mode, :use_team, :vlan, :use_vlan],[:put])
   def update
     @network = Network.find_key(params[:id])
-    params.delete :name if params.key? :name   # not allowed to update name!!
-    # Only allow teaming and conduit stuff to be updated for now.
-    @network.use_team = params[:use_team].eql? "true" if params.has_key?(:use_team)
-    if params.has_key?(:team_mode)
-      tm = params[:team_mode].to_i rescue -1
-      @network.team_mode = tm
-      @network.use_team = (tm>=0) unless params.has_key?(:use_team)
-    end
-    @network.use_team = params[:use_vlan].eql? "true" if params.has_key?(:use_vlan)
-    if params.has_key?(:vlan)
-      vl = params[:vlan].to_i rescue -1
-      @network.vlan = vl
-      @network.use_vlan = (vl>0) unless params.has_key?(:use_vlan)
-    end
-    params[:deployment_id] = Deployment.find_key params[:deployment] if params.has_key?(:deployment)
-    @network.deployment_id = params[:deployment_id] if params.has_key?(:deployment_id)
-    @network.conduit = params[:conduit] if params.has_key?(:conduit)
-    @network.description = params[:description] if params.has_key?(:description)
-    @network.order = params[:order] if params.has_key?(:order)
-    @network.v6prefix = params[:v6prefix] if params.has_key?(:v6prefix)
-    @network.save
-    respond_with(@network) do |format|
-      format.html { render :action=>:show } 
-      format.json { render api_show :network, Network, nil, nil, @network }
+    # Sorry, but no changing of the admin conduit for now.
+    params.delete(:conduit) if @network.name == "admin"
+    @network.update_attributes!(params.permit(:vlan,
+                                              :use_vlan,
+                                              :use_bridge,
+                                              :team_mode,
+                                              :use_team,
+                                              :conduit))
+    respond_to do |format|
+      format.html { render :action=>:show }
+      format.json { render api_show @network }
     end
   end
 
   def destroy
-    if Rails.env.development?
-      render api_delete Network
-    else
-      render api_not_supported("delete", "Network")
-    end
+    @network = Network.find_key(params[:id])
+    return api_not_supported("delete",@network) if @network.name == "admin"
+    @network.destroy
+    render api_delete @network
   end
 
   def ip

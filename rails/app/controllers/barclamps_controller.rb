@@ -18,17 +18,20 @@ class BarclampsController < ApplicationController
   self.help_contents = Array.new(superclass.help_contents)
 
   def index
+    @barclamp = Barclamp.find_key params[:id]
     @list = Barclamp.all
     respond_to do |format|
       format.html { }
-      format.json { render api_index :barclamp, @list }
+      format.json { render api_index Barclamp, @list }
     end
   end
 
   def show
+    return api_wrong_version unless version_ok
+    @barclamp = Barclamp.find_key params[:id]
     respond_to do |format|
-      format.html { @barclamp = Barclamp.find_key params[:id] }
-      format.json { render api_show :barclamp, Barclamp }
+      format.html {  }
+      format.json { render api_show @barclamp }
     end
   end
 

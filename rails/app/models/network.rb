@@ -21,10 +21,6 @@ class Network < ActiveRecord::Base
   after_save      :auto_prefix
   before_destroy  :remove_role
 
-  attr_protected :id
-  attr_accessible :name, :v6prefix, :description, :order, :conduit
-  attr_accessible :deployment_id, :vlan, :use_vlan, :team_mode, :use_team, :use_bridge
-
   validates_format_of :v6prefix, :with=>/auto|([a-f0-9]){1,4}:([a-f0-9]){1,4}:([a-f0-9]){1,4}:([a-f0-9]){1,4}/, :message => I18n.t("db.v6prefix", :default=>"Invalid IPv6 prefix."), :allow_nil=>true
 
   has_many :network_ranges,       :dependent => :destroy
@@ -117,7 +113,7 @@ class Network < ActiveRecord::Base
   # every network needs to have a matching role
   def add_role
     role_name = "network-#{name}"
-    unless Role.find_key role_name
+    unless Role.exists?(name: role_name)
       bc = Barclamp.find_key "network"
       Role.transaction do
         r = Role.find_or_create_by_name(:name => role_name,

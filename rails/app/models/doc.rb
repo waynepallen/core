@@ -15,8 +15,6 @@
 
 class Doc < ActiveRecord::Base
 
-  attr_accessible :id, :name, :description, :order, :barclamp_id, :parent_id
-
   belongs_to :barclamp
   belongs_to :parent, :class_name => "Doc"
   has_many :children, :class_name => "Doc", :foreign_key => "parent_id"
