@@ -13,9 +13,7 @@ development.
 ##Requirements:
 
  * A checkout of OpenCrowbar.
- * Bash 4, ruby, rubygems, and the json gem.
-   If running under Windows, make sure that all these operate in your
-   cygwin or msysgw enviromnent.
+ * Bash 4, ruby, rubygems, and the json gem.  Microsoft Windows users shoul operate in either the cygwin or the msysgw enviromnent.
  * A github username and password.
 
 ##Releases, Builds, and Barclamps:
@@ -34,7 +32,7 @@ includes.  It includes references to barclamps, and any build-specific
 metadata and infrastructure.
 
 Barclamps enable OpenCrowbar to manage sets of services across a
-cluster. All of OpenCrowbar's functionality is implemented in terms of
+cluster. All OpenCrowbar functionality is implemented in terms of
 barclamps. Barclamps consist of independent git repositories with a
 well-defined and dev-controlled branching structure.
 
@@ -42,8 +40,10 @@ well-defined and dev-controlled branching structure.
 ##Remotes:
 
 OpenCrowabar expects you to manage the various remotes that you work with to pull
-branches for pull requests. dev setup will create a personal remote by
-default.
+branches for pull requests. The best way to do this is to create a new branch in
+the local checkout. Checkout the new branch, work on that branch, then at the conclusion
+of work push your checkout to your personal github repository. Pull requests can be
+generated from the github branch to the upstream branch that the code changes are targetted to.
 
 
 ##Day to Day Workflows:
@@ -56,14 +56,10 @@ If you are not sure where to clone from, use https://github.com/opencrowbar/core
 Regular Development:
 
   1. Run _git pull_ against your upstream repositories.
-    a: Git will fetch all changes from all upstream remotes for all
-       repositories.
+    a: Git will fetch all changes from all upstream remotes for all repositories.
   2. Hack/build/test/commit.
-  3. Run _git push_ to back up your changes.  This force-pushes your
-    changes to your personal forks of the crowbar repositories on
-    Github.
-  4. If you are not ready to create a pull request for your changes, go
-    to 1.
+  3. Run _git push_ to back up your changes.  This force-pushes your changes to your personal forks of the OpenCrowbar repositories on Github.
+  4. If you are not ready to create a pull request for your changes, go to 1.
 
 ###Collaborating on a Feature:
 
@@ -77,7 +73,7 @@ Grabbing a feature and starting to hack on it:
 Merging changes from parent into feature/<featurename>
 
   1. Commit your current work to your local repo. git commit -am 'cool message'
-  2. Run _git push personal master_  returns the name of your working copy's parent.
+  2. Run _git push personal master_  returns the name of the parent of your working copy.
 
 
 ####Ready for pull request:

@@ -1,4 +1,4 @@
-# openSUSE images
+# openSUSE images  <== This info is not current -- FixMe
 
 There are a number of openSUSE images available for different use cases:
 
