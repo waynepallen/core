@@ -43,7 +43,7 @@ There are a number of documents that may be helpful. The following is a guide to
   1. Licenses: [Crowbar](./licenses/crowbar.md), [Wrong Name](./licenses/wrong_name.md)
 
 ###Development Workflow
-  1. [Workflow Overview](./development-guides/workflow/dev-and-workflow.md)
+  1. [Workflow Overview](./development-guides/workflow/dev-workflow-overview.md)
 
 
 ##Additional information that will be helpful:
