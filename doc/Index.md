@@ -42,10 +42,12 @@ There are a number of documents that may be helpful. The following is a guide to
   1. Discovery Agent (Sledgehammer) [Hooks](./development-guides/workflow/sledgehammer-hooks.md)
   1. Licenses: [Crowbar](./licenses/crowbar.md), [Wrong Name](./licenses/wrong_name.md)
 
+###Development Workflow
+  1. Development [workflow](./development-guides/workflow/dev-and-workflow.md)
+
 
 ##Additional information that will be helpful:
 
-1. Development [workflow](./development-guides/workflow/dev-and-workflow.md)
 1. Building Sledgehammer [Discovery Agent](./development-guides/workflow/dev-build-sledgehammer.md)
 1. Diagnosing Chef with [Knife](./development-guides/workflow/knife-config.md)
 1. [On-line Installation](./development-guides/workflow/online-install.md)
