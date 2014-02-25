@@ -1,10 +1,6 @@
 ## OpenCrowbar Design Topics
 
-_this is intermediate information, not final docs_
-
-Last Updated: 7/5/2013 by Rob Hirschfeld
-
-We’re working on core OpenCrowbar functions as per the design discussion
+We are working on core OpenCrowbar functions as per the design discussion
 from last week.  Our objective is to code incrementally to validate the
 design.  I believe this approach gives the community concrete examples for
 discussion and makes it possible to update the design based on learning
