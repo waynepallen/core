@@ -22,7 +22,7 @@ There are a number of documents that may be helpful. The following is a guide to
 ###[Development Guides](./development-guides)
 
   1. Overview of the OpenCrowbar Software Installation - [Directory Layout](./OpenCrowbar-DirectoryLayout.md)
-  1. OpenCrowbar Key Design [Concepts](./development-guides/concepts/concepts.md)
+  1. OpenCrowbar Key Design [Concepts](./development-guides/concepts.md)
       1. More detailed [OpenCrowbar Design Information](./development-guides/OCB-DesignInfo.md)
            1. [Application Program Interface (API)](./development-guides/api/api.md)
            1. [Barclamp](./development-guides/barclamps/barclamps.md) Information
