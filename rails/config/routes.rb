@@ -28,12 +28,12 @@ Crowbar::Application.routes.draw do
   get "annealer", :to => "node_roles#anneal", :as => :annealer
   resources :attribs
   resources :barclamps
+  resources :deployment_roles
   resources :deployments do
     get :head
     get :next
     resources :roles
   end
-  resources :deployment_roles
   resources :docs, constraints: {id: /[^\?]*/}
 
   resources :groups
@@ -84,8 +84,8 @@ Crowbar::Application.routes.draw do
       resources :attribs do as_routes end
       resources :barclamps do as_routes end
       resources :docs do as_routes end
-      resources :deployments do as_routes end
       resources :deployment_roles do as_routes end
+      resources :deployments do as_routes end
       resources :groups do as_routes end
       resources :jigs do as_routes end
       resources :navs do as_routes end
@@ -131,15 +131,15 @@ Crowbar::Application.routes.draw do
           post "make_admin", :to => "nodes#make_admin", :as => :make_admin
           resources :attribs
           resources :barclamps
+          resources :deployment_roles do
+            resources :attribs
+          end
           resources :deployments do
             get :head
             get :next
             resources :roles
             resources :nodes
             put 'claim/:node_id' => "deployments#claim"
-          end
-          resources :deployment_roles do
-            resources :attribs
           end
           resources :groups do
             member do
