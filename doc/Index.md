@@ -22,13 +22,13 @@ There are a number of documents that may be helpful. The following is a guide to
 ###[Development Guides](./development-guides)
 
   1. Overview of the OpenCrowbar Software Installation - [Directory Layout](./OpenCrowbar-DirectoryLayout.md)
-  1. OpenCrowbar Key Design [Concepts](./development-guides/concepts.md)
-      1. More detailed [OpenCrowbar Design Information](./development-guides/OCB-DesignInfo.md)
+  1. OpenCrowbar Key Design [Concepts](./development-guides/concepts/concepts.md)
+      1. More detailed [OpenCrowbar Design Information](./development-guides/concepts/OCB-DesignInfo.md)
            1. [Application Program Interface (API)](./development-guides/api/api.md)
            1. [Barclamp](./development-guides/barclamps/barclamps.md) Information
               1. About building a [New Barclamp](./development-guides/barclamps/new_barclamp.md)
               1. The [Crowbar](./development-guides/barclamps/crowbar.md)  barclamp suite
-           1. [Database](./development-guides/database.md) storage infrastructure for OpenCrowbar
+           1. [Database](./development-guides/database/database.md) storage infrastructure for OpenCrowbar
            1. [Jig](./development-guides/jigs/jigs.md) Design Information
       1. Description of the design [model](./development-guides/model/model.md)
       1. User Interface Information:
