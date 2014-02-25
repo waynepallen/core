@@ -18,7 +18,7 @@ contained within their own namespace.
 
 Please refer to the following links for additional guidance:
 
-> [OpenCrowbar Design Topics](./model/00100_CB2_Design_Topics.md)
+> [OpenCrowbar Design Topics](./00100_CB2_Design_Topics.md)
 
-> [OpenCrowbar Primary Model](./model/crowbar_model.md)
+> [OpenCrowbar Primary Model](./crowbar_model.md)
 
