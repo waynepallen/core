@@ -19,7 +19,7 @@
     %p{:style => 'float:right'}
       %input.button{:type => "submit", :name => "save", :value => t('.save')}
   %h3= t '.data'
-  - p = "barclamp_#{@node_role.barclamp.name}/node_roles/#{@node_role.role.name}"
+  - p = "barclamp_#{@node_role.barclamp.name}/node_roles/#{@node_role.role.name.gsub("-","_")}"
   - begin
     - if params.include? :raw
       = render :partial => 'raw', :locals => { :data => @node_role.data, :template => @node_role.role.template }
