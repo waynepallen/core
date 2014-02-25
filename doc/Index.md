@@ -50,7 +50,7 @@ There are a number of documents that may be helpful. The following is a guide to
 ### [Development Workflow](./development-guides/workflow/.)
   1. [Workflow Overview](./development-guides/workflow/dev-workflow-overview.md)
 
-## Additional information that will be helpful:
+## Additional helpful information:
 
   1. Building Sledgehammer [Discovery Agent](./development-guides/workflow/dev-build-sledgehammer.md)
   1. Diagnosing Chef with [Knife](./development-guides/workflow/knife-config.md)
