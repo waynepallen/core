@@ -3,13 +3,13 @@
 There are a number of documents that may be helpful. The following is a guide to what is available:
 
 ## OpenCrowbar Deployment Information
-###[Deployment Guide](./deployment-guide)
+### [Deployment Guide](./deployment-guide)
   1. Install [CentOS/RHEL 6.5](./deployment-guide/Install-CentOS-RHEL-6.5-AdminNode.md) Admin Node
   1. [Docker Containers](./development-guides/dev-systems/docker)
     1. [Docker Admin Node](./development-guides/dev-systems/docker/docker-admin.md)
     1. [Docker Info](./development-guides/dev-systems/docker/README.md)
 
-## [Deployment of an OpenCrowbar Software Development Workstation](./dev-systems/.)
+### [Deployment of an OpenCrowbar Software Development Workstation](./dev-systems/.)
 
   1. [OpenSUSE](./development-guides/dev-systems/dev-openSUSE-images.md)
   1. [Fedora](./development-guides/dev-systems/dev-vm-Fedora.md)
@@ -20,7 +20,7 @@ There are a number of documents that may be helpful. The following is a guide to
     1. [Ubuntu VM](./development-guides/dev-systems/dev-vm-Ubuntu.md)
 
 ## Development Guidance Documentation
-###[Development Guides](./development-guides)
+### [Development Guides](./development-guides)
 
   1. Overview of the OpenCrowbar Software Installation - [Directory Layout](./OpenCrowbar-DirectoryLayout.md)
   1. OpenCrowbar Key Design [Concepts](./development-guides/concepts/concepts.md)
@@ -50,7 +50,7 @@ There are a number of documents that may be helpful. The following is a guide to
 ### [Development Workflow](./development-guides/workflow/.)
   1. [Workflow Overview](./development-guides/workflow/dev-workflow-overview.md)
 
-##Additional information that will be helpful:
+## Additional information that will be helpful:
 
   1. Building Sledgehammer [Discovery Agent](./development-guides/workflow/dev-build-sledgehammer.md)
   1. Diagnosing Chef with [Knife](./development-guides/workflow/knife-config.md)
