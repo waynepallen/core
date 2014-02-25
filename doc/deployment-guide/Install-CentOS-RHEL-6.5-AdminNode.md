@@ -31,13 +31,15 @@ Machine requirements are
 1. Memory: Min 4GB
 2. CPU Cores: 2 or more
 3. Network Interface Controllers: 2 preferred, 1 minimum (can use virtio if using a VM)
+  1. The first NIC (generally known as 'eth0' under Linux, but may named 'em0' or 'en0') must be wired into the private address space (192.168.124.0/24)
+  1. The second NIC will be wired into a network that routes to the internet. Internet access is required for installation OpenCrowbar on CentOS/RHEL 6.5.
   1. Note: It is possible to use a single NIC. In that case the default network address will be 192.168.124.0/24, the admin node IP address will be 192.168.124.10
-  2. Where a single NIC is used, the private admin network (192.168.124.0/24) must be capable of download of files from the internet or from a local caching server
+  1. Where a single NIC is used, the private admin network (192.168.124.0/24) must be capable of download of files from the internet or from a local caching server
 4. Storage: A disk capacity of at least 10 GB is preferred.
 5. Ensure that all physical network transports are correctly configured and are operational - at least check/verify that:
   1. All network cabling is in place
-  2. Network switches are turned on and configured correctly (ask network admin if necessary)
-  3. Keyboard,Video, and Mouse (if required) devices are connected and ready for use.
+  1. Network switches are turned on and configured correctly (ask network admin if necessary)
+  1. Keyboard,Video, and Mouse (if required) devices are connected and ready for use.
 6. If using a virtual machine (VM), where VM motion (ability to migrated VMs across Hypervisor platforms) is required ensure that secure VM access is correctly configured and is operational.
 7. Where network-managed power switches are in use, ensure that network access is secure from unwanted access.
 
@@ -66,16 +68,16 @@ Machine requirements are
     2. Dual NIC configuration:
       1. Select "System eth0" (first NIC - on public network), Click [Edit]
         1. Check "Connect automatically"
-        2. Click [IPV4 Settings]
-        3. Select Method "Automatic (DHCP)" if appropriate, else configure network settings. Click [Apply]
-      2. Select "System eth1" (second NIC - on private admin network), Click [Edit]
-        1. Check "Connect automatically"
         2. Click on [IPV4 Settings]
         3. Select Method "Manual"
         4. Click [Add]
           1. Enter IP address: 192.168.124.10
           2. Click on blank field below "Netmask". Enter: 24, or 255.255.255.0
           3. Click [Apply]
+      1. Select "System eth1" (second NIC - on private admin network), Click [Edit]
+        1. Check "Connect automatically"
+        2. Click [IPV4 Settings]
+        3. Select Method "Automatic (DHCP)" if appropriate, else configure network settings. Click [Apply]
       3. Clock [Close]
 10. Screen: "Please select the nearest city in your time zone:", Select your time zone, Click [Next]
 11. Screen: "The root account is used for administering the system. ...", Enter Root password "crowbar", Confirm: "crowbar", Click [Next]
