@@ -155,7 +155,7 @@ Where the data file is =ns.json= and contains
 ## JSON Fields
 
 | Attribute | Type |Settable | Note
-|--------|--------|
+|:--------|:--------|:--------------|:----------------|
 | Admin       |  Boolean      |Yes||
 |Alias|String|Yes||
 |Alive|Boolean|Yes||
