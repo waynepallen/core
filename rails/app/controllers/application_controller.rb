@@ -16,12 +16,14 @@
 require 'uri'
 require 'digest/md5'
 require 'active_support/core_ext/string'
+require 'json'
 
 # Filters added to this controller apply to all controllers in the application.
 # Likewise, all the methods added will be available for all controllers.
 class ApplicationController < ActionController::Base
 
   before_filter :crowbar_auth
+  after_filter  :filter_json
 
   # Basis for the reflection/help system.
 
@@ -180,6 +182,31 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def filter_one_entry(ent,attrs)
+    res = {}
+    attrs.each do |k|
+      next unless ent.key?(k)
+      res[k] = ent[k]
+    end
+    res
+  end
+
+  def filter_json
+    unless (response.status == 200) &&
+        request.headers["x-return-attributes"] &&
+        (response.content_type =~ /json/)
+      return
+    end
+    body = JSON.parse(response.body)
+    filter_attributes = JSON.parse(request.headers["x-return-attributes"])
+    if body.is_a?(Array)
+      filtered_body = body.map{|ent| filter_one_entry(ent,filter_attributes)}
+    else
+      filtered_body = filter_one_entry(body,filter_attributes)
+    end
+    response.body = JSON.generate(filtered_body)
+  end
 
   def type2name(type)
     case
