@@ -240,7 +240,8 @@ class ApplicationController < ActionController::Base
         }
       end
     else
-      Rails.logger.error(exception)
+      Rails.logger.error("EXCEPTION: #{@error.message}")
+      Rails.logger.error("BACKTRACE:\n#{@error.backtrace.join("\n")}")
       respond_to do |format|
         format.html { render :template => "/errors/500.html.haml", :status => 500 }
         format.json { render :json => {
