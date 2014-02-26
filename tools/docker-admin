@@ -9,7 +9,7 @@ if [[ ! $container = lxc ]]; then
     #image_map["ubuntu"]="ubuntu:precise"
     image_map["ubuntu"]="opencrowbar/ubuntu:12.04-4"
     #image_map["centos"]="centos:6.4"
-    image_map["centos"]="opencrowbar/centos:6.5-2"
+    image_map["centos"]="opencrowbar/centos:6.5-3"
     image_map["opensuse"]="mmckeen/opensuse-13-1:latest"
     image_map["fedora"]="fedora:20"
     image_map["debian"]="debian:jessie"
@@ -118,4 +118,6 @@ printf "%s\n" "$SSH_PUBKEY" >> /root/.ssh/authorized_keys
 
 [[ $1 ]] && "$@"
 . /etc/profile
+export PATH=$PATH:/opt/opencrowbar/core/bin
 /bin/bash -i
+rm -rf /tftpboot/nodes

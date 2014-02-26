@@ -38,7 +38,7 @@ class AttribsController < ApplicationController
     @attrib = Attrib.find_key params[:id]
     respond_to do |format|
       format.html {  }
-      format.json { render api_show :attrib, Attrib, nil, nil, @attrib }
+      format.json { render api_show @attrib }
     end
   end
 
@@ -46,10 +46,10 @@ class AttribsController < ApplicationController
     if params.has_key? :node_id
       render api_not_supported 'post', 'nodes/:node_id/attribs/:id'
     else
-      a = Attrib.create! params
+      @attrib = Attrib.create! params
       respond_to do |format|
         format.html { }
-        format.json { render api_show :attrib, Attrib, nil, nil, a }
+        format.json { render api_show @attrib }
       end
     end
   end
@@ -72,13 +72,15 @@ class AttribsController < ApplicationController
     target = klass.find_key(params[key])
     attrib.set(target,params[:value], atype)
     target.save!
-    render api_show rt, klass, nil, nil, target
+    render api_show target
   end
 
   def destroy
+    @attrib = Attrib.find_key(params[:id])
+    @attrib.destroy
     respond_to do |format|
       format.html { }
-      format.json { render api_delete Attrib }
+      format.json { render api_delete @attrib }
     end
   end
 

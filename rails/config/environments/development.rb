@@ -30,6 +30,7 @@ Crowbar::Application.configure do
   config.action_controller.allow_forgery_protection    = false
   # Don't care if the mailer can't send
   config.action_mailer.raise_delivery_errors = false
+  config.eager_load = false
   # Enable threaded mode
   # config.threadsafe! unless $rails_rake_task
   config.log_level = :debug

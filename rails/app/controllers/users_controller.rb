@@ -22,40 +22,40 @@ class UsersController < ApplicationController
     @users = User.all
     respond_to do |format|
       format.html { }
-      format.json { render api_index :user, @users }
+      format.json { render api_index User, @users }
     end
   end
   
  # RESTful DELETE of the node resource
   def destroy
-    @user = User.find_key params[:id]
-    @user ||= User.find_by_username params[:id]
-    render api_delete User, @user.id
+    @user = User.find_key(params[:id])
+    @user.destroy
+    render api_delete @user
   end
   
   add_help(:create,[:username, :email, :password, :password_confirmation, :remember_me, :is_admin, :digest],[:post])
   def create
-    u = User.create! params
-    if params[:digest] && params[:digest] == true
-      u.digest_password(params[:password])
-      u.save!
+    required_user_params
+    @user = User.create! user_params
+    if params[:digest]
+      @user.digest_password(params[:password])
+      @user.save!
     end
-    render api_show :user, User, u.id.to_s, nil, u
+    render api_show @user
   end
-  
+
   def update
-    @user = User.find_key params[:id]
-    @user ||= User.find_by_username params[:id]
-    render api_update :user, User, @user
+    @user = User.find_key(params[:id])
+    @user.update_attributes!(user_params)
+    render api_show @user
   end
 
   add_help(:show,[:id],[:get])
   def show
-    @user = User.find_key params[:id]
-    @user ||= User.find_by_username params[:id]
+    @user = User.find_key(params[:id])
     respond_to do |format|
       format.html { } # show.html.erb
-      format.json { render api_show :user, User, @user }
+      format.json { render api_show @user }
     end
   end
 
@@ -69,8 +69,7 @@ class UsersController < ApplicationController
         redirect_to users_path, :notice => t("users.index.unlocked")
       end
       format.json do
-        return render :text => ret[1], :status => ret[0] unless ret[0] == 200
-        render :json => @user.to_json
+        render api_show @user
       end
     end
   end
@@ -85,8 +84,7 @@ class UsersController < ApplicationController
         redirect_to users_path, :notice => t("users.index.locked")
       end
       format.json do
-        return render :text => ret[1], :status => ret[0] unless ret[0] == 200
-        render :json => @user.to_json
+        render api_show @user
       end
    end
  end 
@@ -180,7 +178,19 @@ class UsersController < ApplicationController
   end
 
   private
-  
+
+  def user_params
+    params.permit(:username, :email,
+                  :password, :password_confirmation,
+                  :remember_me, :is_admin)
+  end
+
+  def required_user_params
+    [:username, :email, :password, :password_confirmation].each do |k|
+      params.require(k)
+    end
+  end
+
   def edit_common
     setup_users
     render :action => :index

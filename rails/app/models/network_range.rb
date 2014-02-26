@@ -16,9 +16,6 @@ class NetworkRange < ActiveRecord::Base
   
   validate :sanity_check_range
   
-  attr_protected :id
-  attr_accessible :name, :first, :last, :network_id
-
   belongs_to  :network
   has_many    :network_allocations,   :dependent => :destroy
   has_many    :nodes,                 :through=>:network_allocations

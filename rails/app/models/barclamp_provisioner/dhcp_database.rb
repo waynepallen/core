@@ -33,7 +33,7 @@ class BarclampProvisioner::DhcpDatabase < Role
   def rerun_my_noderoles node
 
     clients = {}
-    mac_hint = ::Attrib.find_key "hint-admin-mac"
+    mac_hint = ::Attrib.find_by(name: "hint-admin-mac")
 
 
     Role.transaction do

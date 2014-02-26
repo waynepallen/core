@@ -76,74 +76,73 @@ class ApplicationController < ActionController::Base
 
   # creates the content type for a consistent API
   def cb_content_type(type, form="list")
-    "application/vnd.crowbar.#{ type.to_s.downcase }.#{form}+json; version=2.0"
+    "application/vnd.crowbar.#{type2name(type)}.#{form}+json; version=2.0"
   end
 
-  def api_wrong_version(params)
+  def api_wrong_version
     {
-      :json=> { "message" => I18n.t('api.wrong_version', :version=>params[:version])},
+      :json=> {
+        :message => I18n.t('api.wrong_version',:version=>params[:version]),
+        :status => 400
+      },
+      :content_type=>cb_content_type("version", "error"),
       :status => 400
     }
   end
 
   def api_not_found(k,t)
     { :json => {
-        :message => I18n.t('api.not_found', :id=>k, :type=>t.to_s)
+        :message => I18n.t('api.not_found', :id=>k, :type=>type2name(t)),
+        :status => 404
       },
       :content_type=>cb_content_type(t, "error"),
       :status => :not_found
     }
   end
 
-  def version_ok(params)
+  def api_not_supported(verb, object)
+    return {:json => {
+        :message => I18n.t('api.not_supported', :verb=>verb.upcase, :obj=>object),
+        :status => 405
+      },
+      :status => 405,
+      :content_type=>cb_content_type(object, "error")
+    }
+  end
+
+  def ui_not_supported(verb, object)
+    return { :text=>I18n.t('ui.not_supported', :verb=>verb.upcase, :obj=>object),
+      :status => 405,
+      :content_type=>cb_content_type(object, "error")
+    }
+  end
+
+  def version_ok
     params[:version].eql?('v2')
   end
 
   # formats API json output
   # using this makes it easier to update the API format for all models
-  def api_index(type, list, link=nil)
-    return api_wrong_version(params) unless version_ok(params)
+  def api_index(type, list)
+    return api_wrong_version unless version_ok
     return {:json=>list, :content_type=>cb_content_type(type, "list") }
   end
 
   # formats API json for output
   # using this makes it easier to update the API format for all models
-  def api_show(type, type_class, key=nil, link=nil, o=nil)
-    return api_wrong_version(params) unless version_ok(params)
-    key ||= o.id unless o.nil?
-    key ||= params[:id]
-    o ||= type_class.find_key key
-    return api_not_found(key,type) unless o
-    return {:json=>o, :content_type=>cb_content_type(type, "obj") }
+  def api_show(o)
+    return api_wrong_version unless version_ok
+    return {:json=>o, :content_type=>cb_content_type(o, "obj") }
   end
 
   # formats API for delete
   # using this makes it easier to update the API format for all models
-  def api_delete(type, key=nil)
-    return api_wrong_version(params) unless version_ok(params)
-    key ||= params[:id]
-    o = type.find_key(key)
-    type.destroy type.find_key(key)
+  def api_delete(o)
     return {:json => {
-        :message => I18n.t('api.deleted', :id=>key, :obj=>type)
+        :message => I18n.t('api.deleted', :id=>o.id, :obj=>type2name(o))
       },
-      :content_type=>cb_content_type(type, "empty")
+      :content_type=>cb_content_type(o, "empty")
     }
-  end
-
-  def api_update(type, type_class, key=nil, o=nil)
-    return api_wrong_version(params) unless version_ok(params)
-    key ||= params[:id]
-    o ||= type_class.find_key key
-    return api_not_found(params,key,type) unless o
-    # Only try to update attributes that the object has and which have changed.
-    to_update = params.reject do |k,v|
-      (!o.has_attribute?(k)) ||  # Ignore things that are not attributes on this object.
-        k.to_sym == :id ||  # IDs can never be changed.
-        o[k] == v  # Ignore anything that has not changed.
-    end
-    o.update_attributes! to_update
-    return api_show type, type_class, nil, nil, o
   end
 
   # formats API json output 
@@ -151,19 +150,6 @@ class ApplicationController < ActionController::Base
   def api_array(json)
     return api_wrong_version(params) unless version_ok(params)
     return {:json=>json, :content_type=>cb_content_type("json", "array") }
-  end
-
-  def api_not_supported(verb, object)
-    return {:json => {
-        :message => I18n.t('api.not_supported', :verb=>verb.upcase, :obj=>object)
-      },
-      :status => 405,
-      :content_type=>cb_content_type(object.class.to_s, "error")
-    }
-  end
-
-  def ui_not_supported(verb, object)
-    return {:text=>I18n.t('ui.not_supported', :verb=>verb.upcase, :obj=>object), :status => 405, :content_type=>cb_content_type(object.class.to_s, "error")}
   end
 
   add_help(:help)
@@ -195,17 +181,50 @@ class ApplicationController < ActionController::Base
 
   private
 
+  def type2name(type)
+    case
+    when type.kind_of?(ActiveRecord::Base) then type.class.name.underscore
+    when type.respond_to?(:descends_from_active_record?) &&
+        type.descends_from_active_record? then type.name.underscore
+    when type.kind_of?(String) then type.underscore
+    when type.kind_of?(Symbol) then type.to_s.underscore
+    else raise "type2name cannot handle #{type.inspect}"
+    end
+  end
+
   def render_error(exception)
-    Rails.logger.error(exception)
     @error = exception
-    respond_to do |format|
-      format.html { render :template => "/errors/500.html.haml", :status => 500 }
-      format.json { render :json => {
-          :message => @error.message,
-          :backtrace => @error.backtrace
-        },
-        :status => 500
-      }
+    case
+    when @error.is_a?(ActiveRecord::RecordNotFound)
+      respond_to do |format|
+        format.html { render :status => 404 }
+        format.json { render api_not_found(@error.crowbar_key, @error.crowbar_model) }
+      end
+    when @error.is_a?(ActiveRecord::RecordInvalid)
+      respond_to do |format|
+        format.html { render :status => 409 }
+        format.json { render :json => {
+            :message => @error.message,
+            :backtrace => @error.backtrace,
+            :status => 409
+          },
+          :status => 409,
+          :content_type=>cb_content_type("record", "error")
+        }
+      end
+    else
+      Rails.logger.error(exception)
+      respond_to do |format|
+        format.html { render :template => "/errors/500.html.haml", :status => 500 }
+        format.json { render :json => {
+            :message => @error.message,
+            :backtrace => @error.backtrace,
+            :status => 500
+          },
+          :status => 500,
+          :content_type=>cb_content_type("framework", "error")
+        }
+      end
     end
   end
 

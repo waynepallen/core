@@ -16,9 +16,6 @@ class NetworkAllocation < ActiveRecord::Base
 
   validate :sanity_check_address
   
-  attr_protected :id
-  attr_accessible :network_range_id, :node_id, :address
-
   belongs_to :network_range
   belongs_to :node
 

@@ -29,7 +29,7 @@ class GroupsController < ApplicationController
     end
     respond_to do |format|
       format.html { }
-      format.json { render api_index :group, @list }
+      format.json { render api_index Group, @list }
     end
   end
 
@@ -38,7 +38,8 @@ class GroupsController < ApplicationController
       # this should use the _path
       redirect_to groups_path(:id=>params[:id])
     else
-      render api_show :group, Group
+      @group = Group.find_key params[:id]
+      render api_show @group
     end
   end
   
@@ -46,8 +47,9 @@ class GroupsController < ApplicationController
     if params.has_key? :node_id
       render api_not_supported 'put', 'nodes/:id/groups/:id'
     else
-      g = Group.create! params
-      render api_show :group, Group, nil, nil, g
+      params.require(:name)
+      @group = Group.create! params.permit(:name, :description, :category)
+      render api_show @group
     end
   end
   
@@ -58,8 +60,10 @@ class GroupsController < ApplicationController
       n = Node.find_key params[:node_id]
       n.groups << g  if g and n
       render :text=>I18n.t('api.added', :item=>g.name, :collection=>'node.groups')
-    else  
-      render api_update :group, Group
+    else
+      @group = Group.find_key(params[:id])
+      @group.update_attributes!(params.permit(:name, :description, :category))
+      render api_show @group
     end
   end
 
@@ -71,7 +75,9 @@ class GroupsController < ApplicationController
       g.nodes.delete(n) if g.nodes.include? n
       render :text=>I18n.t('api.removed', :item=>'node', :collection=>'group')
     else
-      render api_delete Group
+      @group = Group.find_key(params[:id])
+      @group.destroy
+      render api_delete @group
     end
   end
 

@@ -19,3 +19,7 @@ end
 file "/etc/environment" do
   action :delete
 end
+
+bash "Clean up history files" do
+  code "find / -type f -name '.*history' -delete"
+end
