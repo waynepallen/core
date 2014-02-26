@@ -224,32 +224,31 @@ Now commit the snapshot to send it to the annealer - which will sort out the dep
 > PUT api/v2/snapshot/snapshot_id
 
 Here is and example of the use of these API python bindings:
-```
+
      from api import cb2_Api
      import json
 
      class deploy_role()
 
-	#create the session to the admin node
-	session = cb2_Api("192.168.124.10","3000","crowbar","crowbar")
-	
-	#get the details of the node we want to manipulate
-	single = session.get_node("d00-0c-29-07-a4-a8.crowbar.org")
-	NodeID = str(single.id)
-	
-	#create a new deployment
-	deploymentdata = {"name":"ApiTestDeployment"}
-	deployment = session.create_deployment(json.dumps(deploymentdata))
-	DeploymentID = str(deployment.id)
-	
-	#update the node with that deployment
-	node_json = json.dumps({"deployment_id":DeploymentID})
-	session.update_node(node_json,node_id=NodeID)
-        
-	#create the node_role to bind the role and create the snapshot (using role 3 as an example)	
-	NodeRole = session.create_node_role(json.dumps({"node_id":NodeID,"role_id":"3"})) 
+         #create the session to the admin node
+         session = cb2_Api("192.168.124.10","3000","crowbar","crowbar")
+         
+         #get the details of the node we want to manipulate
+         single = session.get_node("d00-0c-29-07-a4-a8.crowbar.org")
+         NodeID = str(single.id)
+         
+         #create a new deployment
+         deploymentdata = {"name":"ApiTestDeployment"}
+         deployment = session.create_deployment(json.dumps(deploymentdata))
+         DeploymentID = str(deployment.id)
+         
+         #update the node with that deployment
+         node_json = json.dumps({"deployment_id":DeploymentID})
+         session.update_node(node_json,node_id=NodeID)
+         
+         #create the node_role to bind the role and create the snapshot (using role 3 as an example)	
+         NodeRole = session.create_node_role(json.dumps({"node_id":NodeID,"role_id":"3"})) 
+         
+         #and commit the snapshot	
+         session.commit_snapshot(str(NodeRole.snapshot_id))
 
-	#and commit the snapshot	
-	session.commit_snapshot(str(NodeRole.snapshot_id))
-
-```
