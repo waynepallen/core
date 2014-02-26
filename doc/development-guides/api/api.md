@@ -224,7 +224,7 @@ Now commit the snapshot to send it to the annealer - which will sort out the dep
 > PUT api/v2/snapshot/snapshot_id
 
 Here is and example of the use of these API python bindings:
-
+```
      from api import cb2_Api
      import json
 
@@ -252,3 +252,4 @@ Here is and example of the use of these API python bindings:
 	#and commit the snapshot	
 	session.commit_snapshot(str(NodeRole.snapshot_id))
 
+```
