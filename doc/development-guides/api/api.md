@@ -228,9 +228,9 @@ The snapshot_id reference can be read from the deployment instance
 Using the API python bindings this looks like
 
 ```
-  from api import cb2_Api
+from api import cb2_Api
   
-  class main():
+class main():
   
     #create an api session
     session = cb2_Api("192.168.124.10", "3000", "crowbar", "crowbar")
