@@ -18,7 +18,6 @@ class BarclampsController < ApplicationController
   self.help_contents = Array.new(superclass.help_contents)
 
   def index
-    @barclamp = Barclamp.find_key params[:id]
     @list = Barclamp.all
     respond_to do |format|
       format.html { }
