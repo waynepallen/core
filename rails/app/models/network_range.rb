@@ -49,30 +49,30 @@ class NetworkRange < ActiveRecord::Base
   def allocate(node, suggestion = nil)
     res = NetworkAllocation.where(:node_id => node.id, :network_range_id => self.id).first
     return res if res
-    if suggestion
-      begin
-        suggestion = IP.coerce(suggestion)
-        NetworkAllocation.transaction do
+    begin
+      Rails.logger.info("NetworkRange: allocating address from #{fullname} for #{node.name} with suggestion #{suggestion}")
+      NetworkAllocation.transaction(requires_new: true) do
+        ActiveRecord::Base.connection.execute("LOCK TABLE network_allocations")
+        if suggestion
+          suggestion = IP.coerce(suggestion)
           if (self === suggestion) &&
-              NetworkAllocation.where(:address => suggestion.to_s).count == 0
-            res = NetworkAllocation.create!(:network_range_id => self.id, :node_id => node.id, :address => suggestion)
+              (NetworkAllocation.where(:address => suggestion.to_s).count == 0)
+            res = NetworkAllocation.create!(:network_range_id => self.id,
+                                            :node_id => node.id,
+                                            :address => suggestion)
           end
         end
-      rescue
-        res = nil
-      end
-    end
-    unless res
-      (first..last).each do |addr|
-        next if NetworkAllocation.where(:address => addr.to_s).count > 0
-        begin
+        (first..last).each do |addr|
+          break if res
+          next if NetworkAllocation.where(:address => addr.to_s).count > 0
           res = NetworkAllocation.create!(:network_range_id => self.id, :node_id => node.id, :address => addr.to_s)
-        rescue
-          res = nil
         end
-        break if res
       end
+    rescue ActiveRecord::StatementInvalid
+      sleep(1)
+      retry
     end
+    Rails.logger.info("NetworkRange: #{node.name} allocated #{res.address} from #{fullname}")
     network.make_node_role(node)
     res
   end
@@ -106,16 +106,16 @@ class NetworkRange < ActiveRecord::Base
 
     # Now, verify that this range does not overlap with any other range
 
-#    Range.transaction do
-#      Range.all.each do |other|
-#        if other === first
-#          errors.add("Range #{fullname}: first address #{first.to_s} overlaps with range #{other.fullname}")
-#        end
-#        if other === last
-#          errors.add("Range #{fullname}: last address #{last.to_s} overlaps with range #{other.fullname}")
-#        end
-#      end
-#    end
+    NetworkRange.transaction do
+      NetworkRange.all.each do |other|
+        if other === first
+          errors.add("NetworkRange #{fullname}: first address #{first.to_s} overlaps with range #{other.fullname}")
+        end
+        if other === last
+          errors.add("NetworkRange #{fullname}: last address #{last.to_s} overlaps with range #{other.fullname}")
+        end
+      end
+    end
   end
 
 end
