@@ -8,7 +8,7 @@ Engineers value documentation that explains how to get a development workstation
   1. VirtualBox, TWO network interfaces
     1. bridge external (assumed to be on eth0)
     1. host-only on 192.168.124.x (assumed to be on eth1)
-  1. Setup an .ssh keypair using =rssh-keygen=
+  1. Setup an .ssh keypair using 'rssh-keygen'
   1. Optional Items that we find handy if you are developing on Windows using VMs behind corporate firewalls
     1. CNTLM proxy: =sudo apt-get install cntlm=
        1. make sure that you allow NON local hosts to use the proxy (in =/etc/cntlm.conf= set =gateway yes=)!  Containers are not "local" and require your CNTLM proxy to act as a gateway.
