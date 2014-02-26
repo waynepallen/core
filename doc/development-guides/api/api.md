@@ -189,6 +189,7 @@ Node JSON Data: /tmp/node_sample.json
 Curl command to create the node:
 
    \#> curl --digest -u 'developer:Cr0wbar!' --data @/temp/node_samples.json -H "Content-Type:application/json" --url http://127.0.0.1:3000/api/v2/nodes
+
    {"admin":false,"alias":"simaa","alive":true,"allocated":false,"available":true,"bootenv":"local","created_at":"2013-12-21T05:49:00Z","deployment_id":1,"description":"devBDD Testing Only - should be automatically removed","discovery":{},"hint":"{}","id":41,"name":"simaa.cr0wbar.com","order":100,"target_role_id":null,"updated_at":"2013-12-21T05:49:00Z"}
 
 ### Some workflow examples
@@ -202,53 +203,55 @@ You need to know the following information to start this
 
 Start by creating the deployment
 
-> POST api/v2/deployments 
->	json = {"name":"this is a new deployment"}
+POST api/v2/deployments 
+
+	json = {"name":"this is a new deployment"}
 
 Update the target node with the new deployment that you just created
 
-> PUT api/v2/node/node name
->	json = {"deployment_id":"3"}
+PUT api/v2/node/node name
+
+	json = {"deployment_id":"3"}
 
 Create a node-role to link the node and the role you wish to push
 
-> POST api/v2/node\_roles 
->	json = {"node\_id":"3", "role\_id":"3"}
+POST api/v2/node\_roles 
 
-Creating the node\_role will create a snapshot which will default to the 'head' position of the list. Currently you 
-don't have a method to commit that directly. The POST to create the node_role does return the item that has been created 
-and in that json blob is the snapshot id that was created.
+	json = {"node\_id":"3", "role\_id":"3"}
 
 Now commit the snapshot to send it to the annealer - which will sort out the dependencies and push them to the node
 
-> PUT api/v2/snapshot/snapshot_id
+The snapshot_id reference can be read from the deployment instance
 
-Here is and example of the use of these API python bindings:
+	PUT api/v2/snapshot/snapshot_id/commit
 
-     from api import cb2_Api
-     import json
+Using the API python bindings this looks like
 
-     class deploy_role()
-
-         #create the session to the admin node
-         session = cb2_Api("192.168.124.10","3000","crowbar","crowbar")
-         
-         #get the details of the node we want to manipulate
-         single = session.get_node("d00-0c-29-07-a4-a8.crowbar.org")
-         NodeID = str(single.id)
-         
-         #create a new deployment
-         deploymentdata = {"name":"ApiTestDeployment"}
-         deployment = session.create_deployment(json.dumps(deploymentdata))
-         DeploymentID = str(deployment.id)
-         
-         #update the node with that deployment
-         node_json = json.dumps({"deployment_id":DeploymentID})
-         session.update_node(node_json,node_id=NodeID)
-         
-         #create the node_role to bind the role and create the snapshot (using role 3 as an example)	
-         NodeRole = session.create_node_role(json.dumps({"node_id":NodeID,"role_id":"3"})) 
-         
-         #and commit the snapshot	
-         session.commit_snapshot(str(NodeRole.snapshot_id))
+  from api import cb2_Api
+  
+  class main():
+  
+    #create an api session
+    session = cb2_Api("192.168.124.10", "3000", "crowbar", "crowbar")
+    
+    #create a new deployment    
+    deploy = Deployment()
+    deploy.name = 'ApiDeployment'
+    deploy = session.create(deploy)
+        
+    #get/set the target node    
+    targetNode = session.get(session.create(Node({"name":"nodename.domain.org"})))   
+    targetNode.deployment_id = deploy.id
+    node = session.update(targetNode)
+    
+    #create a node role & assign it to the node created above    
+    nodeRole = Node_Role()
+    nodeRole.node_id = targetNode.id
+    nodeRole.role_id = '6'
+    nodeRole = session.update(nodeRole)
+    
+    #commit the snapshot/proposal
+    snap = session.commit_snapshot(deploy.snapshot_id)
+    
+    #that's all folks
 
