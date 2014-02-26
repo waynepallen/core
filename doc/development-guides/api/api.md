@@ -227,6 +227,7 @@ The snapshot_id reference can be read from the deployment instance
 
 Using the API python bindings this looks like
 
+```
   from api import cb2_Api
   
   class main():
@@ -254,4 +255,4 @@ Using the API python bindings this looks like
     snap = session.commit_snapshot(deploy.snapshot_id)
     
     #that's all folks
-
+```
