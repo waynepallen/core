@@ -16,4 +16,5 @@ Please refer to the [/doc directories](/doc/Index.md) for detailed information. 
 
 > Please, do NOT add documentation in locations outside of the  **/doc** directory trees!  If necessary, expand this README to include pointers to important **/doc** information.
 
-
+## Docker Information
+Getting started with Docker as a rapid-fire code/test/commit cycle tool check the [TL;DR](./doc/development-guide/dev-systems/docker/Dover-TLDR.md) document. For those seeking a detailed *_Good Oil(tm)_*  document check [HERE](./dec/development-guide/dev-systems/docker/docker-admin.md)
