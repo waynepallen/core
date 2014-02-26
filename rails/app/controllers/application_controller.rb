@@ -81,17 +81,6 @@ class ApplicationController < ActionController::Base
     "application/vnd.crowbar.#{type2name(type)}.#{form}+json; version=2.0"
   end
 
-  def api_wrong_version
-    {
-      :json=> {
-        :message => I18n.t('api.wrong_version',:version=>params[:version]),
-        :status => 400
-      },
-      :content_type=>cb_content_type("version", "error"),
-      :status => 400
-    }
-  end
-
   def api_not_found(k,t)
     { :json => {
         :message => I18n.t('api.not_found', :id=>k, :type=>type2name(t)),
@@ -119,21 +108,15 @@ class ApplicationController < ActionController::Base
     }
   end
 
-  def version_ok
-    params[:version].eql?('v2')
-  end
-
   # formats API json output
   # using this makes it easier to update the API format for all models
   def api_index(type, list)
-    return api_wrong_version unless version_ok
     return {:json=>list, :content_type=>cb_content_type(type, "list") }
   end
 
   # formats API json for output
   # using this makes it easier to update the API format for all models
   def api_show(o)
-    return api_wrong_version unless version_ok
     return {:json=>o, :content_type=>cb_content_type(o, "obj") }
   end
 
@@ -150,7 +133,6 @@ class ApplicationController < ActionController::Base
   # formats API json output 
   # used for json output that is not mapped to a Crowbar model
   def api_array(json)
-    return api_wrong_version(params) unless version_ok(params)
     return {:json=>json, :content_type=>cb_content_type("json", "array") }
   end
 
