@@ -26,7 +26,6 @@ class BarclampsController < ApplicationController
   end
 
   def show
-    return api_wrong_version unless version_ok
     @barclamp = Barclamp.find_key params[:id]
     respond_to do |format|
       format.html {  }
