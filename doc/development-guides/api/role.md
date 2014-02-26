@@ -19,28 +19,14 @@ A barclamp specific override can be created using the name of the barclamp and t
 
 #### API Actions
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Comments </th></tr>
-<tr><td> GET  </td>
-  <td> api/v2/roles </td>
-  <td> List </td></tr>
-<tr><td> GET  </td>
-  <td> api/v2/roles/:id </td>
-  <td> Specific Item </td></tr>
-<tr><td> PUT </td>
-  <td> - </td>
-  <td> NOT SUPPORTED / managed during import only </td></tr>
-<tr><td> POST  </td>
-  <td> - </td>
-  <td> NOT SUPPORTED / roles are only created during import </td></tr>
-<tr><td> DELETE  </td>
-  <td> - </td>
-  <td> NOT SUPPORTED </td></tr>
-<tr><td> PUT  </td>
-  <td> /api/v2/roles/[role]/template/[key]/[value] </td>
-  <td> update a single key/value in the template </td></tr>
-
-</table>
+| Verb | URL | Comments |
+|:-------|:-------------------|:----------------------|
+| GET  | api/v2/roles | List |
+| GET  | api/v2/roles/:id | Specific Item |
+| PUT | - | NOT SUPPORTED / managed during import only |
+| POST  | - | NOT SUPPORTED / roles are only created during import |
+| DELETE  | - | NOT SUPPORTED |
+| PUT  | /api/v2/roles/[role]/template/[key]/[value] | update a single key/value in the template |
 
 #### Role Events (triggered on NodeRole state changes)
 
@@ -51,7 +37,7 @@ There is a matching event for each NodeRole state.  The event is called when the
 ## JSON fields
 
 | Attribute | Type |Settable | Note
-|--------|--------|
+|:--------|:---------|:------|:-----------------------------|
 |Description|String|Yes||
 |Name|String|Yes||
 |Created_at|String|No|Unicode - date format|
@@ -73,7 +59,7 @@ There is a matching event for each NodeRole state.  The event is called when the
 The template structure is multi-layered - in the table assume that the lines following a 'blob' are the subsidiary structure
 
 |Name|Value
-|--------|--------|
+|:--------|:--------|
 |Ceph|json blob|
 |config|json blob|
 |osd|json blob|
