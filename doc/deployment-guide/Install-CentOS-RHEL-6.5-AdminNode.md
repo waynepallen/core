@@ -138,6 +138,13 @@ Change directory:
 **Note:** The contents of the ocb-install.sh file are:
 
      #!/bin/bash
+     
+     pkgproc(){
+        RLIST=`ls $1*`
+        echo $RLIST
+        yum install -y $RLIST
+     }
+
      cp -f .bash_profile /root/.bash_profile 
      source .bash_profile
      
@@ -151,15 +158,8 @@ Change directory:
      yum makecache
      yum update -y
      
-     yum install -y ruby-doc-2.0.0.433-1.el6.noarch.rpm rubygem-rdoc-4.0.0-1.el6.noarch.rpm \
-        rubygem-bigdecimal-1.2.0-1.el6.x86_64.rpm rubygems-2.0.2-1.el6.noarch.rpm \
-        rubygem-io-console-0.4.2-1.el6.x86_64.rpm rubygems-devel-2.0.2-1.el6.noarch.rpm \
-        rubygem-json-1.7.7-1.el6.x86_64.rpm ruby-irb-2.0.0.433-1.el6.noarch.rpm \
-        rubygem-minitest-4.3.2-1.el6.noarch.rpm ruby-libs-2.0.0.433-1.el6.x86_64.rpm \
-        rubygem-psych-2.0.0-1.el6.x86_64.rpm ruby-tcltk-2.0.0.433-1.el6.x86_64.rpm \
-        ruby-2.0.0.433-1.el6.x86_64.rpm rubygem-rake-0.9.6-1.el6.noarch.rpm ruby-devel-2.0.0.433-1.el6.x86_64.rpm
-
-     yum install -y opencrowbar-core-2.0-1.noarch.rpm opencrowbar-hadoop-2.0-1.noarch.rpm opencrowbar-openstack-2.0-1.noarch.rpm
+     pkgproc ruby
+     pkgproc open
      
      exit 0
 
@@ -167,9 +167,10 @@ The above script will install OpenCrowbar and all its RPM dependencies up to the
 
 ## Enable WebUI / Connect via browser
 
-Execute the following command to install the ruby gem bundler:
+Execute the following commands:
 
-     #> gem install bundler
+     #> cd /opt/opencrowbar
+     #> 
 
 Execute the following commands to ready the system for execution of the OpenCrowbar webUI:
 
@@ -186,7 +187,7 @@ When ready to deploy a production invocation of OpenCrowbar, execute:
      #> cd /opt/opencrowbar/core
      #> ./production.sh 
 
-Connect to the IP address of the Admin node on port 3000 using a browser of choice (Google Chrome, or Internet Explorer) URL:http://10.208.64.85:3000
+Connect to the IP address of the Admin node on port 3000 using a browser of choice (Google Chrome, or Internet Explorer) URL:http://192.168.124.10:3000
      Log in as user: crowbar
      Password: crowbar
 
