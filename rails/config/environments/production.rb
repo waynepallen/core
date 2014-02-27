@@ -48,5 +48,5 @@ Crowbar::Application.configure do
   # Enable threaded mode
   # config.threadsafe! unless $rails_rake_task
 
-  CROWBAR_VERSION = "v2.0-dev"
+  CROWBAR_VERSION = "v2.0-prod"
  end 
