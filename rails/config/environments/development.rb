@@ -1,4 +1,4 @@
-# Copyright 2011, Dell 
+# Copyright 2011-4, Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -33,5 +33,6 @@ Crowbar::Application.configure do
   config.eager_load = false
   # Enable threaded mode
   # config.threadsafe! unless $rails_rake_task
-  config.log_level = :debug
+  config.log_level = :info
+  config.paths['log'] = "./log/#{Rails.env}.log"
 end
