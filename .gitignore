@@ -10,6 +10,8 @@
 
 /core/rails/coverage/
 
+/doc/README.md.new
+
 /rails/tmp/
 /rails/log/
 /rails/coverage
