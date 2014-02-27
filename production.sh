@@ -140,12 +140,19 @@ for net in "${nets[@]}"; do
     echo "${net%/*} $FQDN" >> /etc/hosts || :
 done
 
-# Mark the node as alive.
-crowbar nodes update "$FQDN" '{"alive": true}'
-#curl -s -f --digest -u $(cat /etc/crowbar.install.key) \
-#    -X PUT "http://localhost:3000/api/v2/nodes/$FQDN" \
-#    -d 'alive=true'
-# Converge the admin node.
-crowbar converge && exit 0
-echo "Could not converge all noderoles!"
-exit 1
+# flag allows you to stop before final step
+if ! [[ $* = *--zombie* ]]; then
+
+  # Mark the node as alive.
+  crowbar nodes update "$FQDN" '{"alive": true}'
+  #curl -s -f --digest -u $(cat /etc/crowbar.install.key) \
+  #    -X PUT "http://localhost:3000/api/v2/nodes/$FQDN" \
+  #    -d 'alive=true'
+  echo "Configuration Complete, you can watch annealing from the UI"
+  # Converge the admin node.
+  crowbar converge && exit 0
+  echo "Could not converge all noderoles!"
+  exit 1
+else
+  echo "To complete configuration, mark node alive using: crowbar nodes update 1 '{""alive"": true}'"
+fi
