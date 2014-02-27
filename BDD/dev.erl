@@ -33,7 +33,7 @@ pop(ConfigRaw)  ->
   bdd_utils:config_set(inspect, false),
 
   % make sure background progress
-  true = bdd_clirat:step([], {foo, {0,0}, ["process", "delayed","returns", "delayed_job.([0..9])"]}),
+  true = crowbar:worker(),
 
   % safety setup 
   bdd_crud:delete(node:g(path), crowbar:g(node_name)),

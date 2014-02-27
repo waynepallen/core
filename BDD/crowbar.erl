@@ -24,6 +24,7 @@ g(Item) ->
     i18n    -> "utils/i18n";
     version -> "v2";
     test_node_path -> "api/test/nodes";
+    queue_status -> "api/status/queue";
     cli     -> bdd_utils:config(cli, "cd ../bin && ./crowbar");
     bootenv -> node:g(bootenv);
     natural_key -> name;			% for most crowbar objects, this is the natural key.  override if not
@@ -105,7 +106,13 @@ wait_for(URL, Match, Times, Sleep) ->
               wait_for(URL, Match, Times-1, Sleep)
   end.
 
-worker() -> bdd_clirat:step([], {foo, {0,0}, ["process", "delayed","returns", "delayed_job.([0..9])"]}).
+worker() ->
+  URL = eurl:uri(g(queue_status)),
+  R = eurl:get_http(URL),
+  case R#http.code of
+    200 -> J = json:parse(R#http.data), list_to_integer(json:value(J,"workers")) > 0;
+    _ -> false
+  end.
 
 % global setup
 step(Global, {step_setup, {Scenario, _N}, Test}) -> 
