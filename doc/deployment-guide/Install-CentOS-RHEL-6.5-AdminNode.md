@@ -170,22 +170,7 @@ The above script will install OpenCrowbar and all its RPM dependencies up to the
 Execute the following commands:
 
      #> cd /opt/opencrowbar
-     #> 
-
-Execute the following commands to ready the system for execution of the OpenCrowbar webUI:
-
-     #> cd /opt/opencrowbar/core/rails
-     #> bundle install --verbose 
-
-Execute the following for a DEVELOPMENT invocation of OpenCrowbar:
-
-     #> cd /opt/opencrowbar/core
-     #> ./development.sh
-
-When ready to deploy a production invocation of OpenCrowbar, execute:
-
-     #> cd /opt/opencrowbar/core
-     #> ./production.sh 
+     #> ./prep.sh
 
 Connect to the IP address of the Admin node on port 3000 using a browser of choice (Google Chrome, or Internet Explorer) URL:http://192.168.124.10:3000
      Log in as user: crowbar
