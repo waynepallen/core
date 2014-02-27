@@ -117,7 +117,8 @@ class ApplicationController < ActionController::Base
   # formats API json for output
   # using this makes it easier to update the API format for all models
   def api_show(o)
-    return {:json=>o, :content_type=>cb_content_type(o, "obj") }
+    ret = o.as_json
+    return {:json=>ret, :content_type=>cb_content_type(o, "obj") }
   end
 
   # formats API for delete
@@ -141,7 +142,7 @@ class ApplicationController < ActionController::Base
     render :json => { self.controller_name => self.help_contents.collect { |m|
         res = {}
         m.each { |k,v|
-          # sigh, we cannot resolve url_for at class definition time.
+          # sigh, we cannot resolve url_for at clqass definition time.
           # I suppose we have to do it at runtime.
           url=URI::unescape(url_for({ :action => k,
                         :controller => self.controller_name,

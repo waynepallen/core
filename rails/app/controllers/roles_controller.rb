@@ -47,50 +47,21 @@ class RolesController < ApplicationController
         format.json { render api_show @deployment }
       end
     else
-      params[:barclamp_id] = Barclamp.find_key(params[:barclamp]).id if params.include? :barclamp
-      params.require(:barclamp_id)
-      params.require(:name)
-      params.require(:jig_name)
-      @role = Role.create! params.permit(:name,
-                                         :jig_name,
-                                         :barclamp_id,
-                                         :library,
-                                         :implicit,
-                                         :bootstrap,
-                                         :discovery,
-                                         :server,
-                                         :cluster,
-                                         :destructive)
-      render api_show @role
+      render api_not_supported("post",Role)
     end
   end
 
   def update
     @role = Role.find_key params[:id]
-    if params.key? :dataprefix
-      params[:data] ||= {}
-      params.each do |k,v|
-        if k.start_with? params[:dataprefix]
-          key = k.sub(params[:dataprefix],"")
-          @role.update_template(key, v)
-        end
-      end
-    elsif params.key? :template
-      @role.template = params[:template]
-    end
     @role.update_attributes!(params.permit(:description))
+    if params.key? :template
+      @role.template = params[:template]
+      @role.save!
+    end
     respond_to do |format|
       format.html { render :action=>:show }
       format.json { render api_show @role }
     end
-  end
-
-  # special function so API can set an single item in template
-  def template
-    role = Role.find_key params[:role_id]
-    role.update_template params[:key], params[:value]
-    role.save!
-    render api_show role
   end
 
   def destroy

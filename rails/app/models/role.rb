@@ -46,35 +46,13 @@ class Role < ActiveRecord::Base
   scope           :all_cohorts,        -> { active.order("cohort ASC, name ASC") }
   scope           :all_cohorts_desc,   -> { active.order("cohort DESC, name ASC") }
 
-  # update just one value in the template
-  # for >1 level deep, add method matching key to role!
-  # use via /api/v2/roles/[role]/template/[key]/[value]
-  def update_template(key, value)
-    t = self.send(key.to_sym,value) rescue { key => value }
-    raw = read_attribute("template")
-    d = raw.nil? ? {} : JSON.parse(raw)
-    merged = d.deep_merge(t)
-    self.template = JSON.generate(merged)
-    self.save!
-  end
 
   # incremental update (merges with existing)
   def template_update(val)
-    d = JSON.parse(read_attribute(template))
-    d.deep_merge!(val)
-    write_attribute("template",JSON.generate(d))
-  end
-
-  # replaces existing
-  def template=(val)
-    val = JSON.generate(val) unless val.is_a?(String)
-    write_attribute("template",val)
-  end
-
-  def template
-    t = read_attribute("template")
-    return {} if t.nil? || t.empty?
-    JSON.parse(t) rescue {}
+    Role.transaction do
+      self.template = self.template.deep_merge(val)
+      save!
+    end
   end
 
   # State Transistion Overrides

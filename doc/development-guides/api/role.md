@@ -23,10 +23,12 @@ A barclamp specific override can be created using the name of the barclamp and t
 |:-------|:-------------------|:----------------------|
 | GET  | api/v2/roles | List |
 | GET  | api/v2/roles/:id | Specific Item |
+| GET  | /api/v2/roles/[:role_id]/attribs  | none   | List Attribs for a specific role| - | 
+| GET  | /api/v2/roles/[:role_id]/attribs/[:id]  | none   | Show Attrib (including value) for a specific Role| - | 
+| PUT  | /api/v2/roles/[:role_id]/attribs/[:id]  | none   | Update Attrib |
 | PUT | - | NOT SUPPORTED / managed during import only |
 | POST  | - | NOT SUPPORTED / roles are only created during import |
 | DELETE  | - | NOT SUPPORTED |
-| PUT  | /api/v2/roles/[role]/template/[key]/[value] | update a single key/value in the template |
 
 #### Role Events (triggered on NodeRole state changes)
 

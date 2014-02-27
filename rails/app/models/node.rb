@@ -19,8 +19,8 @@ require 'open3'
 class Node < ActiveRecord::Base
 
   before_validation :default_population
-  after_create :add_default_roles
   before_destroy :tear_down_roles
+  after_create :add_default_roles
   after_save :after_save_handler
 
   # Make sure we have names that are legal
@@ -120,13 +120,6 @@ class Node < ActiveRecord::Base
     Digest::SHA1.hexdigest(Node.select(:name).order("name ASC").map{|n|n.name}.join).to_i(16)
   end
 
-  def self.make_admin!
-    Node.transaction do
-      raise "Already have an admin node" unless where(:admin => true).empty?
-      Node.create(:name => %x{hostname -f}.strip, :admin => true)
-    end
-  end
-
   def v6_hostpart
     d = Digest::MD5.hexdigest(name)
     "#{d[16..19]}:#{d[20..23]}:#{d[24..27]}:#{d[28..32]}"
@@ -209,47 +202,24 @@ class Node < ActiveRecord::Base
     end
   end
 
-  def hint
-    d = read_attribute("hint")
-    return {} if d.nil? || d.empty?
-    JSON.parse(d) rescue {}
-  end
-
-  def hint=(arg)
-    arg = JSON.parse(arg) unless arg.is_a? Hash
-    data = hint.clone.deep_merge arg
-    write_attribute("hint",JSON.generate(data))
-    data
-  end
-
   def hint_update(val)
-    h = hint.clone
-    h.deep_merge!(val)
-    write_attribute("hint",JSON.generate(h))
-    h
-  end
-
-  def discovery
-    d = read_attribute("discovery")
-    return {} if d.nil? || d.empty?
-    JSON.parse(d) rescue {}
-  end
-
-  def discovery=(arg)
     Node.transaction do
-      arg = JSON.parse(arg) unless arg.is_a? Hash
-      data = discovery.clone.merge arg
-      write_attribute("discovery",JSON.generate(data))
+      self.hint = self.hint.deep_merge(val)
       save!
-      return data
+    end
+  end
+
+  def discovery_merge(val)
+    Node.transaction do
+      self.discovery = self.discovery.merge(val)
+      save!
     end
   end
 
   def discovery_update(val)
     Node.transaction do
-      d = discovery.clone
-      d.deep_merge!(val)
-      write_attribute("discovery",JSON.generate(d))
+      self.discovery = self.discovery.deep_merge(val)
+      save!
     end
   end
 

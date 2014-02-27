@@ -37,13 +37,6 @@ class NodesController < ApplicationController
     # place holder
   end
 
-  def make_admin
-    n = Node.make_admin!
-    n.alive = true
-    n.save!
-    redirect_to :action => 'index', :status => :found
-  end
-
   def show
     @node = Node.find_key params[:id]
     respond_to do |format|
@@ -81,22 +74,23 @@ class NodesController < ApplicationController
     params[:deployment_id] ||= 1
     params.require(:name)
     params.require(:deployment_id)
+    @node = nil
     @node = Node.create!(params.permit(:name,
-                                   :alias,
-                                   :description,
-                                   :admin,
-                                   :deployment_id,
-                                   :allocated,
-                                   :alive,
-                                   :available,
-                                   :bootenv))
-    # deal w/ hint shortcuts  (these are hardcoded but MUST match the imported Attrib list)
-    hint = JSON.parse(params[:hint] || "{}")
-    hint["network-admin"] = {"v4addr"=>params["ip"]} if params.has_key? :ip
-    hint["deployer-client"] = params["mac"] if params.has_key? :mac
-    unless hint.empty?
-      @node.hint = hint
-      @node.save!
+
+                                       :alias,
+                                       :description,
+                                       :admin,
+                                       :deployment_id,
+                                       :allocated,
+                                       :alive,
+                                       :available,
+                                       :bootenv))
+    # Keep suport for mac and ip hints in short form around for legacy Sledgehammer purposes
+    if params[:mac]
+      @node.attribs.find_by!(name: "hint-admin-macs").set(@node,[params[:mac]])
+    end
+    if params[:ip]
+      @node.attribs.find_by!(name: "hint-admin-v4addr").set(@node,params[:ip])
     end
 
     render api_show @node
@@ -108,22 +102,13 @@ class NodesController < ApplicationController
       params[:deployment_id] = Deployment.find_key(params[:deployment]).id
     end
     @node.update_attributes!(params.permit(:alias,
-                                           :description,
-                                           :target_role_id,
-                                           :deployment_id,
-                                           :allocated,
-                                           :available,
-                                           :alive,
-                                           :bootenv))
-    render api_show @node
-  end
-
-  def move
-    deploy = Deployment.find_key params[:deployment_id]
-    @node = Node.find_key params[:node_id]
-    @node.deployment_id = deploy.id
-    @node.save!
-    @node.reload
+                                             :description,
+                                             :target_role_id,
+                                             :deployment_id,
+                                             :allocated,
+                                             :available,
+                                             :alive,
+                                             :bootenv))
     render api_show @node
   end
 

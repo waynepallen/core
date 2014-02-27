@@ -96,17 +96,18 @@ class Network < ActiveRecord::Base
   def auto_prefix
     # Add our IPv6 prefix.
     if (name == ADMIN_NET and v6prefix.nil?) || (v6prefix == "auto")
-      Network.transaction do
-        user = User.admin.first
-        # this config code really needs to move to Crowbar base
-        cluster_prefix = user.settings(:network).v6prefix[name]
-        if cluster_prefix.nil? or cluster_prefix.eql? "auto"
-          cluster_prefix = Network.make_global_v6prefix
-          user.settings(:network).v6prefix[name] = cluster_prefix
-        end
-        write_attribute("v6prefix",sprintf("#{cluster_prefix}:%04x",id))
-        save!
+      Role.logger.info("Network: Creating automatic IPv6 prefix for #{name}")
+      user = User.admin.first
+      # this config code really needs to move to Crowbar base
+      cluster_prefix = user.settings(:network).v6prefix[name]
+      if cluster_prefix.nil? or cluster_prefix.eql? "auto"
+        cluster_prefix = Network.make_global_v6prefix
+        user.settings(:network).v6prefix[name] = cluster_prefix
       end
+      Network.transaction do
+        update_column("v6prefix", sprintf("#{cluster_prefix}:%04x",id))
+      end
+      Rails.logger.info("Network: Created #{sprintf("#{cluster_prefix}:%04x",id)} for #{name}")
     end
   end
 
@@ -114,20 +115,20 @@ class Network < ActiveRecord::Base
   def add_role
     role_name = "network-#{name}"
     unless Role.exists?(name: role_name)
+      Rails.logger.info("Network: Adding role and attribs for #{role_name}")
       bc = Barclamp.find_key "network"
       Role.transaction do
-        r = Role.find_or_create_by_name(:name => role_name,
+        r = Role.find_or_create_by_name!(:name => role_name,
                                         :type => "BarclampNetwork::Role",   # force
                                         :jig_name => Rails.env.production? ? "chef-solo" : "test",
                                         :barclamp_id => bc.id,
                                         :description => I18n.t('automatic_by', :name=>name),
-                                        :template => '{}',    # this will be replaced by the role
                                         :library => false,
                                         :implicit => true,
                                         :bootstrap => (self.name.eql? ADMIN_NET),
                                         :discovery => (self.name.eql? ADMIN_NET)  )
         RoleRequire.create!(:role_id => r.id, :requires => "network-server")
-        RoleRequire.create!(:role_id => r.id, :requires => "deployer-client") 
+        RoleRequire.create!(:role_id => r.id, :requires => "deployer-client")
         RoleRequire.create!(:role_id => r.id, :requires => "crowbar-installed-node") unless name.eql? ADMIN_NET
         # attributes for jig configuraiton
         Attrib.create!(:role_id => r.id,
@@ -175,12 +176,24 @@ class Network < ActiveRecord::Base
                          :name => "#{role_name}_use_bridge",
                          :description => "Whether #{name} network should create a bridge for other barclamps to use",
                          :map => "crowbar/network/#{name}/use_bridge")
-        # attributes for hint
-        Attrib.create!(:role_id => r.id,
-                         :barclamp_id => bc.id,
-                         :name => "hint-#{role_name}-v4addr",
-                         :description => "Hint for #{name} network to assign v4 IP address",
-                         :map => "v4addr")
+        # attributes for hints
+        # These belong to the barclamp, not the role.
+        Attrib.create!(:barclamp_id => bc.id,
+                       :name => "hint-#{name}-v4addr",
+                       :description => "Hint for #{name} network to assign v4 IP address",
+                       :map => "#{name}-v4addr",
+                       :schema => {
+                         "type" => "str",
+                         "required" => true,
+                         "pattern" => '/([0-9]{1,3}\.){3}[0-9]{1,3}/'})
+        Attrib.create!(:barclamp_id => bc.id,
+                       :name => "hint-#{name}-v6addr",
+                       :description => "Hint for #{name} network to assign v6 IP address",
+                       :map => "#{name}-v6addr",
+                       :schema => {
+                         "type" => "str",
+                         "required" => true,
+                         "pattern" => '/[0-9a-f:]+/'})
       end
     end
   end
@@ -189,6 +202,10 @@ class Network < ActiveRecord::Base
     rid = self.id
     Role.destroy_all :name=>"network-#{name}"
     Attrib.destroy_all :role_id => rid
+    # Also destroy the hints
+    ["v4addr","v6addr"].each do |n|
+      Attrib.destroy_all(name: "hint-#{name}-#{v4addr}")
+    end
   end
 
   def check_network_sanity

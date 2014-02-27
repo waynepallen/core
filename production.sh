@@ -78,33 +78,6 @@ admin_net='
   ]
 }'
 
-provisioner_server_template="
-{\"template\": {
-  \"crowbar\": {
-    \"provisioner\": {
-      \"server\": {
-        \"root\": \"/tftpboot\",
-        \"use_local_security\": true,
-        \"web_port\": 8091,
-        \"upstream_proxy\": \"${http_proxy}\",
-        \"use_serial_console\": false,
-        \"default_user\": \"crowbar\",
-        \"default_password_hash\": \"\$1\$BDC3UwFr\$/VqOWN1Wi6oM0jiMOjaPb.\",
-        \"online\": true
-        }
-      }
-    }
-  }
-}"
-
-provisioner_os_install_template='
-{"template": {
-  "crowbar": {
-    "target_os": "centos-6.5"
-    }
-  }
-}'
-
 admin_node="
 {
   \"name\": \"$FQDN\",
@@ -120,8 +93,14 @@ ip_re='([0-9a-f.:]+/[0-9]+)'
 
 # Update the provisioner server template to use whatever
 # proxy the admin node should be using.
-crowbar roles update provisioner-server "$provisioner_server_template"
-crowbar roles update provisioner-os-install "$provisioner_os_install_template"
+if [[ $http_proxy ]]; then
+    crowbar roles set provisioner-server \
+        attrib provisioner-upstream_proxy \
+        to "{\"value\": \"${http_proxy}\"}"
+fi
+crowbar roles set provisioner-os-install \
+    attrib provisioner-target_os \
+    to '{"value": "centos-6.5"}'
 
 # Create a stupid default admin network
 crowbar networks create "$admin_net"

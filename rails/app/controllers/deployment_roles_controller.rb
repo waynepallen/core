@@ -49,8 +49,8 @@ class DeploymentRolesController < ApplicationController
 
   def update
     @deployment_role = DeploymentRole.find_key(params[:id])
-    params.require(:data).permit!
-    @deployment_role.update_attributes!(params)
+    params.require(:data)
+    @deployment_role.update_attributes!(params.permit!(:data))
     render api_show @deployment_role
   end
 

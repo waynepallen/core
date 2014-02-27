@@ -123,7 +123,13 @@ class Barclamp < ActiveRecord::Base
       flags = role['flags'] || []
       description = role['description'] || role_name.gsub("-"," ").titleize
       template = File.join source_path, role_jig.on_disk_name || "none", 'roles', role_name, 'role-template.json'
-      Rails.logger.info("Import: Loading role #{role_name} template from #{template}")
+      template = if File.file?(template)
+                   Rails.logger.info("Import: Loading role #{role_name} template from #{template}")
+                   JSON.parse(IO.read(template))
+                 else
+                   Rails.logger.info("Import: Loading role #{role_name} using blank template")
+                   {}
+                 end
       # roles data import
       ## TODO: Verify that adding the roles will not result in circular role dependencies.
       r = nil
@@ -133,7 +139,7 @@ class Barclamp < ActiveRecord::Base
                                          :barclamp_id=>barclamp.id)
         r.update_attributes!(:description=>description,
                              :barclamp_id=>barclamp.id,
-                             :template=>(IO.read(template) rescue "{}"),
+                             :template=>template,
                              :library=>flags.include?('library'),
                              :implicit=>flags.include?('implicit'),
                              :bootstrap=>flags.include?('bootstrap'),
@@ -159,10 +165,13 @@ class Barclamp < ActiveRecord::Base
         attrib_name = attrib["name"]
         attrib_desc = attrib['description'] || ""
         attrib_map = attrib['map'] || ""
+        attrib_writable = !!attrib['schema']
         a = attrib_type.find_or_create_by!(name: attrib_name)
         a.update_attributes!(:description => attrib_desc,
                              :map => attrib_map,
                              :role_id => r.id,
+                             :writable => attrib_writable,
+                             :schema => attrib_writable ? attrib['schema']: nil,
                              :barclamp_id => barclamp.id)
       end if r && role['attribs']
     end if bc['roles']
@@ -174,9 +183,12 @@ class Barclamp < ActiveRecord::Base
       attrib_name = attrib["name"]
       attrib_desc = attrib['description'] || ""
       attrib_map = attrib['map'] || ""
+      attrib_writable = !!attrib['schema']
       a = attrib_type.find_or_create_by!(:name => attrib_name)
       a.update_attributes!(:description => attrib_desc,
                            :map => attrib_map,
+                           :writable => attrib_writable,
+                           :schema => attrib_writable ? attrib['schema']: nil,
                            :barclamp_id => barclamp.id)
     end if bc['attribs']
     barclamp

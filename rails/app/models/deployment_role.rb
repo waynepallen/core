@@ -40,38 +40,21 @@ class DeploymentRole < ActiveRecord::Base
     role.description
   end
 
-  def data
-    d = read_attribute("data")
-    d.nil? ? {} : JSON.parse(d)
-  end
-
-  def data=(arg)
-    arg = JSON.generate(arg) if arg.is_a? Hash
-    write_attribute("data",arg)
+  def all_data
+    role.template.deep_merge(self.data)
   end
 
   def data_update(val)
-    d = data.clone
-    d.deep_merge! val
-    self.data= d
-  end
-
-  def wall
-    d = read_attribute("wall")
-    return {} if d.nil? || d.empty?
-    JSON.parse(d)
-  end
-
-  def wall=(arg)
-    arg = JSON.generate(arg) if arg.is_a? Hash
-    write_attribute("wall",arg)
+    DeploymentRole.transaction do
+      self.data= self.data.deep_merge(val)
+      save!
+    end
   end
 
   def wall_update(val)
     DeploymentRole.transaction do
-      d = wall.clone
-      d.deep_merge!(val)
-      wall = d
+      self.wall = self.wall.deep_merge(val)
+      save!
     end
   end
 
@@ -84,5 +67,5 @@ class DeploymentRole < ActiveRecord::Base
   def role_delete_hook
     role.on_deployment_delete(self)
   end
-  
+
 end
