@@ -16,7 +16,14 @@ service "postgresql" do
   action :stop
 end
 
-file "/etc/environment" do
+["/etc/environment","/etc/yum.conf"].each do |f|
+  next unless File.file?(f)
+  bash "Clean proxies from #{f}" do
+    code "grep -v proxy '#{f}' > '#{f}.cleaned'; rm '#{f}'; mv '#{f}.cleaned' '#{f}'"
+  end
+end
+
+file "/etc/profile.d/proxy.sh" do
   action :delete
 end
 
