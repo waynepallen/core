@@ -173,8 +173,9 @@ Execute the following commands:
      #> ./prep.sh
 
 Connect to the IP address of the Admin node on port 3000 using a browser of choice (Google Chrome, or Internet Explorer) URL:http://192.168.124.10:3000
+
      Log in as user: crowbar
-     Password: crowbar
+           Password: crowbar
 
 
 ## QA Valdiation Requirements:
