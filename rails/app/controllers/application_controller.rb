@@ -16,12 +16,14 @@
 require 'uri'
 require 'digest/md5'
 require 'active_support/core_ext/string'
+require 'json'
 
 # Filters added to this controller apply to all controllers in the application.
 # Likewise, all the methods added will be available for all controllers.
 class ApplicationController < ActionController::Base
 
   before_filter :crowbar_auth
+  after_filter  :filter_json
 
   # Basis for the reflection/help system.
 
@@ -79,17 +81,6 @@ class ApplicationController < ActionController::Base
     "application/vnd.crowbar.#{type2name(type)}.#{form}+json; version=2.0"
   end
 
-  def api_wrong_version
-    {
-      :json=> {
-        :message => I18n.t('api.wrong_version',:version=>params[:version]),
-        :status => 400
-      },
-      :content_type=>cb_content_type("version", "error"),
-      :status => 400
-    }
-  end
-
   def api_not_found(k,t)
     { :json => {
         :message => I18n.t('api.not_found', :id=>k, :type=>type2name(t)),
@@ -117,21 +108,15 @@ class ApplicationController < ActionController::Base
     }
   end
 
-  def version_ok
-    params[:version].eql?('v2')
-  end
-
   # formats API json output
   # using this makes it easier to update the API format for all models
   def api_index(type, list)
-    return api_wrong_version unless version_ok
     return {:json=>list, :content_type=>cb_content_type(type, "list") }
   end
 
   # formats API json for output
   # using this makes it easier to update the API format for all models
   def api_show(o)
-    return api_wrong_version unless version_ok
     return {:json=>o, :content_type=>cb_content_type(o, "obj") }
   end
 
@@ -148,7 +133,6 @@ class ApplicationController < ActionController::Base
   # formats API json output 
   # used for json output that is not mapped to a Crowbar model
   def api_array(json)
-    return api_wrong_version(params) unless version_ok(params)
     return {:json=>json, :content_type=>cb_content_type("json", "array") }
   end
 
@@ -180,6 +164,31 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def filter_one_entry(ent,attrs)
+    res = {}
+    attrs.each do |k|
+      next unless ent.key?(k)
+      res[k] = ent[k]
+    end
+    res
+  end
+
+  def filter_json
+    unless (response.status == 200) &&
+        request.headers["x-return-attributes"] &&
+        (response.content_type =~ /json/)
+      return
+    end
+    body = JSON.parse(response.body)
+    filter_attributes = JSON.parse(request.headers["x-return-attributes"])
+    if body.is_a?(Array)
+      filtered_body = body.map{|ent| filter_one_entry(ent,filter_attributes)}
+    else
+      filtered_body = filter_one_entry(body,filter_attributes)
+    end
+    response.body = JSON.generate(filtered_body)
+  end
 
   def type2name(type)
     case
@@ -213,7 +222,8 @@ class ApplicationController < ActionController::Base
         }
       end
     else
-      Rails.logger.error(exception)
+      Rails.logger.error("EXCEPTION: #{@error.message}")
+      Rails.logger.error("BACKTRACE:\n#{@error.backtrace.join("\n")}")
       respond_to do |format|
         format.html { render :template => "/errors/500.html.haml", :status => 500 }
         format.json { render :json => {

@@ -200,13 +200,12 @@ Crowbar::Application.routes.draw do
     end # id constraints
   end # json
 
-  # Install route from each root barclamp (should be done last so CB gets priority)
-  begin
-    Barclamp.roots.each do |bc|
-      eval(IO.read(File.path(bc.source_path, "rails", "config", "routes.rb")), binding) unless bc.name.eql? 'crowbar'
-    end
-  rescue
-    # startup cannot resolve Barclamp
+  # Install route from each root barclamp (should be done last so CB gets priority).
+  Dir.glob("/opt/opencrowbar/**/crowbar_engine/barclamp_*/config/routes.rb") do |routefile|
+    bc = routefile.split('/')[-3].partition('_')[2]
+    bc_engine = "#{routefile.split('/')[-3].camelize}::Engine"
+    bc_mount = "mount #{bc_engine}, at: '#{bc}'"
+    eval(bc_mount, binding)
   end
 
   root :to => 'dashboard#layercake'
