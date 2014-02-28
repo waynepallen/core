@@ -141,6 +141,10 @@ This will perform the following actions:
   * Mark the admin node as alive, and converge the default set of admin
   noderoles.
 
+Options:
+
+  * --zombie will run all of the admin config except for the final "node alive" step
+
 You should be able to monitor the progress of the admin node
 deployment at http://localhost:3000.  Once the admin node is finished
 deploying (or if anything goes wrong), you will be left at a running
