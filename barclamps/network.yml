@@ -25,7 +25,7 @@ roles:
         description: 'The global set of interface maps that should be used to figure out nic ordering.'
         map: 'crowbar/interface_map'
   # there are more roles BUT they are dynamically created
-  
+
 attribs:
   - name: 'nics'
     description: 'Ethernet Interface Ports'
@@ -33,7 +33,3 @@ attribs:
   - name: 'switches'
     description: 'Connected Networking Switches'
     map: 'ohai/crowbar_ohai/switch_config'
-
-      - name: 'hint-admin-mac'
-        description: 'Hint for Admin MAC address'
-        map: 'admin_mac'

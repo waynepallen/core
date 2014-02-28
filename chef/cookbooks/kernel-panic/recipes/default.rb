@@ -1,3 +1,6 @@
+# if docker, everything is cool.  don't worry
+return if node[:crowbar_ohai][:in_docker]
+
 # Tell the kernel to reboot after 10 seconds on panic, if we want it to.
 if node["panic"] and node["panic"]["reboot"] == true
   if node["panic"]["timeout"]

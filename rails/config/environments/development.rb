@@ -19,8 +19,7 @@
 # since you don't have to restart the webserver when you make code changes.
 Crowbar::Application.configure do
   config.cache_classes = false
-  # Log error messages when you accidentally call methods on nil.
-  config.whiny_nils = true
+
   # Show full error reports and disable caching
   #config.action_controller.consider_all_requests_local = true
   #config.action_view.debug_rjs                         = true
@@ -33,7 +32,7 @@ Crowbar::Application.configure do
   config.eager_load = false
   # Enable threaded mode
   # config.threadsafe! unless $rails_rake_task
-  config.log_level = :info
+  config.log_level = :debug
   config.paths['log'] = "log/#{Rails.env}.log"
 
   CROWBAR_VERSION = "v2.0-dev"
