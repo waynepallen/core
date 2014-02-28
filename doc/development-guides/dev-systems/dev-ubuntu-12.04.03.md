@@ -1,8 +1,12 @@
-#Configuration Guide - Ubuntu 12.04.03
+# Configuration Guide - Ubuntu 12.04.03
 
 Engineers value documentation that explains how to get a development workstation configured quickly. It is human nature to customize and change things - we do this frequently, but sometimes we need to get back to first base.  This document will help to get you there.
 
 ##Installation and Configuration Information
+
+> Note to reader, many of these steps are generic and should be moved to a higher level document. 
+
+> An attempt has been made to pre-stage downloads so several steps can be done in parallel
 
 ###Base OS Installed
   1. VirtualBox, TWO network interfaces
@@ -14,31 +18,42 @@ Engineers value documentation that explains how to get a development workstation
        1. make sure that you allow NON local hosts to use the proxy (in =/etc/cntlm.conf= set `gateway yes`)!  Containers are not "local" and require your CNTLM proxy to act as a gateway.
     1. SAMBA share: `sudo apt-get install samba`
     1. Passwordless sudo: `sudo sed -ie "s/%sudo\tALL=(ALL:ALL) ALL/%sudo ALL=(ALL) NOPASSWD: ALL/g" /etc/sudoers`
-  1. Prep for docker 
+  1. Prep for Docker 
     1. Review [http://docs.docker.io/en/latest/installation/ubuntulinux/]
         * Using the recommended curl script is the easiest way to install docker
+        * DO NOT TEST docker until you follow the steps below! 
     1. `apt-get install git`
-    1. allow docker without sudo: =sudo usermod -a -G docker crowbar=
+    1. allow docker without sudo: `sudo usermod -a -G docker crowbar`
     1. we recommend changing from AUFS to Device Mapper for storage (slower but more native)
        1. `sudo vi /etc/default/docker`
        1. add `DOCKER_OPTS="-s devicemapper"`
-       1. while you are here, you may want to set your proxy server
+       1. while you are here, you may want to set your proxy server (the #default is for CNTLM)
     1. you'll need to reboot for this setting to take effect
-  1. prep for sledgehammer requirements: =sudo apt-get install rpm rpm2cpio=
+    1. time saving tip: 
+      1. preload the with `docker pull opencrowbar/centos:6.5-4`
+      1. test docker, use `docker run -i -t centos /bin/bash`
+  1. prep for sledgehammer requirements: `sudo apt-get install rpm rpm2cpio`
+
+###Position Boot Assets, see [[docker/Docker-TLDR]]
+    1. Copy the ISOs that you want for nodes to `$HOME/.cache/opencrowbar/tftpboot/isos`
 
 ###Checkout Code 
-  1. create a personal fork of the `https://github.com/opencrowbar/core`
-1. Fork the Code if you want to be able to submit changes
-  1. `git clone https://github.com/opencrowbar/core`
-  1. setup your git identity (one time only)
-    1. `git config --global user.name "user.name"`
-    1. `git config --global user.email "email.address"`
-  1. add a personal remote: =git remote add personal `https://github.com/[yourgitnamehere]/core`
+  1. get git: `sudo apt-get install git`
+  1. get the code: `git clone https://github.com/opencrowbar/core`
+    1. if you want to commit, please review [[..contributing.md]]
+
+###Build Sledgehammer (do 1 time, but takes a while)
+  1. from core, `tools/build_sledgehammer.sh`
 
 ###Setup Docker Admin Node
   1. Enter the OpenCrowbar repo `cd core`
-  1. For UI simulator & testing: `./tools/docker_admin.sh centos ./development.sh`
-  1. For Workload creation: `./tools/docker_admin.sh centos ./production.sh admin.opencrowbar.com`
+  1. For Workload creation: `tools/docker-admin.sh centos ./production.sh admin.opencrowbar.com`
+    1. the first time will be SLOW because Crowbar creates PXE boot images; however, they are saved outside the container for next time.
+  1. To monitor the logs inside the container, use `tail -f /var/log/crowbar/production.log`
+  1. You'll need to put the Admin container on a network the VMs can access
+    1. `brctl addif docker0 eth1`
+    1. You'll need to create some nodes in VMs (or Containers) ...
+    1. Boot the nodes so Crowbar can discover and manage them
   1. Helpful Docker Items
      1. `docker ps` to see if you are running a container
      1. `docker inspect [foo]` to get the IP address of the container so you can =ssh root@foo= into it
@@ -55,18 +70,4 @@ Engineers value documentation that explains how to get a development workstation
        1. compile the BDD code
        1. update the config file (copy example.config to default.config and update)
        1. `erl` then `bdd:test()`
-  1. Production on VMs allows you to create workloads and jigs that can only be tested by 
-    1. Start with `tools/docker-admin centos ./production.sh admin.opencrowbar.com`
-    1. To monitor the logs inside the container, use `tail -f /var/log/crowbar/production.log`
-    1. You'll need to put the Admin container on a network the VMs can access
-      1. `brctl addif docker0 eth1`
-    1. You'll need to create some nodes in VMs (or Containers) ...
-    1. Boot the nodes so Crowbar can discover and manage them
-
-###To create a pull request
-  1. make your change and commit it: `git commit -a -m "helpful info"`
-  1. get the latest code from origin: `git fetch`
-  1. sync your code into the trunk: `git rebase`
-     1. you may have to merge changes using `git add [file]= and =git rebase --continue--`
-  1. push your change to your personal repo in a branch: `git push personal master:[my-pull-request-branch]`
-  1. from your Github fork UI, create a pull request from my-pull-request-branch
+    1. Rails console in container: ''
