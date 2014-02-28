@@ -2,9 +2,14 @@
 
 It is possible (and convienent) to run a OpenCrowbar admin node in a
 CentOS 6.5 based Docker container.  To do so, you need to be running
-in a development environment that can run Docker.  Instructions for
-installing Docker on the most common Linux distributions are at
-http://docs.docker.io/en/latest/installation/
+in a development environment that can run Docker.  
+
+### Install Docker
+
+Instructions for installing Docker on the most common Linux distributions are at
+[http://docs.docker.io/en/latest/installation/]
+
+> DO NOT TEST docker until you follow the steps below!
 
 ### Configure Docker in your development environment
 
@@ -16,41 +21,46 @@ container exposes.
 
 On Ubuntu, edit `/etc/default/docker` and make the following changes:
 
-* Uncomment the line that starts with `DOCKER_OPTS`, and make it read
-`DOCKER_OPTS="-s devicemapper"`
-* If you need to have the Docker daemon talk through an http proxy,
-uncomment the line that starts with `export` and change the part after
-`http_proxy` to point at the http proxy you normally use.
+  * Uncomment the line that starts with `DOCKER_OPTS`, and make it read
+  `DOCKER_OPTS="-s devicemapper"`
+  * If you need to have the Docker daemon talk through an http proxy,
+  uncomment the line that starts with `export` and change the part after
+  `http_proxy` to point at the http proxy you normally use.
 
 On CentOS 6.5, edit `/etc/sysconfig/docker`, and make the following
 changes:
 
-* Change the line that starts with `other_args` to read
-`other_args="-s devicemapper"`.
-* Add a line that reads `export http_proxy="http://<your_http_proxy>"`
-  if you need to have the Docker daemon talk through an http proxy.
-* If you need a proxy to talk https, add a similar line reading
-`export https_proxy="http://<your_https_proxy>"`
+  * Change the line that starts with `other_args` to read
+  `other_args="-s devicemapper"`.
+  * Add a line that reads `export http_proxy="http://<your_http_proxy>"`
+    if you need to have the Docker daemon talk through an http proxy.
+  * If you need a proxy to talk https, add a similar line reading
+  `export https_proxy="http://<your_https_proxy>"`
 
 On OpenSuSE 13.1, Fedora 20, and other distributions that use systemd
 as their init system, perform the following steps:
 
-1. Copy `/usr/lib/systemd/system/docker.service` to
-`/etc/systemd/system/docker.service`
-2. Edit `/etc/systemd/system/docker.service`, and make the following
-changes:
+  1. Copy `/usr/lib/systemd/system/docker.service` to
+  `/etc/systemd/system/docker.service`
+  2. Edit `/etc/systemd/system/docker.service`, and make the following
+  changes:
 
-  * Change the line that starts with `ExecStart=` and append
-  ` -s devicemapper` to the end of it.
-  * If you need to have the Docker daemon talk through an http proxy,
-  add the following line directly under the `[Service]` line:
+    * Change the line that starts with `ExecStart=` and append
+    ` -s devicemapper` to the end of it.
+    * If you need to have the Docker daemon talk through an http proxy,
+    add the following line directly under the `[Service]` line:
 
-    `Environment="http_proxy=http://<your_http_proxy>" "https_proxy=http://<your_http_proxy>"`
+      `Environment="http_proxy=http://<your_http_proxy>" "https_proxy=http://<your_http_proxy>"`
 
-3. Reload the docker service configuration: `systemctl daemon-reload`
+  3. Reload the docker service configuration: `systemctl daemon-reload`
 
-After making the above changes. restart the Docker service for them to
-take effect.
+  After making the above changes. reboot or restart the Docker service (`sudo service docker restart`) for them to
+  take effect.
+
+Time saving tips
+
+  * preload the with `docker pull opencrowbar/centos:6.5-4`
+  * test docker, use `docker run -i -t centos /bin/bash`
 
 ### The docker-admin command and its environment
 
@@ -107,29 +117,29 @@ repository:
 
 This will perform the following actions:
 
-* If needed, pull the latest opencrowbar/centos image from the public
-Docker repository.
-* Spawn the container with all the parameters needed to set up the
-environment as described above.  The rest of the actions will take
-place in the spawned container.
-* Ensure that the UID and GIDs of crowbar user inside the container is
-  the same as your UID and GID in the development environment.
-* Append your SSH public key to root's authorized_keys file.
-* Run `./bootstrap.sh`, which will ensure that ruby and chef-solo are
-installed, and then run the crowbar-bootstrap cookbook to converge the
-state of the container with our latest specifications.
-* Bring up the OpenCrowbar webserver.
-* Create a default admin network on the `192.168.124.0/24` address
-range.
-* Update the `provisioner-server` role template to use the passed-in
-http proxy, if any.
-* Update the `provisioner-os-install` role template to default to
-`centos-6.5`.
-* Create the admin node record.
-* Extract the addresses that were allocated to the admin node, and
-bind them to eth0.
-* Mark the admin node as alive, and converge the default set of admin
-noderoles.
+  * If needed, pull the latest opencrowbar/centos image from the public
+  Docker repository.
+  * Spawn the container with all the parameters needed to set up the
+  environment as described above.  The rest of the actions will take
+  place in the spawned container.
+  * Ensure that the UID and GIDs of crowbar user inside the container is
+    the same as your UID and GID in the development environment.
+  * Append your SSH public key to root's authorized_keys file.
+  * Run `./bootstrap.sh`, which will ensure that ruby and chef-solo are
+  installed, and then run the crowbar-bootstrap cookbook to converge the
+  state of the container with our latest specifications.
+  * Bring up the OpenCrowbar webserver.
+  * Create a default admin network on the `192.168.124.0/24` address
+  range.
+  * Update the `provisioner-server` role template to use the passed-in
+  http proxy, if any.
+  * Update the `provisioner-os-install` role template to default to
+  `centos-6.5`.
+  * Create the admin node record.
+  * Extract the addresses that were allocated to the admin node, and
+  bind them to eth0.
+  * Mark the admin node as alive, and converge the default set of admin
+  noderoles.
 
 You should be able to monitor the progress of the admin node
 deployment at http://localhost:3000.  Once the admin node is finished
@@ -142,3 +152,16 @@ If your development environment is running on bare metal (as opposed
 to running inside a VM), you can use `tools/kvm-slave &` to spawn a
 KVM virtual machine that will boot from the freshly-deployed OpenCrowbar
 admin node.
+
+### Development Admin
+
+  1. Dev/Simulator allows you to play with the UI and BDD tests which is good for developers working on the UI/API and Annealer logic
+    1. Start with `tools/docker-admin centos ./development.sh`
+    1. Dev mode creates a special user `developer/Cr0wbar!`
+    1. To monitor the logs inside the container, use `tail -f /var/log/crowbar/development.log`
+    1. Run the BDD system [see BDD test pages]
+       1. `sudo apt-get install erlang`
+       1. compile the BDD code
+       1. update the config file (copy example.config to default.config and update)
+       1. `erl` then `bdd:test()`
+    1. Rails console in container: ''
