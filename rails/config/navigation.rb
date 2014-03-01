@@ -14,6 +14,7 @@
 
 SimpleNavigation::Configuration.run do |navigation|       
   menu = Nav.item('root').first
+Rails.logger.info  "ZEHICLE #{Nav.all.count}"
   navigation.items do |primary|
     menu.children.sort_by{|n| n.order}.each do |item| # Top Nav
       if item.item != 'root' and item.path =~ /(.*)_path/
@@ -55,7 +56,7 @@ SimpleNavigation::Configuration.run do |navigation|
           end
         rescue Exception => e
           primary.item :menu_error, "#{t 'nav.error'}: #{item.item}", ''
-          puts "render error #{e.inspect}" if Rails.env.development?
+          Rails.logger.error "navigation: #{e.inspect}" 
         end
       end
     end

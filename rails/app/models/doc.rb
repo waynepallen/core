@@ -37,8 +37,8 @@ class Doc < ActiveRecord::Base
 
   # creates the table of contents from the files
   def self.gen_doc_index
-    # determine age of doc index file in seconds (so we don't generate everytime we start)
-    index_age =  File.new(File.join '..', 'doc', 'README.md').mtime - DateTime.now rescue 0
+    # determine age of doc index file in seconds (so we don't generate every time we start)
+    index_age =  File.new(File.join '..', 'doc', 'README.md.new').mtime - DateTime.now rescue 0
     if Doc.count == 0 or index_age < -300
       # load barclamp docs
       Barclamp.order(:id).each { |bc| Doc.discover_docs bc }
