@@ -93,23 +93,24 @@ class SupportController < ApplicationController
   end
 
   def bootstrap
-    if request.post?
-      # only create if no other netwroks
-      if Network.where(:name=>Network::ADMIN_NET).count == 0
-        deployment = Deployment.system_root.first
-        Network.transaction do
-          net = Network.create :name=>Network::ADMIN_NET, :description=>I18n.t('support.bootstrap.admin_net'),  :deployment_id=>deployment.id, :conduit=>'1g0', :v6prefix => "auto"
-          NetworkRange.create :name=>'admin', :network_id=>net.id, :first=>"192.168.124.10/24", :last=>"192.168.124.11/24"
-          NetworkRange.create :name=>'dhcp', :network_id=>net.id, :first=>"192.168.124.21/24", :last=>"192.168.124.80/24"
-          NetworkRange.create :name=>'host', :network_id=>net.id, :first=>"192.168.124.81/24", :last=>"192.168.124.254/24"
-        end
-      end
-    end
     @roles = []
     @roles << Role.find_key("dns-server")
     @roles << Role.find_key("ntp-server")
     @roles << Role.find_key("network-server")
     @roles << Role.find_key("network-#{Network::ADMIN_NET}") || :create_network_admin
+  end
+
+  def bootstrap_post
+    # only create if no other netwroks
+    if Network.where(:name=>Network::ADMIN_NET).count == 0
+      deployment = Deployment.system_root.first
+      Network.transaction do
+        net = Network.create :name=>Network::ADMIN_NET, :description=>I18n.t('support.bootstrap.admin_net'),  :deployment_id=>deployment.id, :conduit=>'1g0', :v6prefix => "auto"
+        NetworkRange.create :name=>'admin', :network_id=>net.id, :first=>"192.168.124.10/24", :last=>"192.168.124.11/24"
+        NetworkRange.create :name=>'dhcp', :network_id=>net.id, :first=>"192.168.124.21/24", :last=>"192.168.124.80/24"
+        NetworkRange.create :name=>'host', :network_id=>net.id, :first=>"192.168.124.81/24", :last=>"192.168.124.254/24"
+      end
+    end
   end
 
   def restart
