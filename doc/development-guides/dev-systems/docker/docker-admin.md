@@ -42,6 +42,7 @@ as their init system, perform the following steps:
 
   1. Copy `/usr/lib/systemd/system/docker.service` to
   `/etc/systemd/system/docker.service`
+
   2. Edit `/etc/systemd/system/docker.service`, and make the following
   changes:
 
@@ -61,6 +62,7 @@ Time saving tips
 
   * preload the with `docker pull opencrowbar/centos:6.5-4`
   * test docker, use `docker run -i -t centos /bin/bash`
+  * a caching proxy server (e.g.: Squid) is highly recommended
 
 ### The docker-admin command and its environment
 
@@ -143,7 +145,7 @@ This will perform the following actions:
 
 Options:
 
-  * --zombie will run all of the admin config except for the final "node alive" step
+  * --zombie will run all of the admin config except for the final "node alive" step.  This is handy if you want to check the system before completes
 
 You should be able to monitor the progress of the admin node
 deployment at http://localhost:3000.  Once the admin node is finished
@@ -152,10 +154,20 @@ shell inside the container.
 
 ### Booting slave VMs from the OpenCrowbar admin node
 
+#### Bare Metal (the easy way)
 If your development environment is running on bare metal (as opposed
 to running inside a VM), you can use `tools/kvm-slave &` to spawn a
 KVM virtual machine that will boot from the freshly-deployed OpenCrowbar
 admin node.
+
+#### Virtual Box (the corporate way)
+
+> this approach expects that you've added an ethernet device (not up'd) to your VM that will be the admin network for slave VMs.
+
+If your development environment is running in VMs then:
+
+  1. slave the eth2 to the docker bridge, `sudo brctl addif docker0 eth2`
+  2. ...
 
 ### Development Admin
 
@@ -168,4 +180,5 @@ admin node.
        1. compile the BDD code
        1. update the config file (copy example.config to default.config and update)
        1. `erl` then `bdd:test()`
-    1. Rails console in container: ''
+    1. Rails console in container: `su -l -c 'cd /opt/opencrowbar/core/rails; bundle exec rails c' crowbar`
+'

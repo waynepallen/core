@@ -107,6 +107,8 @@ if [[ ! $container = lxc ]]; then
         [[ $https_proxy ]] && docker_args+=(-e "https_proxy=$docker_proxy")
         [[ $no_proxy ]] && docker_args+=(-e "no_proxy=$no_proxy")
     fi
+    # since 0.8.1 we need to run in privileged mode so we can change the networking
+    docker_args+=("--privileged")
     # Run whatever we specified to run inside a container.
     docker run "${docker_args[@]}" "$image" /opt/opencrowbar/core/tools/docker-admin "$@"
     exit $?

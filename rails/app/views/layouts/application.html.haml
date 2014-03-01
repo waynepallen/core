@@ -1,7 +1,7 @@
 !!!
 %html
   %head
-    %title= "Crowbar"
+    %title= "OpenCrowbar"
     = csrf_meta_tags
     = stylesheet_link_tag 'application'
     /[if IE]
@@ -26,8 +26,9 @@
             = link_to t('user.sign_out'), main_app.destroy_user_session_path(), :method=>'delete' rescue t('error')
             )
           %nav
-            - unless Rails.env.development? and params[:nav].eql? 'false'
-              = render_navigation :expand_all => true, :skip_if_empty => true
+            - Rails.logger.info  "ZEHICLE 1"
+            = render_navigation :expand_all => true, :skip_if_empty => true
+            - Rails.logger.info  "ZEHICLE 2"
         - else
           %nav
             = link_to t('user.sign_in'),  main_app.new_user_session_path
