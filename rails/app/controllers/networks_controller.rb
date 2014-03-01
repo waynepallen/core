@@ -15,6 +15,8 @@
 class NetworksController < ::ApplicationController
   respond_to :html, :json
 
+  AUTOV6PREFIX = "auto"
+
   add_help(:show,[:network_id],[:get])
   def show
     @network = Network.find_key params[:id]
@@ -42,7 +44,7 @@ class NetworksController < ::ApplicationController
     params[:use_bridge] = true
     params[:deployment_id] = Deployment.find_key(params[:deployment]).id if params.has_key? :deployment
     params[:deployment_id] ||= 1
-    params[:v6prefix] ||= "auto"
+    params[:v6prefix] ||= AUTOV6PREFIX 
     params.require(:name)
     params.require(:conduit)
     params.require(:deployment_id)
@@ -115,12 +117,7 @@ class NetworksController < ::ApplicationController
     @network = Network.find_key(params[:id])
     # Sorry, but no changing of the admin conduit for now.
     params.delete(:conduit) if @network.name == "admin"
-    @network.update_attributes!(params.permit(:vlan,
-                                              :use_vlan,
-                                              :use_bridge,
-                                              :team_mode,
-                                              :use_team,
-                                              :conduit))
+    @network.update_attributes!(params.permit(:vlan, :use_vlan, :use_bridge, :team_mode, :use_team, :conduit))
     respond_to do |format|
       format.html { render :action=>:show }
       format.json { render api_show @network }
