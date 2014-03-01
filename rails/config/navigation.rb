@@ -14,7 +14,6 @@
 
 SimpleNavigation::Configuration.run do |navigation|       
   menu = Nav.item('root').first
-Rails.logger.info  "ZEHICLE #{Nav.all.count}"
   navigation.items do |primary|
     menu.children.sort_by{|n| n.order}.each do |item| # Top Nav
       if item.item != 'root' and item.path =~ /(.*)_path/
