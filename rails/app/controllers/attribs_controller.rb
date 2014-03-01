@@ -46,7 +46,16 @@ class AttribsController < ApplicationController
     if params.has_key? :node_id
       render api_not_supported 'post', 'nodes/:node_id/attribs/:id'
     else
-      @attrib = Attrib.create! params
+      params.require(:name)
+      Attrib.transaction do
+        @attrib = Attrib.create! params.permit(:barclamp_id,
+                                                :role_id,
+                                                :type,
+                                                :name,
+                                                :description,
+                                                :order, 
+                                                :map)
+      end
       respond_to do |format|
         format.html { }
         format.json { render api_show @attrib }
