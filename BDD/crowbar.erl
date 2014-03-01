@@ -121,28 +121,41 @@ step(Global, {step_setup, {Scenario, _N}, Test}) ->
   bdd_utils:alias(group, group_cb),
   bdd_utils:alias(user, user_cb),
   bdd_utils:alias(networkrange, range),
-  % make sure that the delayed job queues are running
-  true = bdd_clirat:step([], {foo, {0,0}, ["process", "delayed","returns", "delayed_job.([0..9])"]}),
-  % turn off the delays in the test jig
-  role:step(Global, {step_given, {Scenario, _N}, ["I set the",role, "test-admin", "property", "test", "to", "false"]}), 
-  role:step(Global, {step_given, {Scenario, _N}, ["I set the",role, "test-server", "property", "test", "to", "false"]}), 
-  role:step(Global, {step_given, {Scenario, _N}, ["I set the",role, "test-client", "property", "test", "to", "false"]}), 
-  role:step(Global, {step_given, {Scenario, _N}, ["I set the",role, "test-library", "property", "test", "to", "false"]}), 
-  role:step(Global, {step_given, {Scenario, _N}, ["I set the",role, "test-discovery", "property", "test", "to", "false"]}), 
-  % create admin network
-  network:make_admin(),
+  % skip some activity if we're logging at debug level
+  case lists:member(debug,get(log)) of
+    true -> bdd_utils:log(debug, crowbar, step, "Skipping Setup Queue Empty, Make Admin Net & Test Attribs",[]);
+    _ ->
+      % make sure that the delayed job queues are running
+      true = bdd_clirat:step([], {foo, {0,0}, ["process", "delayed","returns", "delayed_job.([0..9])"]}),
+      % turn off the delays in the test jig
+      role:step(Global, {step_given, {Scenario, _N}, ["I set the",role, "test-admin", "property", "test", "to", "false"]}), 
+      role:step(Global, {step_given, {Scenario, _N}, ["I set the",role, "test-server", "property", "test", "to", "false"]}), 
+      role:step(Global, {step_given, {Scenario, _N}, ["I set the",role, "test-client", "property", "test", "to", "false"]}), 
+      role:step(Global, {step_given, {Scenario, _N}, ["I set the",role, "test-library", "property", "test", "to", "false"]}), 
+      role:step(Global, {step_given, {Scenario, _N}, ["I set the",role, "test-discovery", "property", "test", "to", "false"]}), 
+      % create admin network
+      network:make_admin()
+  end,
   % create node for testing
   bdd_utils:log(debug, crowbar, step, "Global Setup running (creating node ~p)",[g(node_name)]),
   Node = json([{name, g(node_name)}, {description, Test ++ g(description)}, {order, 100}, {alive, "true"}, {bootenv, node:g(bootenv)}, {admin, "true"}]),
-  bdd_crud:create(node:g(path), Node, g(node_atom));
+  bdd_crud:create(node:g(path), Node, g(node_atom)),
+  true;
 
 % find the node from setup and remove it
 step(_Global, {step_teardown, {_Scenario, _N}, _}) -> 
   worker(),
-  crowbar:step([], {step_given, {0, 0}, ["there are no pending Crowbar runs for",node,g(node_name)]}), 
   bdd_utils:log(debug, crowbar, step, "Global Teardown running",[]),
-  % remove node for testing
-  bdd_crud:delete(g(node_atom));
+  % skip some activity if we're logging at debug level
+  case lists:member(debug,get(log)) of
+    true -> bdd_utils:log(debug, crowbar, step, "Skipping Teardown Queue Empty & Admin Remove",[]);
+    _ ->
+      % clear quueue
+      crowbar:step([], {step_given, {0, 0}, ["there are no pending Crowbar runs for",node,g(node_name)]}),
+      % remove node for testing
+      bdd_crud:delete(g(node_atom))
+  end,
+  true;
 
 % ============================  GIVEN STEPS =========================================
 
