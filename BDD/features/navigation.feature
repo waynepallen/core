@@ -27,9 +27,3 @@ Feature: Navigation, Check Core Navigation
     When I click on the "Nodes" menu item
     Then I should see a menu for {bdd:crowbar.i18n.nodes.index.title}
       And there should be no translation errors
-
-  Scenario: Help Guide 
-    Given I am on the home page
-    When I click on the "Help" menu item
-    Then I should see a heading {bdd:crowbar.i18n.docs.index.title}
-      And there should be no translation errors
