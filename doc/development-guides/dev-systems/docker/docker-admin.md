@@ -166,6 +166,7 @@ admin node.
 
 If your development environment is running in VMs then:
 
+<<<<<<< HEAD
   1. make sure that your dev VM has an extra eth port connected to a dedicated host only bridge (let's assume eth2)
   1. slave the eth2 to the docker bridge, `sudo brctl addif docker0 eth2`
   1. turn on eth2 for the bridge, `sudo ip link set eth2 up`
@@ -173,6 +174,10 @@ If your development environment is running in VMs then:
     1. attached to the dedicated host only bridge 
     1. make sure it is able to network boot
   1. boot the VM - it should PXE boot 
+=======
+  1. slave the eth2 to the docker bridge, `sudo brctl addif docker0 eth2`
+  2. ...
+>>>>>>> e06a15ed6bf914e6ef0bf44bfb3cfc391ee37427
 
 ### Development Admin
 
