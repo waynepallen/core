@@ -33,6 +33,7 @@ Crowbar::Application.configure do
 
   # See everything in the log (default is :info)
   config.log_level = :info
+  config.paths['log'] = "/var/log/crowbar/#{Rails.env}.log"
 
   # Use a different logger for distributed setups
 
