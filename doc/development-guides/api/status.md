@@ -1,41 +1,34 @@
 ### Status APIs
 
-Status APIs are used to provide lists of objects in optimized formats.
+Status APIs are used to provide lists of objects in optimized formats.  They do not have a release contract and should not be used for external APIs that are not tightly integrated to the code base
 
 The general pattern for the Status API calls is:
 
-> `status/2.0/object/[:id]`
+> `api/status/object/[:id]`
 
-#### Node Status 
+#### Queue Status 
 
-Returns JSON for node status.  Includes hash of all nodes to help detect changes.
+Returns JSON for Annealer worker queue
 
 **Input:**
 
 | Verb | URL | Options | Returns | Comments |
 |:------|:-----------------------|--------|--------|:----------------|
-| GET  |/status/2.0/node |none |All nodes |Used by Dashboard |
-| GET  |/status/2.0/node/[id] |id is the node ID or name. Used by Node details |- |
+| GET  |/api/status/queue  |none | Number of Workers and List of Jobs | Used by BDD |
 
-**Output:**
+**Output**
 
-    {
-      "state":{"1":null},
-      "sum":-1881043387,
-      "i18n":{"ready":"Ready"},
-      "groups":{
-        "0":{"failed":0,"ready":0,"building":0,"pending":0,"unready":1,"name":"all","unknown":0}
-      },
-      "count":1,
-      "status":{"1":"unready"}
-    }
+  { workers:10, jobs:[] }
 
-Details:
 
-* Format - json
-* i18n - the localized versions of the status strings for display.
-* state - ?
-* groups - ?
-* status - ?
-* count - ?
-* sum - Hashed value of the nodes included to identify state changes for refresh
+#### Node Status 
+
+Returns JSON for node status for AJAX calls.  Includes hash of all nodes to help detect changes.
+
+**Input:**
+
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET  |api/status/node |none |All nodes |Used by Dashboard |
+| GET  |api/status/node/[id] |id is the node ID or name. Used by Node details |- |
+

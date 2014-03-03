@@ -121,6 +121,7 @@ Crowbar::Application.routes.draw do
         scope 'status' do
           get "nodes(/:id)" => "nodes#status", :as => :nodes_status
           get "snapshots(/:id)" => "snapshots#status", :as => :snapshots_status
+          get "queue" => "support#queue", :as => :queue_status
         end
         scope 'test' do
           put "nodes(/:id)" => "nodes#test_load_data"
@@ -194,7 +195,9 @@ Crowbar::Application.routes.draw do
             delete "lock", :controller => "users", :action => "unlock"
             put "reset_password", :controller => "users", :action => "reset_password"
           end
+
           resources :dhcps
+
         end # version
       end # api
     end # id constraints

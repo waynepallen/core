@@ -64,10 +64,6 @@ roles:
       - provisioner-base-images
     flags:
       - implicit
-    attribs:
-      - name: 'hint-admin-mac'
-        description: 'Hint for Admin MAC address'
-        map: 'admin_mac'
     wants-attribs:
       - provisioner-package-repos
   - name: provisioner-dhcp-server

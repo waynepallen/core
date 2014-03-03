@@ -62,7 +62,7 @@ class Attrib < ActiveRecord::Base
           when :wall then from.wall
           when :system then from.sysdata
           when :user then from.data
-          when :hint then from_orig.hint[role.name]
+          when :hint then from_orig.hint
           else raise("#{from} is not a valid source to read noderole data from!")
           end
         when from.is_a?(Role) then from.template

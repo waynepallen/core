@@ -35,7 +35,6 @@ class BarclampProvisioner::DhcpDatabase < Role
     clients = {}
     mac_hint = ::Attrib.find_by(name: "hint-admin-mac")
 
-
     Role.transaction do
       Node.all.each do |node|
         ints = (node.discovery["ohai"]["network"]["interfaces"] rescue nil)
@@ -56,6 +55,7 @@ class BarclampProvisioner::DhcpDatabase < Role
             end
           end
         end
+
         # we need to have at least 1 mac (from preload or inets)
         next unless mac_list.length > 0
         # add this node to the DHCP clients list
@@ -64,6 +64,7 @@ class BarclampProvisioner::DhcpDatabase < Role
           "v4addr" => node.addresses.reject{|a|a.v6?}.sort.first.to_s,
           "bootenv" => node.bootenv
         }
+
       end
     end
     # this gets the client list sent to the jig implementing the DHCP database role

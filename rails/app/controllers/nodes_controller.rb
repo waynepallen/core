@@ -1,4 +1,4 @@
-# Copyright 2013, Dell
+# Copyright 2014, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -79,10 +79,6 @@ class NodesController < ApplicationController
   def create
     params[:deployment_id] = Deployment.find_key(params[:deployment]).id if params.has_key? :deployment
     params[:deployment_id] ||= 1
-    # deal w/ hint shortcuts  (these are hardcoded but MUST match the imported Attrib list)
-    hint = JSON.parse(params[:hint] || "{}")
-    hint["network-admin"] = {"v4addr"=>params["ip"]} if params.has_key? :ip
-    hint["provisioner-repos"] = {"admin_mac"=>params["mac"]} if params.has_key? :mac
     params.require(:name)
     params.require(:deployment_id)
     @node = Node.create!(params.permit(:name,
@@ -94,10 +90,15 @@ class NodesController < ApplicationController
                                    :alive,
                                    :available,
                                    :bootenv))
+    # deal w/ hint shortcuts  (these are hardcoded but MUST match the imported Attrib list)
+    hint = JSON.parse(params[:hint] || "{}")
+    hint["network-admin"] = {"v4addr"=>params["ip"]} if params.has_key? :ip
+    hint["deployer-client"] = params["mac"] if params.has_key? :mac
     unless hint.empty?
       @node.hint = hint
       @node.save!
     end
+
     render api_show @node
   end
 

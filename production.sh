@@ -1,4 +1,18 @@
 #!/bin/bash
+# Copyright 2014, Dell
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 export RAILS_ENV=production
 [[ $1 ]] || {
     echo "Must pass the FQDN you want the admin node to have as the first argument!"
@@ -140,12 +154,19 @@ for net in "${nets[@]}"; do
     echo "${net%/*} $FQDN" >> /etc/hosts || :
 done
 
-# Mark the node as alive.
-crowbar nodes update "$FQDN" '{"alive": true}'
-#curl -s -f --digest -u $(cat /etc/crowbar.install.key) \
-#    -X PUT "http://localhost:3000/api/v2/nodes/$FQDN" \
-#    -d 'alive=true'
-# Converge the admin node.
-crowbar converge && exit 0
-echo "Could not converge all noderoles!"
-exit 1
+# flag allows you to stop before final step
+if ! [[ $* = *--zombie* ]]; then
+
+  # Mark the node as alive.
+  crowbar nodes update "$FQDN" '{"alive": true}'
+  #curl -s -f --digest -u $(cat /etc/crowbar.install.key) \
+  #    -X PUT "http://localhost:3000/api/v2/nodes/$FQDN" \
+  #    -d 'alive=true'
+  echo "Configuration Complete, you can watch annealing from the UI"
+  # Converge the admin node.
+  crowbar converge && exit 0
+  echo "Could not converge all noderoles!"
+  exit 1
+else
+  echo "To complete configuration, mark node alive using: crowbar nodes update 1 '{""alive"": true}'"
+fi
