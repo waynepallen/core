@@ -14,12 +14,5 @@
 # limitations under the License.
 #
 class BarclampImportCrowbar < ActiveRecord::Migration
-  def up
-    Barclamp.import 'crowbar'
-  end
-  
-  def down
-    Barclamp.delete(Barclamp.find_by_name 'crowbar')
-  end
-  
+
 end

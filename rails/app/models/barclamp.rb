@@ -15,8 +15,6 @@
 
 class Barclamp < ActiveRecord::Base
 
-  attr_accessible :id, :name, :description, :source_path, :source_url, :barclamp_id, :commit, :build_on
-  
   #
   # Validate the name should unique
   # and that it starts with an alph and only contains alpha,digits,underscore
@@ -24,7 +22,7 @@ class Barclamp < ActiveRecord::Base
   validates_uniqueness_of :name, :case_sensitive => false, :message => I18n.t("db.notunique", :default=>"Name item must be unique")
   validates_exclusion_of :name, :in => %w(framework api barclamp docs machines jigs roles groups users support application), :message => I18n.t("db.barclamp_excludes", :default=>"Illegal barclamp name")
 
-  validates_format_of :name, :with=>/^[a-zA-Z][_a-zA-Z0-9]*$/, :message => I18n.t("db.lettersnumbers", :default=>"Name limited to [_a-zA-Z0-9]")
+  validates_format_of :name, :with=>/\A[a-zA-Z][_a-zA-Z0-9]*\z/, :message => I18n.t("db.lettersnumbers", :default=>"Name limited to [_a-zA-Z0-9]")
 
   # Deployment
   has_many          :roles,     :dependent => :destroy
@@ -41,9 +39,8 @@ class Barclamp < ActiveRecord::Base
     (1..size).collect{|a| chars[rand(chars.size)] }.join
   end
 
-
-  def self.import(bc_name="crowbar", bc=nil, source_path=nil)
-    barclamp = Barclamp.find_or_create_by_name(bc_name)
+  def self.import(bc_name="core", bc=nil, source_path=nil)
+    barclamp = Barclamp.find_or_create_by!(name: bc_name)
     source_path ||= File.expand_path(File.join(Rails.root, '..'))
     bc_file = File.expand_path(File.join(source_path, bc_name)) + '.yml'
 
@@ -52,6 +49,7 @@ class Barclamp < ActiveRecord::Base
       raise "Barclamp metadata #{bc_file} for #{bc_name} not found" unless File.exists?(bc_file)
       bc = YAML.load_file bc_file
     end
+    bc_namespace = "Barclamp#{bc_name.camelize}"
 
     Rails.logger.info "Importing Barclamp #{bc_name} from #{source_path}"
 
@@ -59,7 +57,15 @@ class Barclamp < ActiveRecord::Base
     gitcommit = "unknown" if bc['git'].nil? or bc['git']['commit'].nil?
     gitdate = "unknown" if bc['git'].nil? or bc['git']['date'].nil?
     version = bc["version"] || '2.0'
+    
     source_url = bc["source_url"] || "http://github/opencrowbar/unknown"
+    barclamp.update_attributes!(:description => bc['description'] || bc_name.humanize,
+                                :version     => version,
+                                :source_path => source_path,
+                                :source_url  => source_url,
+                                :build_on    => gitdate,
+                                :barclamp_id => barclamp.id,
+                                :commit      => gitcommit)
 
     # load the jig information.
     bc['jigs'].each do |jig|
@@ -74,33 +80,29 @@ class Barclamp < ActiveRecord::Base
                    else
                      ["noop","test"].include? jig_name
                    end
-      jig = jig_type.constantize.find_or_create_by_name(:name => jig_name)
-      jig.update_attributes(:order => 100,
+      jig = jig_type.constantize.find_or_create_by!(:name => jig_name)
+      jig.update_attributes!(:order => 100,
                             :active => jig_active,
                             :description => jig_desc,
-                            :type => jig_type,
                             :client_role_name => jig_client_role)
-      jig.save!
     end if bc["jigs"]
 
     # load the barclamps submodules information.
     bc['barclamps'].each do |sub_details|
-
       name = sub_details['name']
-      subm = Barclamp.find_or_create_by_name :name=>name 
+      subm = Barclamp.find_or_create_by!(name: name)
       # barclamp data import
       Barclamp.transaction do
-        subm.update_attributes( :description => sub_details['description'] || name.humanize,
+        subm.update_attributes!(:description => sub_details['description'] || name.humanize,
                                 :version     => version,
                                 :source_path => source_path,
                                 :source_url  => source_url,
                                 :build_on    => gitdate,
                                 :barclamp_id => barclamp.id,
-                                :commit      => gitcommit )
-        subm.save!
+                                :commit      => gitcommit)
       end
       subm_file = File.join(source_path,"barclamps","#{name}.yml")
-      next unless File.exists?(subm_file)
+        next unless File.exists?(subm_file)
       Barclamp.import name, YAML.load_file(subm_file), source_path
 
     end if bc["barclamps"]
@@ -109,64 +111,95 @@ class Barclamp < ActiveRecord::Base
     # Jigs are now late-bound, so we just load everything.
     bc['roles'].each do |role|
       role_name = role["name"]
-      role_jig = Jig.where(:name => role["jig"]).first
-      rt = role['type']
-      role_type = (rt.constantize ? rt : nil) rescue nil
+      role_jig = Jig.find_by!(name: role["jig"])
+      role_type_candidates = []
+      role_type_candidates << role['type'] if role['type']
+      role_type_candidates << "#{bc_namespace}::#{role_name.sub("#{bc_name}-", '').gsub('-','_').camelize}"
+      role_type_candidates << "#{bc_namespace}::Role"
+      role_type_candidates << "Role"
+      role_type = role_type_candidates.detect{|rt| (rt.constantize ? true : false) rescue false}.constantize
       prerequisites = role['requires'] || []
       wanted_attribs = role['wants-attribs'] || []
       flags = role['flags'] || []
       description = role['description'] || role_name.gsub("-"," ").titleize
       template = File.join source_path, role_jig.on_disk_name || "none", 'roles', role_name, 'role-template.json'
-      Rails.logger.info("Import: Loading role #{role_name} template from #{template}")
+      template = if File.file?(template)
+                   Rails.logger.info("Import: Loading role #{role_name} template from #{template}")
+                   JSON.parse(IO.read(template))
+                 else
+                   Rails.logger.info("Import: Loading role #{role_name} using blank template")
+                   {}
+                 end
       # roles data import
       ## TODO: Verify that adding the roles will not result in circular role dependencies.
       r = nil
       Role.transaction do
-        r = Role.find_or_create_by_name(:name=>role_name, :jig_name => role_jig.name, :barclamp_id=>barclamp.id)
-        r.update_attributes(:description=>description,
-                            :barclamp_id=>barclamp.id,
-                            :template=>(IO.read(template) rescue "{}"),
-                            :library=>flags.include?('library'),
-                            :implicit=>flags.include?('implicit'),
-                            :bootstrap=>flags.include?('bootstrap'),
-                            :discovery=>flags.include?('discovery'),
-                            :server=>flags.include?('server'),
-                            :destructive=>flags.include?('destructive'),
-                            :cluster=>flags.include?('cluster'),
-                            :type=>role_type)
+        r = role_type.find_or_create_by!(:name=>role_name,
+                                         :jig_name => role_jig.name,
+                                         :barclamp_id=>barclamp.id)
+        r.update_attributes!(:description=>description,
+                             :barclamp_id=>barclamp.id,
+                             :template=>template,
+                             :library=>flags.include?('library'),
+                             :implicit=>flags.include?('implicit'),
+                             :bootstrap=>flags.include?('bootstrap'),
+                             :discovery=>flags.include?('discovery'),
+                             :server=>flags.include?('server'),
+                             :destructive=>flags.include?('destructive'),
+                             :cluster=>flags.include?('cluster'))
         RoleRequire.where(:role_id=>r.id).delete_all
         RoleRequireAttrib.where(:role_id => r.id).delete_all
-        r.save!
         prerequisites.each { |req| RoleRequire.create :role_id => r.id, :requires => req }
         wanted_attribs.each do  |attr|
-          RoleRequireAttrib.create(:role_id => r.id,
-                                   :attrib_name => attr.is_a?(Hash) ? attr["name"] : attr,
-                                   :attrib_at => attr.is_a?(Hash) ? attr["at"] : nil)
+          RoleRequireAttrib.create!(:role_id => r.id,
+                                    :attrib_name => attr.is_a?(Hash) ? attr["name"] : attr,
+                                    :attrib_at => attr.is_a?(Hash) ? attr["at"] : nil)
         end
       end
       role['attribs'].each do |attrib|
+        attrib_type_candidates = []
+        attrib_type_candidates << "#{r.jig.type}Attrib"
+        attrib_type_candidates << "#{bc_namespace}::Attrib::#{attrib["name"].camelize}"
+        attrib_type_candidates << "Attrib"
+        attrib_type = attrib_type_candidates.detect{|at| (at.constantize ? true : false) rescue false}.constantize
         attrib_name = attrib["name"]
         attrib_desc = attrib['description'] || ""
         attrib_map = attrib['map'] || ""
-        a = Attrib.find_or_create_by_name(:name => attrib_name,
-                                          :description => attrib_desc,
-                                          :map => attrib_map,
-                                          :role_id => r.id,
-                                          :barclamp_id => barclamp.id)
-        a.save!
+        attrib_writable = !!attrib['schema']
+        a = attrib_type.find_or_create_by!(name: attrib_name)
+        a.update_attributes!(:description => attrib_desc,
+                             :map => attrib_map,
+                             :role_id => r.id,
+                             :writable => attrib_writable,
+                             :schema => attrib_writable ? attrib['schema']: nil,
+                             :barclamp_id => barclamp.id)
       end if r && role['attribs']
     end if bc['roles']
     bc['attribs'].each do |attrib|
+      attrib_type_candidates = []
+      attrib_type_candidates << "#{bc_namespace}::Attrib::#{attrib["name"].camelize}"
+      attrib_type_candidates << "Attrib"
+      attrib_type = attrib_type_candidates.detect{|at| (at.constantize ? true : false) rescue false}.constantize
       attrib_name = attrib["name"]
       attrib_desc = attrib['description'] || ""
       attrib_map = attrib['map'] || ""
-      a = Attrib.find_or_create_by_name(:name => attrib_name,
-                                        :description => attrib_desc,
-                                        :map => attrib_map,
-                                        :barclamp_id => barclamp.id)
-      a.save!
+      attrib_writable = !!attrib['schema']
+      a = attrib_type.find_or_create_by!(:name => attrib_name)
+      a.update_attributes!(:description => attrib_desc,
+                           :map => attrib_map,
+                           :writable => attrib_writable,
+                           :schema => attrib_writable ? attrib['schema']: nil,
+                           :barclamp_id => barclamp.id)
     end if bc['attribs']
     barclamp
+  end
+
+  def api_version
+    'v2'
+  end
+
+  def api_version_accepts
+    'v2'
   end
 
 end

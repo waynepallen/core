@@ -16,16 +16,19 @@ deployment tree to being 2 layers deep.
 
 ### Workload Deployments
 
-1: Create a new deployment, and add the provisioner-os-install role to
+  1. Create a new deployment, and add the provisioner-os-install role to
 that deployment.  In the future you will be able to edit the
 deployment role information to change what the default OS for a
 deployment should be.
-2: Drag one of the non-admin nodes onto the provisioner-os-install
+
+  2. Drag one of the non-admin nodes onto the provisioner-os-install
 role.  This will create a proposed noderole binding the
 provisioner-os-install role to that node, and in the future you would
 be able to change what OS would be installed on that node by editing
 that noderole before committing the deployment.
-3: Commit the snapshot.  This will cause several things to happen:
+
+  3. Commit the snapshot.  This will cause several things to happen:
+
   * The freshly-bound noderoles will transition to TODO, which will
     trigger an annealer pass on the noderoles.
   * The annealer will grab all the provisioner-os-install roles that

@@ -25,7 +25,7 @@ class NodeRolesController < ApplicationController
             end).order("cohort asc, id asc")
     respond_to do |format|
       format.html { }
-      format.json { render api_index :node_role, @list }
+      format.json { render api_index NodeRole, @list }
     end
   end
 
@@ -42,7 +42,7 @@ class NodeRolesController < ApplicationController
     end
     respond_to do |format|
       format.html {  }
-      format.json {  render api_show :node_role, NodeRole, @node_role.id, nil, @node_role }
+      format.json { render api_show @node_role }
     end
   end
 
@@ -61,36 +61,33 @@ class NodeRolesController < ApplicationController
     snap ||= node.deployment.head
     
     raise "Cannot add noderole to snapshot in #{Snapshot.state_name(snap.state)}" unless snap.proposed?
-    r = role.add_to_node_in_snapshot(node,snap)
-
+    NodeRole.transaction do
+      @node_role = role.add_to_node_in_snapshot(node,snap)
+      if params[:data]
+        @node_role.data = params[:data]
+        @node_role.save!
+      end
+    end
     respond_to do |format|
       format.html { redirect_to snapshot_path(snap.id) }
-      format.json { render api_show :node_role, NodeRole, nil, nil, r  }
+      format.json { render api_show @node_role }
     end
     
   end
 
   def update
     @node_role = NodeRole.find_key params[:id]
-    # we can build the data from the input
-    if params.key? :dataprefix
-      params[:data] ||= {}
-      params.each do |k,v|
-        if k.start_with? params[:dataprefix]
-          key = k.sub(params[:dataprefix],"")
-          params[:data][key] = v
-        end
-      end
-    end
     # if you've been passed data then save it
-    unless params[:data].nil?
-      @node_role.data = params[:data]
-      @node_role.save!
-      flash[:notice] = I18n.t 'saved', :scope=>'layouts.node_roles.show'
+    NodeRole.transaction do
+      unless params[:data].nil?
+        @node_role.data = params[:data]
+        @node_role.save!
+        flash[:notice] = I18n.t 'saved', :scope=>'layouts.node_roles.show'
+      end
     end
     respond_to do |format|
       format.html { render 'show' }
-      format.json { render api_show :node_role, NodeRole, nil, nil, @node_role }
+      format.json { render api_show @node_role }
     end
   end
 
@@ -108,7 +105,7 @@ class NodeRolesController < ApplicationController
     @node_role.save!
     respond_to do |format|
       format.html { render :action => :show }
-      format.json { render api_show :node_role, NodeRole, nil, nil, @node_role }
+      format.json { render api_show @node_role }
     end
 
   end

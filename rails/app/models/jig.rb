@@ -26,15 +26,12 @@
 
 class Jig < ActiveRecord::Base
 
-  attr_accessible :id, :name, :description, :type, :order
-  attr_accessible :server, :client_name, :client_role_name, :key, :active
-
   # 
   # Validate the name should unique 
   # and that it starts with an alph and only contains alpha,digist,hyphen,underscore
   #
   validates_uniqueness_of :name, :case_sensitive => false, :message => I18n.t("db.notunique", :default=>"Name item must be unique")
-  validates_format_of     :name, :with=> /^[a-zA-Z][-_a-zA-Z0-9]*$/, :message => I18n.t("db.lettersnumbers", :default=>"Name limited to [-_a-zA-Z0-9]")
+  validates_format_of     :name, :with=> /\A[a-zA-Z][-_a-zA-Z0-9]*\z/, :message => I18n.t("db.lettersnumbers", :default=>"Name limited to [-_a-zA-Z0-9]")
 
   has_many    :roles,     :primary_key=>:name, :foreign_key=>:jig_name
   belongs_to  :barclamp
@@ -129,6 +126,8 @@ class Jig < ActiveRecord::Base
       res["crowbar_wall"] ||= Hash.new
       res["crowbar_wall"]["reservations"] = nr.node.discovery["reservations"]
     end
+    # Add any hints.
+    res["hints"] = nr.node.hint
     # And we are done.
     res
   end
@@ -152,7 +151,7 @@ class Jig < ActiveRecord::Base
         next unless (this_nr.wall["crowbar_wall"]["reservations"] rescue nil)
         res.deep_merge!(this_nr.wall["crowbar_wall"]["reservations"])
       end
-      nr.node.discovery=({"reservations" => res})
+      nr.node.discovery.merge({"reservations" => res})
     end
     return nr
   end

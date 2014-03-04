@@ -36,14 +36,15 @@ class User < ActiveRecord::Base
   end
 
   # Setup accessible (or protected) attributes for your model
-  attr_accessible :username, :is_admin, :email, :password, :password_confirmation, :remember_me, :encrypted_password
-
-
+  
   validates :username, :uniqueness => {:case_sensitive => false}, :presence => true
   DIGEST_REALM = "Crowbar"
   
   scope  :admin,              -> { where(:is_admin => true) }
  
+  def self.name_column
+    :username
+  end
   
   def self.find_by_id_or_username(id)
     if id.kind_of?(Integer)

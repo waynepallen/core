@@ -27,8 +27,7 @@ class BarclampTest::Jig < Jig
       begin
         # create tests data
         disco = { :test=> { :random => Random.rand(1000000), :marker => data["marker"] }, data["marker"] => nr.id }
-        nr.node.discovery = disco
-        nr.node.save!
+        nr.node.discovery_merge(disco)
         # running the actions from the node role
         Rails.logger.info("TestJig Running node-role: #{nr.to_s}")    
         name = data["marker"] || nr.name

@@ -28,12 +28,12 @@ Crowbar::Application.routes.draw do
   get "annealer", :to => "node_roles#anneal", :as => :annealer
   resources :attribs
   resources :barclamps
+  resources :deployment_roles
   resources :deployments do
     get :head
     get :next
     resources :roles
   end
-  resources :deployment_roles
   resources :docs, constraints: {id: /[^\?]*/}
 
   resources :groups
@@ -63,7 +63,7 @@ Crowbar::Application.routes.draw do
   # UI only functionality to help w/ visualization
   scope 'dashboard' do
     get 'list(/:deployment)'  => 'dashboard#list', :as => :bulk_edit
-    put 'list'                => 'dashboard#list', :as => :bulk_edit
+    put 'list'                => 'dashboard#list', :as => :bulk_update
     get 'layercake'           => 'dashboard#layercake', :as => :layercake
   end
   
@@ -78,14 +78,16 @@ Crowbar::Application.routes.draw do
     get 'restart/:id'   => 'support#restart', :as => :restart
     get 'digest'        => "support#digest"
     get 'fail'          => "support#fail"
-    match 'settings(/:id/:value)' => "support#settings", :as => :utils_settings
-    match "bootstrap"     => "support#bootstrap", :as => :bootstrap
+    get 'settings'      => "support#settings", :as => :utils_settings
+    put 'settings(/:id/:value)' => "support#settings_put", :as => :utils_settings_put
+    get  "bootstrap"     => "support#bootstrap", :as => :bootstrap
+    post "bootstrap"     => "support#bootstrap_post", :as => :bootstrap_post
     namespace :scaffolds do
       resources :attribs do as_routes end
       resources :barclamps do as_routes end
       resources :docs do as_routes end
-      resources :deployments do as_routes end
       resources :deployment_roles do as_routes end
+      resources :deployments do as_routes end
       resources :groups do as_routes end
       resources :jigs do as_routes end
       resources :navs do as_routes end
@@ -108,7 +110,7 @@ Crowbar::Application.routes.draw do
     get 'get_cli', :controller => 'support', :action => 'get_cli'
   end
 
-  devise_for :users, { :path_prefix => 'my', :module => :devise, :class_name=> 'Crowbar::User' }
+  devise_for :users, { :path_prefix => 'my', :module => :devise, :class_name=> 'User' }
   resources :users, :except => :new
 
   # API routes (must be json and must prefix v2)()
@@ -121,6 +123,7 @@ Crowbar::Application.routes.draw do
         scope 'status' do
           get "nodes(/:id)" => "nodes#status", :as => :nodes_status
           get "snapshots(/:id)" => "snapshots#status", :as => :snapshots_status
+          get "queue" => "support#queue", :as => :queue_status
         end
         scope 'test' do
           put "nodes(/:id)" => "nodes#test_load_data"
@@ -128,18 +131,21 @@ Crowbar::Application.routes.draw do
         scope ':version' do
           # These are not restful.  They poke the annealer and wait if you pass "sync=true".
           get "anneal", :to => "node_roles#anneal", :as => :anneal
-          post "make_admin", :to => "nodes#make_admin", :as => :make_admin
           resources :attribs
           resources :barclamps
+          resources :deployment_roles do
+            resources :attribs
+          end
           resources :deployments do
             get :head
             get :next
             resources :roles
             resources :nodes
-            put 'claim/:node_id' => "deployments#claim"
-          end
-          resources :deployment_roles do
             resources :attribs
+            # These just do the appropriate action on the relavent snapshot.
+            put :propose
+            put :commit
+            put :recall
           end
           resources :groups do
             member do
@@ -151,7 +157,7 @@ Crowbar::Application.routes.draw do
             resources :network_ranges
             resources :network_routers, :as => :network_routers_api
             member do
-              match 'ip'
+              match 'ip', via: [:get, :delete]
               post 'allocate_ip'
               get 'allocations'
             end
@@ -171,17 +177,19 @@ Crowbar::Application.routes.draw do
             put :redeploy
           end
           resources :node_roles do
+            resources :attribs
             put :retry
           end
           resources :roles do
+            resources :attribs
             resources :deployment_roles
-            put 'template/:key/:value' => "roles#template"
           end
           resources :snapshots do
             resources :node_roles
             resources :nodes
             resources :roles
             resources :deployment_roles
+            resources :attribs
             get :graph
             put :propose
             put :commit
@@ -195,21 +203,19 @@ Crowbar::Application.routes.draw do
             put "reset_password", :controller => "users", :action => "reset_password"
           end
 
-          #provisioner          
-          get 'dhcp(/:id)' => 'Dhcps#index'
+          resources :dhcps
 
         end # version
       end # api
     end # id constraints
   end # json
 
-  # Install route from each root barclamp (should be done last so CB gets priority)
-  begin
-    Barclamp.roots.each do |bc|
-      eval(IO.read(File.path(bc.source_path, "rails", "config", "routes.rb")), binding) unless bc.name.eql? 'crowbar'
-    end
-  rescue
-    # startup cannot resolve Barclamp
+  # Install route from each root barclamp (should be done last so CB gets priority).
+  Dir.glob("/opt/opencrowbar/**/crowbar_engine/barclamp_*/config/routes.rb") do |routefile|
+    bc = routefile.split('/')[-3].partition('_')[2]
+    bc_engine = "#{routefile.split('/')[-3].camelize}::Engine"
+    bc_mount = "mount #{bc_engine}, at: '#{bc}'"
+    eval(bc_mount, binding)
   end
 
   root :to => 'dashboard#layercake'

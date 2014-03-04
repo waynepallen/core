@@ -13,12 +13,12 @@
 # limitations under the License.
 #
 class CreateRoles < ActiveRecord::Migration
-  def change  
+  def change
     create_table :roles do |t|
       t.string      :name,              :null=>false
       t.string      :description,       :null=>true
       t.string      :type,              :null=>true
-      t.text        :template,          :null=>false, :default=>"{}"
+      t.json        :template,          :null=>false, :default=> {}
       t.string      :jig_name,          :null=>false
       # brings in library code thats used to access another role (sql client)
       t.boolean     :library,           :null=>false, :default=>false

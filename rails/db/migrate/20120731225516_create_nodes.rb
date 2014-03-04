@@ -22,8 +22,8 @@ class CreateNodes < ActiveRecord::Migration
       t.boolean     :admin,         :default=>false
       t.integer     :target_role_id,:null=>true
       t.belongs_to  :deployment     # should be system by default
-      t.text        :discovery,     :null=>false, :default=>'{}'
-      t.text        :hint,          :null=>false, :default=>'{}'
+      t.json        :discovery,     :null=>false, :default=> {}
+      t.json        :hint,          :null=>false, :default=> {}
       t.boolean     :allocated,     :default=>false
       t.boolean     :alive,         :null => false, :default => false
       t.boolean     :available,     :null => false, :default => true

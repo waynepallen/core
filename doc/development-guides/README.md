@@ -1,4 +1,4 @@
-# OpenCrowbar Developers' Guide
+# Development Guide
 
 Welcome to the amazing fuzziness of OpenCrowbar!  
 

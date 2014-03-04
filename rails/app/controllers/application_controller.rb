@@ -16,12 +16,14 @@
 require 'uri'
 require 'digest/md5'
 require 'active_support/core_ext/string'
+require 'json'
 
 # Filters added to this controller apply to all controllers in the application.
 # Likewise, all the methods added will be available for all controllers.
 class ApplicationController < ActionController::Base
 
   before_filter :crowbar_auth
+  after_filter  :filter_json
 
   # Basis for the reflection/help system.
 
@@ -76,94 +78,63 @@ class ApplicationController < ActionController::Base
 
   # creates the content type for a consistent API
   def cb_content_type(type, form="list")
-    "application/vnd.crowbar.#{ type.to_s.downcase }.#{form}+json; version=2.0"
-  end
-
-  def api_wrong_version(params)
-    {
-      :json=> { "message" => I18n.t('api.wrong_version', :version=>params[:version])},
-      :status => 400
-    }
+    "application/vnd.crowbar.#{type2name(type)}.#{form}+json; version=2.0"
   end
 
   def api_not_found(k,t)
     { :json => {
-        :message => I18n.t('api.not_found', :id=>k, :type=>t.to_s)
+        :message => I18n.t('api.not_found', :id=>k, :type=>type2name(t)),
+        :status => 404
       },
       :content_type=>cb_content_type(t, "error"),
       :status => :not_found
     }
   end
 
-  def version_ok(params)
-    params[:version].eql?('v2')
+  def api_not_supported(verb, object)
+    return {:json => {
+        :message => I18n.t('api.not_supported', :verb=>verb.upcase, :obj=>object),
+        :status => 405
+      },
+      :status => 405,
+      :content_type=>cb_content_type(object, "error")
+    }
+  end
+
+  def ui_not_supported(verb, object)
+    return { :text=>I18n.t('ui.not_supported', :verb=>verb.upcase, :obj=>object),
+      :status => 405,
+      :content_type=>cb_content_type(object, "error")
+    }
   end
 
   # formats API json output
   # using this makes it easier to update the API format for all models
-  def api_index(type, list, link=nil)
-    return api_wrong_version(params) unless version_ok(params)
+  def api_index(type, list)
     return {:json=>list, :content_type=>cb_content_type(type, "list") }
   end
 
   # formats API json for output
   # using this makes it easier to update the API format for all models
-  def api_show(type, type_class, key=nil, link=nil, o=nil)
-    return api_wrong_version(params) unless version_ok(params)
-    key ||= o.id unless o.nil?
-    key ||= params[:id]
-    o ||= type_class.find_key key
-    return api_not_found(key,type) unless o
-    return {:json=>o, :content_type=>cb_content_type(type, "obj") }
+  def api_show(o)
+    ret = o.as_json
+    return {:json=>ret, :content_type=>cb_content_type(o, "obj") }
   end
 
   # formats API for delete
   # using this makes it easier to update the API format for all models
-  def api_delete(type, key=nil)
-    return api_wrong_version(params) unless version_ok(params)
-    key ||= params[:id]
-    o = type.find_key(key)
-    type.destroy type.find_key(key)
+  def api_delete(o)
     return {:json => {
-        :message => I18n.t('api.deleted', :id=>key, :obj=>type)
+        :message => I18n.t('api.deleted', :id=>o.id, :obj=>type2name(o))
       },
-      :content_type=>cb_content_type(type, "empty")
+      :content_type=>cb_content_type(o, "empty")
     }
-  end
-
-  def api_update(type, type_class, key=nil, o=nil)
-    return api_wrong_version(params) unless version_ok(params)
-    key ||= params[:id]
-    o ||= type_class.find_key key
-    return api_not_found(params,key,type) unless o
-    # Only try to update attributes that the object has and which have changed.
-    to_update = params.reject do |k,v|
-      (!o.has_attribute?(k)) ||  # Ignore things that are not attributes on this object.
-        k.to_sym == :id ||  # IDs can never be changed.
-        o[k] == v  # Ignore anything that has not changed.
-    end
-    o.update_attributes! to_update
-    return api_show type, type_class, nil, nil, o
   end
 
   # formats API json output 
   # used for json output that is not mapped to a Crowbar model
   def api_array(json)
-    return api_wrong_version(params) unless version_ok(params)
     return {:json=>json, :content_type=>cb_content_type("json", "array") }
-  end
-
-  def api_not_supported(verb, object)
-    return {:json => {
-        :message => I18n.t('api.not_supported', :verb=>verb.upcase, :obj=>object)
-      },
-      :status => 405,
-      :content_type=>cb_content_type(object.class.to_s, "error")
-    }
-  end
-
-  def ui_not_supported(verb, object)
-    return {:text=>I18n.t('ui.not_supported', :verb=>verb.upcase, :obj=>object), :status => 405, :content_type=>cb_content_type(object.class.to_s, "error")}
   end
 
   add_help(:help)
@@ -171,7 +142,7 @@ class ApplicationController < ActionController::Base
     render :json => { self.controller_name => self.help_contents.collect { |m|
         res = {}
         m.each { |k,v|
-          # sigh, we cannot resolve url_for at class definition time.
+          # sigh, we cannot resolve url_for at clqass definition time.
           # I suppose we have to do it at runtime.
           url=URI::unescape(url_for({ :action => k,
                         :controller => self.controller_name,
@@ -195,17 +166,76 @@ class ApplicationController < ActionController::Base
 
   private
 
+  def filter_one_entry(ent,attrs)
+    res = {}
+    attrs.each do |k|
+      next unless ent.key?(k)
+      res[k] = ent[k]
+    end
+    res
+  end
+
+  def filter_json
+    unless (response.status == 200) &&
+        request.headers["x-return-attributes"] &&
+        (response.content_type =~ /json/)
+      return
+    end
+    body = JSON.parse(response.body)
+    filter_attributes = JSON.parse(request.headers["x-return-attributes"])
+    if body.is_a?(Array)
+      filtered_body = body.map{|ent| filter_one_entry(ent,filter_attributes)}
+    else
+      filtered_body = filter_one_entry(body,filter_attributes)
+    end
+    response.body = JSON.generate(filtered_body)
+  end
+
+  def type2name(type)
+    case
+    when type.kind_of?(ActiveRecord::Base) then type.class.name.underscore
+    when type.respond_to?(:descends_from_active_record?) &&
+        type.descends_from_active_record? then type.name.underscore
+    when type.kind_of?(String) then type.underscore
+    when type.kind_of?(Symbol) then type.to_s.underscore
+    else raise "type2name cannot handle #{type.inspect}"
+    end
+  end
+
   def render_error(exception)
-    Rails.logger.error(exception)
     @error = exception
-    respond_to do |format|
-      format.html { render :template => "/errors/500.html.haml", :status => 500 }
-      format.json { render :json => {
-          :message => @error.message,
-          :backtrace => @error.backtrace
-        },
-        :status => 500
-      }
+    case
+    when @error.is_a?(ActiveRecord::RecordNotFound)
+      respond_to do |format|
+        format.html { render :status => 404 }
+        format.json { render api_not_found(@error.crowbar_key, @error.crowbar_model) }
+      end
+    when @error.is_a?(ActiveRecord::RecordInvalid)
+      respond_to do |format|
+        format.html { render :status => 409 }
+        format.json { render :json => {
+            :message => @error.message,
+            :backtrace => @error.backtrace,
+            :status => 409
+          },
+          :status => 409,
+          :content_type=>cb_content_type("record", "error")
+        }
+      end
+    else
+      Rails.logger.error("EXCEPTION: #{@error.message}")
+      Rails.logger.error("BACKTRACE:\n#{@error.backtrace.join("\n")}")
+      respond_to do |format|
+        format.html { render :template => "/errors/500.html.haml", :status => 500 }
+        format.json { render :json => {
+            :message => @error.message,
+            :backtrace => @error.backtrace,
+            :status => 500
+          },
+          :status => 500,
+          :content_type=>cb_content_type("framework", "error")
+        }
+      end
     end
   end
 

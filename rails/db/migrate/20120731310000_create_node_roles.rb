@@ -40,9 +40,9 @@ class CreateNodeRoles < ActiveRecord::Migration
     create_table :node_role_data do |t|
       t.belongs_to :snapshot,         :null => false
       t.belongs_to :node_role,        :null => false
-      t.text       :data,             :null => false, :default => '{}'
-      t.text       :sysdata,          :null => false, :default => '{}'
-      t.text       :wall,             :null => false, :default => '{}'
+      t.json       :data,             :null => false, :default => {}
+      t.json       :sysdata,          :null => false, :default => {}
+      t.json       :wall,             :null => false, :default => {}
       t.boolean    :current,          :null => false, :default => true
       t.timestamps
     end

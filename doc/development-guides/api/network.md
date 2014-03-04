@@ -8,19 +8,19 @@ Lists the current networks.
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> GET  </td><td>api/v2/networks</td><td>N/A</td><td>JSON array of network IDs</td><td></td></tr>
-<tr><td> GET  </td><td>\api/v2/networks/[network]</td><td>id is the network ID or name.</td><td>Details of the network in JSON format</td><td></
-<tr><td> POST  </td><td>api/v2/networks</td><td> json definition (see Node Show) </td><td> must be a legal object </td></tr>
-<tr><td> PUT  </td><td>api/v2/networks/[network]</td><td></td><td></td><td></td></tr>
-<tr><td> DELETE  </td><td>api/v2/networks/[network]</td><td> Database ID or name </td><td>HTTP error code 200 on success</td><td></td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET   | api/v2/networks | N/A | JSON array of network IDs | |
+| GET   | \api/v2/networks/[network] | id is the network ID or name. | Details of the network in JSON format | 
+| POST   | api/v2/networks |  json definition (see Node Show)  |  must be a legal object |
+| PUT   | api/v2/networks/[network] |  |  | |
+| DELETE   | api/v2/networks/[network] |  Database ID or name  | HTTP error code 200 on success | |
 
 
 > There are helpers on the POST method that allow you to create ranges and routers when you create the network. 
 
 Sample:
+
     {
       "name":       "networkname",
       "deployment": "deploymentname",
@@ -43,18 +43,16 @@ Sample:
 
 Allocates a free IP address in a network.
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td>POST</td><td>api/v2/networks/[id]/allocate_ip</td><td> Database ID or name of the network barclamp </td><td>HTTP error code 200 on success</td><td></td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+|POST | api/v2/networks/[id]/allocate_ip |  Database ID or name of the network barclamp  | HTTP error code 200 on success | |
 
 
 #### Network Actions: IP Deallocate
 
 Deallocates a used IP address in a network.
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td>DELETE</td><td>api/v2/networks/deallocate_ip/[network_id]/[node_id]</td><td>id: Database ID or name of proposal<br>network_id: Database ID or name of network<br>node_id: Database ID or name of node</td><td>HTTP error code 200 on success</td><td></td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+|DELETE | api/v2/networks/deallocate_ip/[network_id]/[node_id] | id: Database ID or name of proposal<br>network_id: Database ID or name of network<br>node_id: Database ID or name of node | HTTP error code 200 on success | |
 

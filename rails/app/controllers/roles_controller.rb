@@ -25,71 +25,49 @@ class RolesController < ApplicationController
             end
     respond_to do |format|
       format.html { }
-      format.json { render api_index :role, @list }
+      format.json { render api_index Role, @list }
     end
   end
 
   def show
+    @role = Role.find_key params[:id]
     respond_to do |format|
-      format.html { @role = Role.find_key params[:id]  }
-      format.json { render api_show :role, Role }
+      format.html {  }
+      format.json { render api_show @role }
     end
   end
 
   def create
     if params.include? :deployment_id
-      deployment = Deployment.find_key params[:deployment_id]
+      @deployment = Deployment.find_key params[:deployment_id]
       role = Role.find_key params[:deployment][:role_id].to_i 
-      role.add_to_snapshot deployment.head
+      role.add_to_snapshot @deployment.head
       respond_to do |format|
-        format.html { redirect_to snapshot_path(deployment.head.id) }
-        format.json { render api_show :deployment, Deployment, nil, nil, deployment }
+        format.html { redirect_to snapshot_path(@deployment.head.id) }
+        format.json { render api_show @deployment }
       end
     else
-      params[:barclamp_id] = Barclamp.find_key(params[:barclamp]).id if params.include? :barclamp
-      r = Role.create! params
-      render api_show :role, Role, nil, nil, r 
+      render api_not_supported("post",Role)
     end
   end
 
   def update
-    respond_to do |format|
-      format.html { 
-        # for HTML, we are processing form input from template overlays (similar to node_role update)
-        # for nested JSON, this routine relies on the role overriding the update_template method
-        @role = Role.find_key params[:id]
-        if params.key? :dataprefix
-          params[:data] ||= {}
-          params.each do |k,v|
-            if k.start_with? params[:dataprefix]
-              key = k.sub(params[:dataprefix],"")
-              @role.update_template(key, v)
-            end
-          end
-        elsif params.key? :template
-          @role.template = params[:template]
-        end
-        @role.save!
-        render :action=>:show
-      }
-      format.json { render api_update :role, Role }
+    @role = Role.find_key params[:id]
+    @role.update_attributes!(params.permit(:description))
+    if params.key? :template
+      @role.template = params[:template]
+      @role.save!
     end
-  end
-
-  # special function so API can set an single item in template
-  def template
-    role = Role.find_key params[:role_id]
-    role.update_template params[:key], params[:value]
-    role.save!
-    render api_show :role, Role, nil, nil, role
+    respond_to do |format|
+      format.html { render :action=>:show }
+      format.json { render api_show @role }
+    end
   end
 
   def destroy
-    unless Rails.env.development?
-      render  api_not_supported("delete", "role")
-    else
-      render api_delete Role
-    end
-  end  
+    @role = Role.find_key params[:role_id]
+    @role.destroy
+    render api_delete @role
+  end
 
 end

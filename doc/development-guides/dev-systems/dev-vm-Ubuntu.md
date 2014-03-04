@@ -153,8 +153,3 @@ community on LTS releases.
     sudo gem install bundler --version '1.3.5' --no-ri --no-rdoc
     sudo gem install json net-http-digest_auth kwalify delayed_job delayed_job_active_record rake simplecov rspec pg --no-ri --no-rdoc
 
-## Building OpenCrowbar 
-
-At this point, the development environment is set up, and you can 
-follow the directions in [devtool-build.md](../devtool-build.md) to 
-checkout the OpenCrowbar code and start developing.

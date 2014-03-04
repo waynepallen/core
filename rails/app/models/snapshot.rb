@@ -28,12 +28,11 @@ class Snapshot < ActiveRecord::Base
     ERROR => "error"
   }
   
-  attr_accessible :id, :name, :description, :order, :deployment_id, :snapshot_id
-  
   belongs_to      :deployment
 
   has_many        :deployment_roles,  :dependent => :destroy
   has_many        :roles,             :through => :deployment_roles
+  has_many        :attribs,           :through => :roles
 
   has_many        :node_roles,        :dependent => :destroy
   has_many        :nodes,             :through => :node_roles

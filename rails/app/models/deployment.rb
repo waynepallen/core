@@ -20,10 +20,8 @@ class Deployment < ActiveRecord::Base
   before_create  :set_parent
   before_destroy :release_nodes    # also prevent deleting if deployment is a system deployment
 
-  attr_accessible :name, :description, :parent_id
-
   validates_uniqueness_of   :name, :case_sensitive => false, :message => I18n.t("db.notunique", :default=>"Name item must be unique")
-  validates_format_of       :name, :with=>/^[a-zA-Z][_a-zA-Z0-9]*$/, :message => I18n.t("db.lettersnumbers", :default=>"Name limited to [_a-zA-Z0-9]")
+  validates_format_of       :name, :with=>/\A[a-zA-Z][_a-zA-Z0-9]*\z/, :message => I18n.t("db.lettersnumbers", :default=>"Name limited to [_a-zA-Z0-9]")
 
   has_many          :snapshots,           :dependent => :destroy
   has_one           :snapshot,            :class_name => "Snapshot", :primary_key => "snapshot_id", :foreign_key => 'id', :dependent => :destroy

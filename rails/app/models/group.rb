@@ -15,10 +15,8 @@
 
 class Group < ActiveRecord::Base
   
-  attr_accessible :name, :description, :category, :order
-
-  validates_format_of :name, :with=>/^[a-zA-Z][_a-zA-Z0-9]*$/, :message => I18n.t("db.lettersnumbers", :default=>"Name limited to [_a-zA-Z0-9]")
-  validates_format_of :category, :with=>/^[a-zA-Z][_a-zA-Z0-9]*$/, :message => I18n.t("db.lettersnumbers", :default=>"Category limited to [_a-zA-Z0-9]")
+  validates_format_of :name, :with=>/\A[a-zA-Z][_a-zA-Z0-9]*\z/, :message => I18n.t("db.lettersnumbers", :default=>"Name limited to [_a-zA-Z0-9]")
+  validates_format_of :category, :with=>/\A[a-zA-Z][_a-zA-Z0-9]*\z/, :message => I18n.t("db.lettersnumbers", :default=>"Category limited to [_a-zA-Z0-9]")
 
   validates_uniqueness_of :name, :scope => :category, :case_sensitive => false, :message => I18n.t("db.notuniqueincategory", :default=>"Name item must be unique within category")
   validates_inclusion_of :category, :in => %w(ui rack tag), :message => I18n.t("db.group_category", :default=>"Illegal group category")

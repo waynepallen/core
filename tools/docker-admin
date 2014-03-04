@@ -1,4 +1,18 @@
 #!/bin/bash
+# Copyright 2014, Dell
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 # Run opencrowbar in a docker container.
 # $1 = OS to run in
 # $@ = Command to run, if nothing then /bin/bash -i
@@ -9,7 +23,7 @@ if [[ ! $container = lxc ]]; then
     #image_map["ubuntu"]="ubuntu:precise"
     image_map["ubuntu"]="opencrowbar/ubuntu:12.04-4"
     #image_map["centos"]="centos:6.4"
-    image_map["centos"]="opencrowbar/centos:6.5-2"
+    image_map["centos"]="opencrowbar/centos:6.5-4"
     image_map["opensuse"]="mmckeen/opensuse-13-1:latest"
     image_map["fedora"]="fedora:20"
     image_map["debian"]="debian:jessie"
@@ -36,9 +50,22 @@ if [[ ! $container = lxc ]]; then
         exit 1
     fi
 
+    if [[ $0 = /* ]]; then
+        mountdir="$0"
+    elif [[ $0 = .*  || $0 = */* ]]; then
+        mountdir="$(readlink -f "$PWD/$0")"
+    else
+        echo "Cannot figure out where core is!"
+        exit 1
+    fi
+    # This gets us to core
+    mountdir="${mountdir%/tools/docker-admin}"
+    # This gets us to the parent directory of core, where presumably the rest of our repos are checked out
+    mountdir="${mountdir%/*}"
+    echo "We will mount $mountdir at /opt/opencrowbar"
     mkdir -p "$HOME/.cache/opencrowbar/tftpboot"
-    
-    docker_args=(-t -i -w /opt/opencrowbar/core -v "$PWD:/opt/opencrowbar/core")
+
+    docker_args=(-t -i -w /opt/opencrowbar/core -v "$mountdir:/opt/opencrowbar")
     docker_args+=(-v "$HOME/.cache/opencrowbar/tftpboot:$tftproot")
     docker_args+=(-e "OUTER_UID=$(id -u)")
     docker_args+=(-e "OUTER_GID=$(id -g)")
@@ -94,6 +121,8 @@ if [[ ! $container = lxc ]]; then
         [[ $https_proxy ]] && docker_args+=(-e "https_proxy=$docker_proxy")
         [[ $no_proxy ]] && docker_args+=(-e "no_proxy=$no_proxy")
     fi
+    # since 0.8.1 we need to run in privileged mode so we can change the networking
+    docker_args+=("--privileged")
     # Run whatever we specified to run inside a container.
     docker run "${docker_args[@]}" "$image" /opt/opencrowbar/core/tools/docker-admin "$@"
     exit $?
@@ -118,4 +147,6 @@ printf "%s\n" "$SSH_PUBKEY" >> /root/.ssh/authorized_keys
 
 [[ $1 ]] && "$@"
 . /etc/profile
+export PATH=$PATH:/opt/opencrowbar/core/bin
 /bin/bash -i
+rm -rf /tftpboot/nodes

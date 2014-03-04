@@ -1,22 +1,22 @@
-This file documents the current state of UEFI booting in OpenCrowbar
+This file documents the current state of UEFI booting in OpenCrowbar.
 
 Right now, we have basic support for network booting systems running
 in UEFI mode. We are able to netboot Sledgehammer and the OS install
 kernel/initrd pairs, and get to the point where we have an installed
 operating system on the compute nodes.
 
-How To Use UEFI:
+##How To Use UEFI:
  * Switch your system to operate in UEFI mode.  How this is done
    varies from system to system.
  * Once the system is in UEFI mode, configure it to network boot off
    the first nic.
  * The crowbar framework will handle things from there.
 
-What UEFI Gives You:
+##What UEFI Gives You:
  * Native support for drive sizes > 2TB.
  * All new low-level system firmware.
 
-What Does Not Work:
+##What Does Not Work:
  * Booting Ubuntu 12.04 off the hard drive.
 
    There is a bug in how the version of Grub 2 that comes with Ubuntu
@@ -33,7 +33,7 @@ What Does Not Work:
    * Working on getting Canonical to pull in an updated version of
      Grub2 that has the patch that fixes the issue.
 
-What Had to Be Changed:
+##What Had to Be Changed:
 
  * We now generate per-node OS installation scripts and UEFI/PXE
    config files on the fly instead of having per-OS install scripts

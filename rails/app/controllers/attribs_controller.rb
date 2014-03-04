@@ -16,17 +16,8 @@
 class AttribsController < ApplicationController
 
   def index
-    @list = if params.has_key? :node_id
-              Node.find_key(params[:node_id]).attribs
-            elsif params.has_key? :role_id
-              Role.find_key(params[:role_id]).attribs
-            elsif params.has_key? :node_role_id
-              NodeRole.find_key(params[:node_role_id]).attribs
-            elsif params.has_key? :deployment_role_id
-              DeploymentRole.find_key(params[:deployment_role_id]).attribs
-            else
-              Attrib.all
-            end
+    target = find_target
+    @list = target.nil? ? Attrib.all : target.attribs
     respond_to do |format|
       format.html { }
       format.json { render api_index :attrib, @list }
@@ -34,51 +25,55 @@ class AttribsController < ApplicationController
   end
 
   def show
-    @node = Node.find_key params[:node_id] if params.key? :node_id
+    target = find_target
     @attrib = Attrib.find_key params[:id]
-    respond_to do |format|
-      format.html {  }
-      format.json { render api_show :attrib, Attrib, nil, nil, @attrib }
+    if target.nil?
+      respond_to do |format|
+        format.html {  }
+        format.json { render api_show @attrib }
+      end
+    else
+      ret = @attrib.as_json
+      ret["value"] = @attrib.get(target)
+      render json: ret, content_type: cb_content_type(@attrib, "obj")
     end
   end
 
   def create
-    if params.has_key? :node_id
-      render api_not_supported 'post', 'nodes/:node_id/attribs/:id'
-    else
-      a = Attrib.create! params
-      respond_to do |format|
-        format.html { }
-        format.json { render api_show :attrib, Attrib, nil, nil, a }
-      end
-    end
+    render api_not_supported 'post', 'attribs'
   end
 
   def update
-    # based on the type of data being passed, figure out they attribute class (klass), key, role type (rt) and attribue type (atype)
-    klass,key,rt,atype = case
-                   when params.has_key?(:node_id) then [Node,:node_id,:node, :discovery]
-                   when params.has_key?(:deployment_role_id) then [DeploymentRole,:deployment_role_id,:deployment_role, :user]
-                   when params.has_key?(:node_role_id) then [NodeRole,:node_role_id,:node_role, :user]
-                   when params.has_key?(:role_id) then [Role,:role_id,:role, :user]
-                   else [nil,nil,nil]
-                   end
-    attrib = Attrib.find_key(params[:id])
-    if (key == :node_id && !attrib.role_id.nil?) ||
-        (key != :node_id && attrib.role_id.nil?) ||
-        key.nil?
+    target = find_target
+    if target.nil?
+      # We do not allow updating attribs outside the context of
+      # some other object.
       render api_not_supported 'put', 'attribs/:id'
+      return
     end
-    target = klass.find_key(params[key])
-    attrib.set(target,params[:value], atype)
-    target.save!
-    render api_show rt, klass, nil, nil, target
+    params.require(:value)
+    attrib = Attrib.find_key(params[:id])
+    target.attribs.find(attrib.id).set(target,params[:value], :user)
+    ret = attrib.as_json
+    ret["value"] = params[:value]
+    render json: ret, content_type: cb_content_type(attrib, "obj")
   end
 
   def destroy
-    respond_to do |format|
-      format.html { }
-      format.json { render api_delete Attrib }
+    render api_not_supported 'delete', 'attribs/:id'
+  end
+
+  private
+
+  def find_target
+    case
+    when params.has_key?(:node_id) then Node.find_key(params[:node_id])
+    when params.has_key?(:role_id) then Role.find_key(params[:role_id])
+    when params.has_key?(:node_role_id) then NodeRole.find_key(params[:node_role_id])
+    when params.has_key?(:snapshot_id) then Snapshot.find_key(params[:snapshot_id])
+    when params.has_key?(:deployment_id) then Deployment.find_key(params[:deployment_id]).snapshot
+    when params.has_key?(:deployment_role_id) then DeploymentRole.find_key(params[:deployment_role_id])
+    else nil
     end
   end
 

@@ -18,8 +18,6 @@ class Run < ActiveRecord::Base
   belongs_to :node
   belongs_to :node_role
 
-  attr_accessible :node_role_id, :node_id
-
   scope :runnable,   -> { where(:running => false).sort{|a,b| a.sort_id <=> b.sort_id} }
   scope :running,    -> { where(:running => true) }
   scope :running_on, ->(node_id) { running.where(:node_id => node_id) }

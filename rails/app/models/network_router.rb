@@ -17,10 +17,7 @@ class NetworkRouter < ActiveRecord::Base
   validate    :router_is_sane
   before_save :infer_address
   
-  attr_protected :id
   belongs_to     :network
-
-  attr_accessible :pref, :network_id
 
   def address
     IP.coerce(read_attribute("address"))

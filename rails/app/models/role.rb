@@ -21,21 +21,8 @@ class Role < ActiveRecord::Base
   class Role::MISSING_JIG < Exception
   end
 
-  before_create :create_type_from_name
-
-  attr_accessible :id, :description, :name, :jig_name, :barclamp_id, :template
-  ### Flags for roles described in [[/doc/devguide/model/role.md]]
-  attr_accessible :library
-  attr_accessible :implicit
-  attr_accessible :bootstrap
-  attr_accessible :discovery
-  attr_accessible :server
-  attr_accessible :cluster
-  attr_accessible :destructive
-  attr_accessible :template
-
   validates_uniqueness_of   :name,  :scope => :barclamp_id
-  validates_format_of       :name,  :with=>/^[a-zA-Z][-_a-zA-Z0-9]*$/, :message => I18n.t("db.lettersnumbers", :default=>"Name limited to [_a-zA-Z0-9]")
+  validates_format_of       :name,  :with=>/\A[a-zA-Z][-_a-zA-Z0-9]*\z/, :message => I18n.t("db.lettersnumbers", :default=>"Name limited to [_a-zA-Z0-9]")
 
   belongs_to      :barclamp
   belongs_to      :jig,               :foreign_key=>:jig_name, :primary_key=>:name
@@ -59,35 +46,13 @@ class Role < ActiveRecord::Base
   scope           :all_cohorts,        -> { active.order("cohort ASC, name ASC") }
   scope           :all_cohorts_desc,   -> { active.order("cohort DESC, name ASC") }
 
-  # update just one value in the template
-  # for >1 level deep, add method matching key to role!
-  # use via /api/v2/roles/[role]/template/[key]/[value]
-  def update_template(key, value)
-    t = self.send(key.to_sym,value) rescue { key => value }
-    raw = read_attribute("template")
-    d = raw.nil? ? {} : JSON.parse(raw)
-    merged = d.deep_merge(t)
-    self.template = JSON.generate(merged)
-    self.save!
-  end
 
   # incremental update (merges with existing)
   def template_update(val)
-    d = JSON.parse(read_attribute(template))
-    d.deep_merge!(val)
-    write_attribute("template",JSON.generate(d))
-  end
-
-  # replaces existing
-  def template=(val)
-    val = JSON.generate(val) unless val.is_a?(String)
-    write_attribute("template",val)
-  end
-
-  def template
-    t = read_attribute("template")
-    return {} if t.nil? || t.empty?
-    JSON.parse(t) rescue {}
+    Role.transaction do
+      self.template = self.template.deep_merge(val)
+      save!
+    end
   end
 
   # State Transistion Overrides
@@ -216,7 +181,10 @@ class Role < ActiveRecord::Base
     # make sure there's a deployment role before we add a node role
     if DeploymentRole.snapshot_and_role(snap, self).size == 0
       Rails.logger.info("Role: Adding deployment role #{name} to #{snap.name}")
-      DeploymentRole.create!({:role_id=>self.id, :snapshot_id=>snap.id, :data=>self.template}, :without_protection => true)
+      args = ActionController::Parameters.new(:role_id=>self.id,
+                                              :snapshot_id=>snap.id,
+                                              :data=>self.template).permit!
+      DeploymentRole.create!(args)
     end
   end
 
@@ -244,7 +212,7 @@ class Role < ActiveRecord::Base
       # if we are testing, then we're going to just skip adding and keep going
       if Jig.active('test')
         Rails.logger.info("Role: Test mode allows us to coerce role #{name} to use the 'test' jig instead of #{jig_name} when it is not active")
-        self.jig = Jig.find_key 'test'
+        self.jig = Jig.find_by(name: 'test')
         self.save
       else
         raise MISSING_JIG.new("Role: role '#{name}' cannot be added to node '#{node.name}' without '#{jig_name}' being active!")
@@ -276,7 +244,7 @@ class Role < ActiveRecord::Base
       res = NodeRole.create({ :node => node,
                               :role => self,
                               :snapshot => snap,
-                              :cohort => 0}, :without_protection => true)
+                              :cohort => 0})
       Rails.logger.info("Role: Creating new noderole #{res.name}")
       # Second pass through our parent array.  Since we created all our
       # parent noderoles earlier, we can just concern ourselves with creating the bindings we need.
@@ -327,31 +295,6 @@ class Role < ActiveRecord::Base
   def <=>(other)
     return 0 if self.id == other.id
     self.cohort <=> other.cohort
-  end
-
-  private
-
-  # This method ensures that we have a type defined for
-  def create_type_from_name
-    raise "roles require a name" if self.name.nil?
-    raise "roles require a barclamp" if self.barclamp_id.nil?
-    namespace = "Barclamp#{self.barclamp.name.camelize}"
-    # remove the redundant part of the name (if any)
-    name = self.name.sub("#{self.barclamp.name}-", '').gsub('-','_').camelize
-    # these routines look for the namespace & class
-    # barclamps can override specific roles
-    test_specific =  ("#{namespace}::#{name}".constantize ? true : false) rescue false
-    # barclamps can provide a generic fallback  "BarclampName::Role"
-    test_generic = ("#{namespace}::Role".constantize ? true : false) rescue false
-    # if they dont' find it we fall back to the core Role
-    self.type = if test_specific
-                  "#{namespace}::#{name}"
-                elsif test_generic
-                  "#{namespace}::Role"
-                else
-                  "Role"
-                end
-    Rails.logger.info "Role #{self.name} created with model #{self.type}!"
   end
 
 end

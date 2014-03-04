@@ -13,12 +13,12 @@ You can create ranges and routers for IPv6 addresses
   * "auto", which will create a globally unique RFC4193 IPv6 network
     prefix from a randomly-chosen 40 bit number (unique per cluster
     installation) followed by a subnet ID based on the ID of the
-    Crowbar network.
-  Either way, nodes in a Crowbar network that has a v6prefix will get
+    OpenCrowbar network.
+  Either way, nodes in a OpenCrowbar network that has a v6prefix will get
   an interface ID that maps back to their FQDN via the last 64 bits of
   the md5sum of that FQDN. For now, the admin network will
   automatically create an RFC4193 IPv6 network if it is not passed a
-  v6prefix so that we can easily test all the core Crowbar components
+  v6prefix so that we can easily test all the core OpenCrowbar components
   with IPv6 as well as IPv4.  The DNS barclamp has been updated to
   create the appropriate AAAA records for any IPv6 addresses in the
   admin network.
@@ -83,7 +83,7 @@ You can create ranges and routers for IPv6 addresses
      * Ranges "host"? used to give the admin node access to the BMC's
      * Rules - Must be the same subnet as the BMC
     * Admin
-     * Used by all each computer to communication with the Crowbar Server and for all Nova work
+     * Used by all each computer to communication with the OpenCrowbar Server and for all Nova work
      * External Access - Not required but helpful
      * router and router_pref are required
      * Ranges - requires "host", "dhcp", "switch", and "admin"

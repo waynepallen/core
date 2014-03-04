@@ -116,6 +116,7 @@ debs:
     - dpkg-dev
     # To let us extract ISO images without loopback mounting them.
     - bsdtar
+    - git
   build_pkgs:
     - bison
     - flex
@@ -395,6 +396,7 @@ rpms:
     - dpkg-devel
     # To extract ISO images without needing a loopback mount.
     - bsdtar
+    - git
   build_pkgs:
     - make
     - gcc

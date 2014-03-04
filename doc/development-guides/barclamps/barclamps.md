@@ -1,6 +1,6 @@
 ## Crowbar Barclamps
 
-> NOTE: This is from the wiki and needs to be reviewed, RAH 11/9/2012
+> **NOTE: This is from the wiki and needs to be reviewed, RAH 11/9/2012**
 
 The Crowbar barclamp provides the roles and recipes to set up the barclamp framework.
 It initializes the system, creates initial instances of other barclamps defined in its configuration, and creates the users to access the crowbar API and UI. Any number of barclamp instances can be started. By default, the system starts a network, ganglia, nagios, ntp, dns, provisioner, deployer, ipmi, raid, and BIOS barclamp based upon their default configurations. The initialization function of the crowbar barclamp works exactly like the other barclamps. A proposal is created and can be committed during installation.
@@ -21,51 +21,38 @@ The shared barclamp command line library is all the is provided to interact with
 
 The following scripts are also provided.
 
-<table border=1>
-  <tr><th>Script</th><th>Description</td></tr>
-  <tr>
-    <td>crowbar</td>
-    <td>Master control script for the command line interface</td></tr>
-  <tr>
-    <td>crowbar_crowbar</td>
-    <td>The actual control script for the crowbar barclamp</td></tr>
-  <tr>
-    <td>crowbar_watch_status</td>
-    <td>Wrapper for script that watches the node state and node status</td></tr>
-  <tr>
-    <td>crowbar_node_state</td>
-    <td>Displays the current provisioner state of the nodes</td></tr>
-  <tr>
-    <td>crowbar_node_status</td>
-    <td>Displays the current nagios state of the nodes</td></tr>
-  <tr>
-    <td>transition.sh</td>
-    <td>A helper script that can be used to transition nodes.</td></tr>
-</table>
+| Script | Description |
+|:----------------------|:-------------------------------------------|
+| crowbar | Master control script for the command line interface |
+| crowbar_crowbar | The actual control script for the crowbar barclamp |
+| crowbar_watch_status |Wrapper for script that watches the node state and node status |
+| crowbar_node_state | Displays the current provisioner state of the nodes |
+| crowbar_node_status | Displays the current nagios state of the nodes |
+| transition.sh | A helper script that can be used to transition nodes |
 
 ### Parameters
 
 The Crowbar Barclamp has a couple of list parameters.
 
-<table border=1>
-  <tr><th>Name</th><th>Default</th><th>Description</th></tr>
-  <tr><td>instances</td><td>The starting barclamps using their default configurations</td><td>A map of barclamp names that reference a list of json files (default is special to mean to take the defaults) that represent starting barclamp instances to create</td></tr>
-  <tr><td>users</td><td>A map of users - containing crowbar</td><td>This map defines the users allowed to access crowbar's UI and REST API.</td></tr>
-</table>
+| Name | Default | Description |
+|:---------------|:--------------------------|:--------------------------------|
+| instances | The starting barclamps using their default configurations | A map of barclamp names that reference a list of json files (default is special to mean to take the defaults) that represent starting barclamp instances to create |
+| users | A map of users - containing crowbar | This map defines the users allowed access to the OpenCrowbar UI and its REST API |
 
-The users map contains a map. The key is the user name and the rest of the required fields are:
+#### The users map contains a map. 
 
-<table border=1>
-  <tr><th>Name</th><th>Description</th></tr>
-  <tr><td>password</td><td>Clear text password of the user</td></tr>
-  <tr><td>description</td><td>A description of the user.</td></tr>
-</table>
+The key is the user name and the rest of the required fields are:
+
+| Name | Description |
+|:----------|:-----------------------------------------|
+| password | Clear text password of the user |
+| description | A description of the user. |
 
 **Operations**
 
 When the barclamp is committed, it uses a custom apply_roles function to ensure that the barclamps listed in the instances variable are created and committed.
 
-Once running, the barclamp provides the global transition function that calls other barclamps as nodes transition. The barclamp is also responsible for creating new nodes, assigning them a temporary name. The deployer will change these things if needed later in the node's life cycle. The transition function will also add the crowbar config to the admin node as it transitions through the =discovered= state.
+Once running, the barclamp provides the global transition function that calls other barclamps as nodes transition. The barclamp is also responsible for creating new nodes, assigning them a temporary name. The deployer will change these things if needed later in the node life cycle. The transition function will also add the crowbar config to the admin node as it transitions through the __discovered__ state.
 
 When starting a barclamp, use the following steps.
 

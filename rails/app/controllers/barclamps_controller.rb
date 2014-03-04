@@ -21,14 +21,15 @@ class BarclampsController < ApplicationController
     @list = Barclamp.all
     respond_to do |format|
       format.html { }
-      format.json { render api_index :barclamp, @list }
+      format.json { render api_index Barclamp, @list }
     end
   end
 
   def show
+    @barclamp = Barclamp.find_key params[:id]
     respond_to do |format|
-      format.html { @barclamp = Barclamp.find_key params[:id] }
-      format.json { render api_show :barclamp, Barclamp }
+      format.html {  }
+      format.json { render api_show @barclamp }
     end
   end
 
@@ -42,11 +43,6 @@ class BarclampsController < ApplicationController
 
   def create
     render api_not_supported 'post', 'barclamp'
-  end
-  
-  # Redirects the requested to the snapshot that is the requested template
-  def template
-    redirect_to snapshot_path(:id=>barclamp.template_id)
   end
 
   #

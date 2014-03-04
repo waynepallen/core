@@ -1,4 +1,4 @@
-# Copyright 2011, Dell 
+# Copyright 2011-4, Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -19,8 +19,7 @@
 # since you don't have to restart the webserver when you make code changes.
 Crowbar::Application.configure do
   config.cache_classes = false
-  # Log error messages when you accidentally call methods on nil.
-  config.whiny_nils = true
+
   # Show full error reports and disable caching
   #config.action_controller.consider_all_requests_local = true
   #config.action_view.debug_rjs                         = true
@@ -30,7 +29,10 @@ Crowbar::Application.configure do
   config.action_controller.allow_forgery_protection    = false
   # Don't care if the mailer can't send
   config.action_mailer.raise_delivery_errors = false
+  config.eager_load = false
   # Enable threaded mode
   # config.threadsafe! unless $rails_rake_task
-  config.log_level = :debug
+  config.log_level = :info
+
+  CROWBAR_VERSION = "v2.0-dev"
 end

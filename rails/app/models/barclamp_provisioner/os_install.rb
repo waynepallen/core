@@ -14,14 +14,6 @@
 #
 
 class BarclampProvisioner::OsInstall < Role
-  
-  def on_proposed(nr)
-    nr.sysdata = {
-      "crowbar" => {
-        "target_os" => nr.deployment_data["crowbar"]["target_os"]
-      }
-    }
-  end
 
   def on_transition(nr)
     node = nr.node

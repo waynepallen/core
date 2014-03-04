@@ -13,16 +13,54 @@
 # limitations under the License.
 #
 
+require 'yaml'
+require 'kwalify'
 class Attrib < ActiveRecord::Base
 
-  before_create :create_type_from_name
+  validate :schema_is_valid
+  serialize :schema
 
-  attr_accessible :barclamp_id, :role_id, :type, :name, :description, :order, :map     # core relationship
+  # Will be thrown unless the attribute is writable.
+  class AttribReadOnly < Exception
+    def initialize(attr)
+      @errstr = "Attrib #{attr.name} is read-only"
+    end
+
+    def to_s
+      @errstr
+    end
+
+    def to_str
+      to_s
+    end
+  end
 
   belongs_to      :role
   belongs_to      :barclamp
 
   scope           :by_name,              ->(name) { where(:name=>name) }
+
+  def wrap_schema(fragment)
+    {"type" => "map",
+      "required" => true,
+      "mapping" => {
+        name => fragment
+      }
+    }
+  end
+
+  # Returns an array of schema validation errors.
+  # If the array is empty, the validation passed.
+  # Fragment must be a string full of YAML.
+  def validate_schema(fragment)
+    Rails.logger.info("Attrib: Validating schema for #{name}")
+    test_schema = wrap_schema(fragment)
+    Rails.logger.info("Attrib: #{name}: Schema:\n#{test_schema.to_yaml}")
+    validator = Kwalify::MetaValidator.instance
+    schema_errors = validator.validate(test_schema)
+    Rails.logger.info("Attrib: Schema validation for #{name} passed.") if schema_errors.empty?
+    schema_errors
+  end
 
   # Return a deeply nested hash table built from the map with this attribute's
   # data at the end.
@@ -36,9 +74,8 @@ class Attrib < ActiveRecord::Base
     res
   end
 
-  def self.get(name, from, source=:discovery)
-    attrib = ( name.is_a?(ActiveRecord::Base) ? name : Attrib.find_key(name) )
-    attrib.get(from, source)
+  def self.get(name, from, source=:all)
+    (name.is_a?(Attrib) ? name : Attrib.find_key(name)).get(from, source)
   end
 
   # Get the attribute value from the passed object.
@@ -56,8 +93,8 @@ class Attrib < ActiveRecord::Base
           end
         when from.is_a?(DeploymentRole)
           case source
-          when :all then from.wall.deep_merge(from.data)
-          when :hint, :user then from.data
+          when :all then from.wall.deep_merge(from.all_data)
+          when :hint, :user then from.all_data
           when :wall then from.wall
           else from.data
           end
@@ -66,8 +103,7 @@ class Attrib < ActiveRecord::Base
           when :all then from.attrib_data
           when :wall then from.wall
           when :system then from.sysdata
-          when :user then from.data
-          when :hint then from_orig.hint[role.name]
+          when :user,:hint then from.data
           else raise("#{from} is not a valid source to read noderole data from!")
           end
         when from.is_a?(Role) then from.template
@@ -114,73 +150,79 @@ class Attrib < ActiveRecord::Base
   end
 
   def self.set(name, to, value, type)
-    a = Attrib.find_key name
-    a.set(to,value,type)
+    Attrib.find_key(name).set(to,value,type)
+  end
+
+  class AttribValidationFailed < Exception
+    def initialize(attr,data,errors)
+      @errstr = "Attrib #{attr.name}: New requested data #{data.to_json} failed schema validation\n"
+      errors.each do |e|
+        @errstr << "[#{e.path}]: #{e.message}\n"
+      end
+    end
+
+    def to_s
+      @errstr
+    end
+
+    def to_str
+      to_s
+    end
+  end
+
+  def kwalify_validate(value)
+    return if schema.nil?
+    test_schema = wrap_schema(schema)
+    test_value = { name => value }
+    validator = Kwalify::Validator.new(test_schema)
+    errors = validator.validate(test_value)
+    return true if errors.empty?
+    raise AttribValidationFailed.new(self,value,errors)
   end
 
   private
 
-  # used to create a mapping for discovery values from the map
-  def map_set_value(map,value)
-    return ( map =~ /^([^\/]*)\/(.*)/ ? { $1 => map_set_value($2, value)} : { map => value } )
-  end
-
-
-  # This method ensures that we have a type defined for
-  def create_type_from_name
-    raise "attribs require a name" if self.name.nil?
-    # remove the redundant part of the name (if any)
-    name = self.name.gsub('-','_').camelize
-    # Find the proper class to use to instantiate this attribute
-    # 1. If the barclamp provides a specific class for this attribute, use it.
-    # 2. Otherwise fall back on attrib class that the jig provides.
-    # 3. Finally, fall back on the generic Attrib class.
-    klassnames = []
-    klassnames << "Barclamp#{self.barclamp.name.camelize}::Attrib::#{name}" if self.barclamp_id
-    klassnames << "#{self.role.jig.type}Attrib" if self.role_id && (Jig.where(:name => role.jig_name).count > 0)
-    klassnames << "Attrib"
-    klassnames.each do |t|
-      if (t.constantize rescue nil)
-        Rails.logger.info("Attrib: Using #{t} for #{self.name}")
-        self.type = t
-        return
-      else
-        Rails.logger.info("Attrib: #{t} cannot be used for #{self.name}")
-      end
+  def schema_is_valid
+    return if schema.nil?
+    validate_schema(schema).each do |e|
+      errors.add(:schema,"[#{e.path}]: #{e.message}")
     end
-    raise "Cannot find the appropriate class for attribute #{self.name}"
   end
 
   # If we were asked to do something with an attribute on a node,
   # but that attribute is part of a node role bound to that node,
   # use the node role instead.
   def __resolve(to)
-    return to unless to.is_a?(Node) && self.role_id
-    res = to.node_roles.where(:role_id => self.role_id).first
-    raise("#{self.name} belongs to role #{role.name}, but node #{to.name} does not have a binding for it!") unless res
-    res
+    case
+    when (to.is_a?(Node) && self.role_id) then to.node_roles.find_by!(:role_id => self.role_id)
+    when to.is_a?(Snapshot) then to.deployment_roles.find_by!(:role_id => self.role_id)
+    when [Node,Role,DeploymentRole,NodeRole].any?{|klass|to.is_a?(klass)} then to
+    else raise "#{to.class.name} is not something that we can use Attribs with!"
+    end
   end
 
   # Set a new value for this attribute onto the passed object.
   # The last parameter is what area the new attribute should be placed on
   def __set(to_orig,value,target=:system)
+    raise AttribReadOnly.new(self) unless writable
+    kwalify_validate(value)
+    to_merge = template(value)
     to = __resolve(to_orig)
+    Rails.logger.debug("Attrib: Attempting to update #{name} on #{to.class.name}:#{to.name} to #{value} with #{to_merge.inspect}")
     case
     when to.is_a?(Node)
       case target
-      when :hint then to.hint_update(map_set_value("#{role.name}/#{map}", value))
-      when :discovery then  to.discovery_update(map_set_value(map,value))
-      else raise("#{target} is not a valid target to write node data to!")
+      when :discovery then to.discovery_update(to_merge)
+      else to.hint_update(to_merge)
       end
-    when to.is_a?(Role) then to.template_update(value)
+    when to.is_a?(Role) then to.template_update(to_merge)
     when to.is_a?(DeploymentRole)
-      target == :system ? to.wall_update(value) : to.data_update(value)
+      target == :system ? to.wall_update(to_merge) : to.data_update(to_merge)
     when to.is_a?(NodeRole)
       case target
-      when :system then to.sysdata_update(value)
-      when :user then to.data_update(value)
-      when :hint then to_orig.hint_update(map_set_value("#{role.name}/#{map}", value))
-      when :wall then to.wall_update(value)
+      when :system then to.sysdata_update(to_merge)
+      when :user,:hint then to.data_update(to_merge)
+      when :wall then to.wall_update(to_merge)
       else raise("#{target} is not a valid target to write noderole data to!")
       end
     else raise("Cannot write attribute data to #{to.class.to_s}")

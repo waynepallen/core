@@ -30,7 +30,7 @@ step(_Global, {step_given, {_Scenario, _N}, ["I set",user,"setting",Key,"to",Val
   eurl:put_post(URI, "{}", put);
 
 step(_Given, {step_when, {_Scenario, _N}, ["I inspect the logs for",Mark]}) -> 
-  Path = bdd_utils:config(marker_log, "/var/log/crowbar/development.log"),
+  Path = bdd_utils:config(marker_log, "../rails/log/development.log"),
   step(_Given, {step_when, {_Scenario, _N}, ["I inspect the",Path,"for",Mark]});
 
 step(_Given, {step_when, {_Scenario, _N}, ["I inspect the",Path,"for",Mark]}) -> 

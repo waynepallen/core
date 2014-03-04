@@ -1,4 +1,4 @@
-# Copyright 2013, Dell
+# Copyright 2013-4, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ SimpleNavigation::Configuration.run do |navigation|
           end
         rescue Exception => e
           primary.item :menu_error, "#{t 'nav.error'}: #{item.item}", ''
-          puts "render error #{e.inspect}" if Rails.env.development?
+          Rails.logger.error "navigation: #{e.inspect}" 
         end
       end
     end

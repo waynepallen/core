@@ -17,8 +17,6 @@ require 'json'
 
 class NodeRoleDatum < ActiveRecord::Base
 
-  attr_accessible :id, :node_role_id, :snapshot_id, :current
-  attr_accessible :data, :sysdata, :wall
   belongs_to :node_role
   belongs_to :snapshot
 

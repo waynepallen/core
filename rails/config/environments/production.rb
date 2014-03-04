@@ -29,9 +29,11 @@ Crowbar::Application.configure do
 
   # Disable request forgery protection in test environment
   config.action_controller.allow_forgery_protection    = true
+  config.eager_load = true
 
   # See everything in the log (default is :info)
-  config.log_level = :debug
+  config.log_level = :info
+  config.paths['log'] = "/var/log/crowbar/#{Rails.env}.log"
 
   # Use a different logger for distributed setups
 
@@ -47,5 +49,5 @@ Crowbar::Application.configure do
   # Enable threaded mode
   # config.threadsafe! unless $rails_rake_task
 
-  CROWBAR_VERSION = "v2.0-dev"
+  CROWBAR_VERSION = "v2.0-prod"
  end 

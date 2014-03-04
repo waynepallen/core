@@ -7,10 +7,9 @@ Lists the current users.
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> GET  </td><td>crowbar/2.0/user/2.0/users</td><td>N/A</td><td>JSON array of user ID:Username pairs</td><td></td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET  |crowbar/2.0/user/2.0/users|N/A|JSON array of user ID:Username pairs||
 
 
 **Output:**
@@ -30,10 +29,9 @@ Shows details about a selected user.
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> GET  </td><td>crowbar/2.0/user/2.0/users/[id]</td><td>id is the user ID or username.</td><td>Details of the user in JSON format</td><td></td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| GET  |crowbar/2.0/user/2.0/users/[id]|id is the user ID or username.|Details of the user in JSON format||
 
 
 **Output:**
@@ -54,10 +52,9 @@ Creates a new user.
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> POST  </td><td>crowbar/2.0/user/2.0/users</td><td></td><td> User json definition (see User CRUD: Show) </td><td> must be a valid user object </td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| POST  |crowbar/2.0/user/2.0/users|| User json definition (see User CRUD: Show) | must be a valid user object |
 
     {
       "username":"testuser1",
@@ -95,10 +92,9 @@ Updates existing user.
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> PUT  </td><td>crowbar/2.0/user/2.0/users/[id]</td><td></td><td> User json definition (see User CRUD: Show) </td><td></td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| PUT  |crowbar/2.0/user/2.0/users/[id]|| User json definition (see User CRUD: Show) ||
 
 
     {
@@ -135,10 +131,9 @@ Change existing user password
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> PUT  </td><td>crowbar/2.0/user/2.0/users/reset_password/[id]</td><td></td><td> User json definition (see User CRUD: Show) </td><td></td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| PUT  |crowbar/2.0/user/2.0/users/reset_password/[id]|| User json definition (see User CRUD: Show) ||
 
 
     {
@@ -171,10 +166,9 @@ Lock existing user account.
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> POST </td><td>crowbar/2.0/user/2.0/users/lock/[id]</td><td>id is the user ID or username</td><td> User json definition (see User CRUD: Show) </td><td></td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| POST |crowbar/2.0/user/2.0/users/lock/[id]|id is the user ID or username| User json definition (see User CRUD: Show) ||
 
 
 **Output:**
@@ -195,10 +189,9 @@ Unlock existing user account.
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> DELETE </td><td>crowbar/2.0/user/2.0/users/lock/[id]</td><td>id is the user ID or username</td><td> User json definition (see User CRUD: Show) </td><td></td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| DELETE |crowbar/2.0/user/2.0/users/lock/[id]|id is the user ID or username| User json definition (see User CRUD: Show) ||
 
 
 **Output:**
@@ -218,10 +211,9 @@ Add user administrator priviledge to existing user.
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> POST </td><td>crowbar/2.0/user/2.0/users/admin/[id]</td><td>id is the user ID or username</td><td> User json definition (see User CRUD: Show) </td><td></td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| POST |crowbar/2.0/user/2.0/users/admin/[id]|id is the user ID or username| User json definition (see User CRUD: Show) ||
 
 
 **Output:**
@@ -242,10 +234,9 @@ Delete user administrator priviledge from existing user.
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> DELETE </td><td>crowbar/2.0/user/2.0/users/admin/[id]</td><td>id is the user ID or username</td><td> User json definition (see User CRUD: Show) </td><td></td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| DELETE |crowbar/2.0/user/2.0/users/admin/[id]|id is the user ID or username| User json definition (see User CRUD: Show) ||
 
 
 **Output:**
@@ -266,10 +257,9 @@ Deletes a user.
 
 **Input:**
 
-<table border=1>
-<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
-<tr><td> DELETE  </td><td>crowbar/2.0/user/2.0/users/[id]</td><td> User ID or username </td><td>HTTP error code 200 on success</td><td></td></tr>
-</table>
+| Verb | URL | Options | Returns | Comments |
+|:------|:-----------------------|--------|--------|:----------------|
+| DELETE  |crowbar/2.0/user/2.0/users/[id]| User ID or username |HTTP error code 200 on success||
 
 No body.
 

@@ -33,16 +33,11 @@ class BarclampProvisioner::DhcpDatabase < Role
   def rerun_my_noderoles node
 
     clients = {}
-    mac_hint = ::Attrib.find_key "hint-admin-mac"
-
 
     Role.transaction do
       Node.all.each do |node|
         ints = (node.discovery["ohai"]["network"]["interfaces"] rescue nil)
-        mac_list = []
-        # get the suggested mac (requies an ip address also!
-        preseed = mac_hint.get(node, :hint) if mac_hint
-        mac_list << preseed if preseed 
+        mac_list = Attrib.get("hint-admin-macs",node) || []
 
         # scan interfaces to capture all the mac addresses discovered
         unless ints.nil?
@@ -56,14 +51,16 @@ class BarclampProvisioner::DhcpDatabase < Role
             end
           end
         end
+
         # we need to have at least 1 mac (from preload or inets)
         next unless mac_list.length > 0
         # add this node to the DHCP clients list
         clients[node.name] = {
-          "mac_addresses" => mac_list.sort,
+          "mac_addresses" => mac_list.map{|m|m.upcase}.sort.uniq,
           "v4addr" => node.addresses.reject{|a|a.v6?}.sort.first.to_s,
           "bootenv" => node.bootenv
         }
+
       end
     end
     # this gets the client list sent to the jig implementing the DHCP database role

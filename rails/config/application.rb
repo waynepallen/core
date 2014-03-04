@@ -1,3 +1,18 @@
+# Copyright 2011-4, Dell 
+# 
+# Licensed under the Apache License, Version 2.0 (the "License"); 
+# you may not use this file except in compliance with the License. 
+# You may obtain a copy of the License at 
+# 
+#  http://www.apache.org/licenses/LICENSE-2.0 
+# 
+# Unless required by applicable law or agreed to in writing, software 
+# distributed under the License is distributed on an "AS IS" BASIS, 
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+# See the License for the specific language governing permissions and 
+# limitations under the License. 
+# 
+
 require File.expand_path('../boot', __FILE__)
 
 require 'rails/all'
@@ -47,7 +62,7 @@ module Crowbar
     # This will create an empty whitelist of attributes available for mass-assignment for all models
     # in your app. As such, your models will need to explicitly whitelist or blacklist accessible
     # parameters by using an attr_accessible or attr_protected declaration.
-    config.active_record.whitelist_attributes = true
+    #config.active_record.whitelist_attributes = true
 
     # Enable the asset pipeline
     config.assets.enabled = true
@@ -72,7 +87,6 @@ module Crowbar
     # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
     # Run "rake -D time" for a list of tasks for finding time zone names.
     config.time_zone = 'UTC'
-    config.paths['log'] = "/var/log/crowbar/#{Rails.env}.log"
 
     config.cache_store                   = [ :file_store, "/var/cache/crowbar/rails-cache/" ]
     config.assets.cache_store            = [ :file_store, "/var/cache/crowbar/rails-cache/assets/#{Rails.env}/" ]

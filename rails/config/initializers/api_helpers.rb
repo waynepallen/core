@@ -1,4 +1,4 @@
-# Copyright 2012, Dell 
+# Copyright 2012-4 Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -15,4 +15,7 @@
 # 
 
 require Rails.root.join('lib/api_helper.rb')
-require Rails.root.join('lib/ip.rb')
+
+unless File.exists?("../chef/cookbooks/barclamp/libraries")
+  require Rails.root.join('lib/ip.rb')
+end

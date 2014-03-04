@@ -44,6 +44,13 @@ roles:
       - name: provisioner-webserver
         description: 'The URL that managed nodes should use to contact the provisioner webserver.'
         map: 'crowbar/provisioner/server/webserver'
+      - name: provisioner-upstream_proxy
+        description: "The upstream Web proxy that the proxy on the provisioner will use"
+        map: 'crowbar/provisioner/server/upstream_proxy'
+        schema:
+          type: str
+          required: true
+          pattern: '/\Ahttp:\/\/.+\z/'
   - name: provisioner-base-images
     jig: chef-solo
     attribs:
@@ -64,10 +71,6 @@ roles:
       - provisioner-base-images
     flags:
       - implicit
-    attribs:
-      - name: 'hint-admin-mac'
-        description: 'Hint for Admin MAC address'
-        map: 'admin_mac'
     wants-attribs:
       - provisioner-package-repos
   - name: provisioner-dhcp-server
@@ -90,3 +93,10 @@ roles:
       - name: provisioner-target_os
         description: "The operating system to install on a node"
         map: 'crowbar/target_os'
+        schema:
+          type: str
+          required: true
+          enum:
+            - ubuntu-12.04
+            - redhat-6.5
+            - centos-6.5

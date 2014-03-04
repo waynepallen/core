@@ -31,13 +31,15 @@ Machine requirements are
 1. Memory: Min 4GB
 2. CPU Cores: 2 or more
 3. Network Interface Controllers: 2 preferred, 1 minimum (can use virtio if using a VM)
+  1. The first NIC (generally known as 'eth0' under Linux, but may named 'em0' or 'en0') must be wired into the private address space (192.168.124.0/24)
+  1. The second NIC will be wired into a network that routes to the internet. Internet access is required for installation OpenCrowbar on CentOS/RHEL 6.5.
   1. Note: It is possible to use a single NIC. In that case the default network address will be 192.168.124.0/24, the admin node IP address will be 192.168.124.10
-  2. Where a single NIC is used, the private admin network (192.168.124.0/24) must be capable of download of files from the internet or from a local caching server
+  1. Where a single NIC is used, the private admin network (192.168.124.0/24) must be capable of download of files from the internet or from a local caching server
 4. Storage: A disk capacity of at least 10 GB is preferred.
 5. Ensure that all physical network transports are correctly configured and are operational - at least check/verify that:
   1. All network cabling is in place
-  2. Network switches are turned on and configured correctly (ask network admin if necessary)
-  3. Keyboard,Video, and Mouse (if required) devices are connected and ready for use.
+  1. Network switches are turned on and configured correctly (ask network admin if necessary)
+  1. Keyboard,Video, and Mouse (if required) devices are connected and ready for use.
 6. If using a virtual machine (VM), where VM motion (ability to migrated VMs across Hypervisor platforms) is required ensure that secure VM access is correctly configured and is operational.
 7. Where network-managed power switches are in use, ensure that network access is secure from unwanted access.
 
@@ -66,16 +68,16 @@ Machine requirements are
     2. Dual NIC configuration:
       1. Select "System eth0" (first NIC - on public network), Click [Edit]
         1. Check "Connect automatically"
-        2. Click [IPV4 Settings]
-        3. Select Method "Automatic (DHCP)" if appropriate, else configure network settings. Click [Apply]
-      2. Select "System eth1" (second NIC - on private admin network), Click [Edit]
-        1. Check "Connect automatically"
         2. Click on [IPV4 Settings]
         3. Select Method "Manual"
         4. Click [Add]
           1. Enter IP address: 192.168.124.10
           2. Click on blank field below "Netmask". Enter: 24, or 255.255.255.0
           3. Click [Apply]
+      1. Select "System eth1" (second NIC - on private admin network), Click [Edit]
+        1. Check "Connect automatically"
+        2. Click [IPV4 Settings]
+        3. Select Method "Automatic (DHCP)" if appropriate, else configure network settings. Click [Apply]
       3. Clock [Close]
 10. Screen: "Please select the nearest city in your time zone:", Select your time zone, Click [Next]
 11. Screen: "The root account is used for administering the system. ...", Enter Root password "crowbar", Confirm: "crowbar", Click [Next]
@@ -136,6 +138,13 @@ Change directory:
 **Note:** The contents of the ocb-install.sh file are:
 
      #!/bin/bash
+     
+     pkgproc(){
+        RLIST=`ls $1*`
+        echo $RLIST
+        yum install -y $RLIST
+     }
+
      cp -f .bash_profile /root/.bash_profile 
      source .bash_profile
      
@@ -149,15 +158,8 @@ Change directory:
      yum makecache
      yum update -y
      
-     yum install -y ruby-doc-2.0.0.433-1.el6.noarch.rpm rubygem-rdoc-4.0.0-1.el6.noarch.rpm \
-        rubygem-bigdecimal-1.2.0-1.el6.x86_64.rpm rubygems-2.0.2-1.el6.noarch.rpm \
-        rubygem-io-console-0.4.2-1.el6.x86_64.rpm rubygems-devel-2.0.2-1.el6.noarch.rpm \
-        rubygem-json-1.7.7-1.el6.x86_64.rpm ruby-irb-2.0.0.433-1.el6.noarch.rpm \
-        rubygem-minitest-4.3.2-1.el6.noarch.rpm ruby-libs-2.0.0.433-1.el6.x86_64.rpm \
-        rubygem-psych-2.0.0-1.el6.x86_64.rpm ruby-tcltk-2.0.0.433-1.el6.x86_64.rpm \
-        ruby-2.0.0.433-1.el6.x86_64.rpm rubygem-rake-0.9.6-1.el6.noarch.rpm ruby-devel-2.0.0.433-1.el6.x86_64.rpm
-
-     yum install -y opencrowbar-core-2.0-1.noarch.rpm opencrowbar-hadoop-2.0-1.noarch.rpm opencrowbar-openstack-2.0-1.noarch.rpm
+     pkgproc ruby
+     pkgproc open
      
      exit 0
 
@@ -165,28 +167,15 @@ The above script will install OpenCrowbar and all its RPM dependencies up to the
 
 ## Enable WebUI / Connect via browser
 
-Execute the following command to install the ruby gem bundler:
+Execute the following commands:
 
-     #> gem install bundler
+     #> cd /opt/opencrowbar
+     #> ./prep.sh
 
-Execute the following commands to ready the system for execution of the OpenCrowbar webUI:
+Connect to the IP address of the Admin node on port 3000 using a browser of choice (Google Chrome, or Internet Explorer) URL:http://192.168.124.10:3000
 
-     #> cd /opt/opencrowbar/core/rails
-     #> bundle install --verbose 
-
-Execute the following for a DEVELOPMENT invocation of OpenCrowbar:
-
-     #> cd /opt/opencrowbar/core
-     #> ./development.sh
-
-When ready to deploy a production invocation of OpenCrowbar, execute:
-
-     #> cd /opt/opencrowbar/core
-     #> ./production.sh 
-
-Connect to the IP address of the Admin node on port 3000 using a browser of choice (Google Chrome, or Internet Explorer) URL:http://10.208.64.85:3000
      Log in as user: crowbar
-     Password: crowbar
+           Password: crowbar
 
 
 ## QA Valdiation Requirements:

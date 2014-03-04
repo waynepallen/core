@@ -11,8 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
 # See the License for the specific language governing permissions and 
 # limitations under the License. 
-# 
-# 
+
+# Extend RecordNotFound to let us attach some useful error to the exception.
+module ActiveRecord
+  class RecordNotFound < ActiveRecordError
+    attr_accessor :crowbar_model, :crowbar_column, :crowbar_key
+  end
+end
+
 # This class AUTOMATICALLY extends the ActiveRecord base class 
 # so that we can add AR helpers for Crowbar
 module ApiHelper
@@ -25,59 +31,28 @@ module ApiHelper
 
   # for the top level classes (finders, etc)
   module ClassMethods
-    
-    # Helper that returns SET of all (or limited listed based on ID or name)
-    def find_keys(key)
-      begin 
-        if key.nil?
-          all
-        elsif db_id?(key)
-          find_all_by_id key.to_i
-        else key.is_a? String
-          find_all_by_name key
-        end
-      rescue ActiveRecord::RecordNotFound => e
-        []
-      end
-    end
-  
+
     # Helper to allow API to use ID or name
     def find_key(key)
+      col,key = case
+                when db_id?(key) then [:id, key.to_i]
+                when key.is_a?(ActiveRecord::Base) then [:id, key.id]
+                when self.respond_to?(:name_column) then [name_column, :key]
+                else [:name, key]
+                end
       begin
-        if db_id?(key)
-          find key.to_i
-        elsif key.is_a? String
-          if key =~ /^[0-9]+$/
-            find key.to_i
-          else
-            find_by_name key rescue nil
-          end
-        elsif key.is_a? ActiveRecord::Base  
-          # if we get the object itself then use find to valid it exists
-          find key.id
-        end          
+        find_by!(col => key)
       rescue ActiveRecord::RecordNotFound => e
-        nil
-      end
-    end
-
-    # get id of object by id string or name string
-    def find_real_key(key)
-      begin
-        if db_id?(key)
-          key.to_i
-        elsif key.is_a? String
-          o = find_by_name key
-          o.id || nil
-        end
-      rescue ActiveRecord::RecordNotFound => e
-        nil
+        e.crowbar_model = self
+        e.crowbar_column = col
+        e.crowbar_key = key
+        raise e
       end
     end
 
     # Helper to determine if a given key is an ActiveRecord DB ID
     def db_id?(key)
-      key.is_a? Fixnum or key.is_a? Integer or key =~ /^[0-9]+$/
+      key.is_a?(Fixnum) or key.is_a?(Integer) or key =~ /^[0-9]+$/
     end
   end 
 

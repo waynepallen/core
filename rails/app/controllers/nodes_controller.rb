@@ -1,4 +1,4 @@
-# Copyright 2013, Dell
+# Copyright 2014, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ class NodesController < ApplicationController
             end
     respond_to do |format|
       format.html { }
-      format.json { render api_index :node, @list }
+      format.json { render api_index Node, @list }
     end
   end
   
@@ -37,25 +37,19 @@ class NodesController < ApplicationController
     # place holder
   end
 
-  def make_admin
-    n = Node.make_admin!
-    n.alive = true
-    n.save!
-    redirect_to :action => 'index', :status => :found
-  end
-
   def show
     @node = Node.find_key params[:id]
     respond_to do |format|
       format.html {  } # show.html.erb
-      format.json { render api_show :node, Node, nil, nil, @node }
+      format.json { render api_show @node }
     end
   end
 
   # RESTful DELETE of the node resource
   def destroy
-    n = Node.find_key(params[:id] || params[:name])
-    render api_delete Node
+    @node = Node.find_key(params[:id] || params[:name])
+    @node.destroy
+    render api_delete @node
   end
 
   def reboot
@@ -77,40 +71,45 @@ class NodesController < ApplicationController
   # RESTfule POST of the node resource
   def create
     params[:deployment_id] = Deployment.find_key(params[:deployment]).id if params.has_key? :deployment
-    # deal w/ hint shortcuts  (these are hardcoded but MUST match the imported Attrib list)
-    hint = JSON.parse(params[:hint] || "{}")
-    hint["network-admin"] = {"v4addr"=>params["ip"]} if params.has_key? :ip
-    hint["provisioner-repos"] = {"admin_mac"=>params["mac"]} if params.has_key? :mac
+    params[:deployment_id] ||= 1
+    params.require(:name)
+    params.require(:deployment_id)
+    @node = nil
+    @node = Node.create!(params.permit(:name,
 
-    n = Node.create! params
-    if hint != {}
-      n.hint = hint
-      n.save!
+                                       :alias,
+                                       :description,
+                                       :admin,
+                                       :deployment_id,
+                                       :allocated,
+                                       :alive,
+                                       :available,
+                                       :bootenv))
+    # Keep suport for mac and ip hints in short form around for legacy Sledgehammer purposes
+    if params[:mac]
+      @node.attribs.find_by!(name: "hint-admin-macs").set(@node,[params[:mac]])
     end
-    render api_show :node, Node, n.id.to_s, nil, n
+    if params[:ip]
+      @node.attribs.find_by!(name: "hint-admin-v4addr").set(@node,params[:ip])
+    end
+
+    render api_show @node
   end
-  
+
   def update
-    params[:deployment] ||= params[:node][:deployment] if params.has_key? :node
-    params[:deployment_id] = Deployment.find_key(params[:deployment]).id if params.has_key? :deployment
-    # If we wind up changing to being alive and available,
-    # we will want to enqueue some noderoles to run.
     @node = Node.find_key params[:id]
-    # discovery requires a direct save
-    if params.has_key? :discovery
-      @node.discovery = params[:discovery]
-      @node.save!
+    if params.has_key? :deployment
+      params[:deployment_id] = Deployment.find_key(params[:deployment]).id
     end
-    render api_update :node, Node, nil, @node
-  end
-
-  def move
-    deploy = Deployment.find_key params[:deployment_id]
-    node = Node.find_key params[:node_id]
-    node.deployment_id = deploy.id
-    node.save!
-    node.reload
-    render api_show :node, Node, nil, nil, node
+    @node.update_attributes!(params.permit(:alias,
+                                             :description,
+                                             :target_role_id,
+                                             :deployment_id,
+                                             :allocated,
+                                             :available,
+                                             :alive,
+                                             :bootenv))
+    render api_show @node
   end
 
   #test_ methods support test functions that are not considered stable APIs
@@ -127,16 +126,16 @@ class NodesController < ApplicationController
     json = JSON.load raw
     @node.discovery  = json
     @node.save!
-    render api_show :node, Node, nil, nil, @node
+    render api_show @node
 
   end
 
   private
 
   def node_action(meth)
-    n = Node.find_key(params[:id] || params[:name] || params[:node_id])
-    n.send(meth)
-    render api_show :node, Node, nil, nil, n
+    @node = Node.find_key(params[:id] || params[:name] || params[:node_id])
+    @node.send(meth)
+    render api_show @node
   end
 
 end

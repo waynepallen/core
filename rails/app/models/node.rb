@@ -19,17 +19,14 @@ require 'open3'
 class Node < ActiveRecord::Base
 
   before_validation :default_population
-  after_create :add_default_roles
   before_destroy :tear_down_roles
+  after_create :add_default_roles
   after_save :after_save_handler
-
-  attr_accessible   :id, :name, :description, :alias, :order, :admin, :allocated, :deployment_id
-  attr_accessible   :alive, :available, :bootenv
 
   # Make sure we have names that are legal
   # requires at least three domain elements "foo.bar.com", cause the admin node shouldn't
   # be a top level domain ;p
-  FQDN_RE = /^([a-zA-Z0-9_\-]{1,63}\.){2,}(?:[a-zA-Z]{2,})$/
+  FQDN_RE = /\A([a-zA-Z0-9_\-]{1,63}\.){2,}(?:[a-zA-Z]{2,})\z/
   # for to_api_hash
   API_ATTRIBUTES = ["id", "name", "description", "order", "admin", "available", "alive",
                     "allocated", "created_at", "updated_at"]
@@ -43,7 +40,7 @@ class Node < ActiveRecord::Base
 
   # TODO: 'alias' will move to DNS BARCLAMP someday, but will prob hang around here a while
   validates_uniqueness_of :alias, :case_sensitive => false, :message => I18n.t("db.notunique", :default=>"Name item must be unique")
-  validates_format_of :alias, :with=>/^[A-Za-z0-9\-]*[A-Za-z0-9]$/, :message => I18n.t("db.fqdn", :default=>"Alias is not valid.")
+  validates_format_of :alias, :with=>/\A[A-Za-z0-9\-]*[A-Za-z0-9]\z/, :message => I18n.t("db.fqdn", :default=>"Alias is not valid.")
   validates_length_of :alias, :maximum => 100
 
   has_and_belongs_to_many :groups, :join_table => "node_groups", :foreign_key => "node_id"
@@ -121,13 +118,6 @@ class Node < ActiveRecord::Base
 
   def self.name_hash
     Digest::SHA1.hexdigest(Node.select(:name).order("name ASC").map{|n|n.name}.join).to_i(16)
-  end
-
-  def self.make_admin!
-    Node.transaction do
-      raise "Already have an admin node" unless where(:admin => true).empty?
-      Node.create(:name => %x{hostname -f}.strip, :admin => true)
-    end
   end
 
   def v6_hostpart
@@ -212,47 +202,24 @@ class Node < ActiveRecord::Base
     end
   end
 
-  def hint
-    d = read_attribute("hint")
-    return {} if d.nil? || d.empty?
-    JSON.parse(d) rescue {}
-  end
-
-  def hint=(arg)
-    arg = JSON.parse(arg) unless arg.is_a? Hash
-    data = hint.clone.deep_merge arg
-    write_attribute("hint",JSON.generate(data))
-    data
-  end
-
   def hint_update(val)
-    h = hint.clone
-    h.deep_merge!(val)
-    write_attribute("hint",JSON.generate(h))
-    h
-  end
-
-  def discovery
-    d = read_attribute("discovery")
-    return {} if d.nil? || d.empty?
-    JSON.parse(d) rescue {}
-  end
-
-  def discovery=(arg)
     Node.transaction do
-      arg = JSON.parse(arg) unless arg.is_a? Hash
-      data = discovery.clone.merge arg
-      write_attribute("discovery",JSON.generate(data))
+      self.hint = self.hint.deep_merge(val)
       save!
-      return data
+    end
+  end
+
+  def discovery_merge(val)
+    Node.transaction do
+      self.discovery = self.discovery.merge(val)
+      save!
     end
   end
 
   def discovery_update(val)
     Node.transaction do
-      d = discovery.clone
-      d.deep_merge!(val)
-      write_attribute("discovery",JSON.generate(d))
+      self.discovery = self.discovery.deep_merge(val)
+      save!
     end
   end
 

@@ -71,6 +71,12 @@ step(_Global, {step_given, {Scenario, _N}, ["I use the Network API to create",Ne
  bdd_utils:log(debug, network, step, "creating network ~p on range ~p [~p to ~p] with JSON ~p", [Network, Range, First, Last, JSON]),
  bdd_restrat:create(g(path), JSON, network, Scenario);
 
+step(_Global, {step_when, {Scenario, _N}, ["I use the Network API to create",Network,"with v6prefix of",V6Prefix]}) -> 
+ JSON = crowbar:json([{name, Network}, {description, g(description)}, {order, g(order)}, {conduit, "1g1"}, {deployment, "system"},
+      {v6prefix, V6Prefix} ]),
+ bdd_utils:log(debug, network, step, "creating network ~p with v6 ~p with JSON ~p", [Network, V6Prefix, JSON]),
+ bdd_restrat:create(g(path), JSON, network, Scenario);
+
 step(_Global, {step_setup, _N, _}) -> true;
 
 step(_Global, {step_teardown, _N, _}) -> true;
