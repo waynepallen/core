@@ -9,5 +9,11 @@ Sledgehammer you need:
   * A CentOS 6.5 install DVD from bittorrent or your favorite CentOS
     mirror. 
 
-update Sledgehammer, run the **PUT INFO HERE** script in the main
+To create Sledgehammer, run the `tools\build_sledgehammersh` script in the main
 OpenCrowbar core checkout.
+
+If it fails to find some packages, change the mirror kickstart is using in `sledgehammer\sledgehammer.ks`
+
+List of mirrors here: http://isoredirect.centos.org/centos/6/isos/x86_64/
+
+
