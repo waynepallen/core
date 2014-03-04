@@ -29,7 +29,7 @@ Engineers value documentation that explains how to get a development workstation
   1. get git
     1. ubuntu: `sudo apt-get install git`
   1. get the code: `git clone https://github.com/opencrowbar/core`
-    1. if you want to commit, please review [../contributing.md]
+    1. if you want to commit, please review [the Contributor guide](../contributing.md)
 
 ###Build Sledgehammer (do 1 time, but takes a while)
   1. prep for sledgehammer requirements: 
@@ -38,5 +38,5 @@ Engineers value documentation that explains how to get a development workstation
     1. warning: this may take multiple attempts to complete to downloads.  Keep trying.
 
 ###Setup Docker Admin Node 
-  1. follow steps in [docker/docker-admin.md]
+  1. follow steps in [docker/docker-admin.md](docker/docker-admin.md)
 
