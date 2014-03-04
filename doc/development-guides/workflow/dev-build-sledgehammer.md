@@ -20,6 +20,7 @@ List of mirrors here: http://isoredirect.centos.org/centos/6/isos/x86_64/
 
 #### Example diff
 
+```diff
 diff --git a/sledgehammer/sledgehammer.ks b/sledgehammer/sledgehammer.ks
 index 27fc7c0..7f8aa2f 100644
 --- a/sledgehammer/sledgehammer.ks
@@ -37,3 +38,4 @@ index 27fc7c0..7f8aa2f 100644
  repo --name=a-live    --baseurl=http://www.nanotechnologies.qc.ca/propos/linux/centos-live/$basearch/live
  repo --name=a-wsman   --baseurl=http://download.opensuse.org/repositories/Openwsman/CentOS_CentOS-6
  %packages
+```
