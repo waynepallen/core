@@ -36,6 +36,7 @@ Engineers value documentation that explains how to get a development workstation
     1. ubuntu: `sudo apt-get install rpm rpm2cpio`
   1. from core, `tools/build_sledgehammer.sh`
     1. warning: this may take multiple attempts to complete to downloads.  Keep trying.
+    2. warning: might need a better literal mirror in sledgehammer/sledgehammer.ks - see [Details]((../../workflow/dev-build-sledgehammer.md))
 
 ###Setup Docker Admin Node 
   1. follow steps in [docker/docker-admin.md](docker/docker-admin.md)
