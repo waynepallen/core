@@ -69,7 +69,7 @@ class NetworkRange < ActiveRecord::Base
         end
       end
     rescue ActiveRecord::StatementInvalid
-      sleep(1)
+      sleep(0.2+rand(5))
       retry
     end
     Rails.logger.info("NetworkRange: #{node.name} allocated #{res.address} from #{fullname}")

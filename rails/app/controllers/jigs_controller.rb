@@ -31,15 +31,7 @@ class JigsController < ApplicationController
   end
 
   def create
-    params.require(:name)
-    @jig = Jig.create! params.permit(:name,
-                                     :description,
-                                     :active,
-                                     :client_role_name,
-                                     :server,
-                                     :client_name,
-                                     :key)
-    render api_show @jig
+    render api_not_supported("post", "jigs")
   end
 
   def update
@@ -49,11 +41,7 @@ class JigsController < ApplicationController
   end
 
   def destroy
-    unless Rails.env.development?
-      render  api_not_supported("post", "jig")
-    else
-      render api_delete Jig
-    end
+    render api_not_supported("post", "jigs")
   end
 
 end

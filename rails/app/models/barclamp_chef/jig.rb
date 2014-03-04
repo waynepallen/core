@@ -99,8 +99,7 @@ class BarclampChef::Jig < Jig
     Node.transaction do
       node_disc = nr.node.discovery
       node_disc["ohai"] = chef_node.attributes.automatic
-      nr.node.discovery = node_disc
-      nr.node.save!
+      nr.node.discovery_merge(node_disc)
     end
     new_attrs = chef_node.attributes.normal
     nr.wall = deep_diff(data,new_attrs)

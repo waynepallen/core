@@ -16,10 +16,9 @@ _This is a reference index - API is documented in subpages_
 
     * /api/v2
       * /anneal (check the annealer status)
-      * /make_admin (used by smoke test automation to script install)
       * /nodes
-        * /[:id]/node_roles 
-        * /[:id]/attribs 
+        * /[:id]/node_roles
+        * /[:id]/attribs
       * /jigs
       * /barclamps
       * /deployments
@@ -27,15 +26,14 @@ _This is a reference index - API is documented in subpages_
         * /next (second snapshot)
         * /[:id]/roles
       * /deployment_roles
-      * /snapshots 
-        * /[:id]/node_roles 
+      * /snapshots
+        * /[:id]/node_roles
         * /graph (GET only)
         * /propose (PUT only)
         * /commit (PUT only)
         * /recall (PUT only)
       * /jigs
-      * /roles 
-        * /template/:key/:value (shortcut to set single values of the template)
+      * /roles
       * /attribs
       * /groups
         * /[:id]/nodes
@@ -48,21 +46,21 @@ The OpenCrowbar API follows the following behavior pattern.
 
 #### Expectations:
 
-* Core objects can be referenced equally by name or ID.  This means that objects with natural key names are NOT allowed to start with a number (similar to FQDN restrictions)
+* Core objects can be referenced equally by name or ID.
+  This means that objects with natural key names are NOT allowed to
+  start with a number (similar to FQDN restrictions)
 * JSON is the API serialization model
 
-  > Warning: Do NOT use API calls without the version # included!  Calls without version numbers are tightly coupled to the UI screens and do not have any contract at all.  They are expected to be used internally by the UI and not maintained for external users!
-
 #### Digest Authentication
-API callers may bypass the login screen and use digest authentication for all requests.  Calls directly to API pages will be challenged for digest authentication.  Users who have logged in using the normal login process will be able to use their UI session to make API calls.
-
-  > Note: Because of the hashing method for Digest, user accounts need to be specifically configured for API only access.  A user account with API access will still be able to log in normally.
+API callers use digest authentication for all requests. User accounts
+need to be specifically configured for API only access.  A user
+account with API access will still be able to log in normally.
 
 #### Common API URL Patterns:
 
-OpenCrowbar uses a versioned URL pattern.  Version in the URL allows the barclamp to offer an API contract independent of OpenCrowbar.  By convention, resources names are pluralized in the API.  For example, the API will use =nodes= instead of =node= in paths.
-
-* UI URLs: _these are less documented, unsupported for external use, and do not include a version number_.  Do not use these for API calls!
+OpenCrowbar uses a versioned URL pattern. By convention, resources
+names are pluralized in the API.  For example, the API will use
+=nodes= instead of =node= in paths.
 
 * Base Form: `[workload | api]/[version]/[resources]/[id]`
   * version - version of OpenCrowbar framework being used (v2 for this guide)
@@ -74,7 +72,7 @@ OpenCrowbar uses a versioned URL pattern.  Version in the URL allows the barclam
   * id - (optional) name or DB id of the barclamp configuration
   * Result codes
      * 200 = OK, success
-     * 500 = Error in processing.  Error given as HTML
+     * 500 = Error in processing.
      * 404 = item not found in database (may return 500 in some cases)
 
 * List: 
@@ -82,7 +80,9 @@ OpenCrowbar uses a versioned URL pattern.  Version in the URL allows the barclam
   * Returns a json array of objects
 
 * CRUD Operations: 
-  * id - name or database ID of the item.  Items that do not have natural keys are not expected to honor use of name instead of database ID.  When possible, either will be allowed.
+  * id - name or database ID of the item.  Items that do not have
+  natural keys are not expected to honor use of name instead of
+  database ID.  When possible, either will be allowed.
   * RESTful Verbs for CRUD:
      * POST / Create - ID is ignored if provided
      * GET / Read - Objects will be shallow
@@ -95,8 +95,8 @@ OpenCrowbar uses a versioned URL pattern.  Version in the URL allows the barclam
 
 In general, OpenCrowbar REST pattern uses the 4 HTTP verbs as follows:
 
-   * GET to retrieve information 
-   * PUT to transform or change existing data  
+   * GET to retrieve information
+   * PUT to transform or change existing data
    * POST to create new data or relationships
    * DELETE to remove data or relationships
 
@@ -107,18 +107,23 @@ By convention, most OpenCrowbar models have the same fields.
 * id - database assigned role, number
 * name - resource name, often a natural key with enforced uniqueness
 * description - user definable content
-* order - override alpha sort order
 * created_at - when object was created
 * updated_at - when object was last updated
-* object_id - cross reference id to an object.  In most cases, you can use the name of the object instead of the API
+* object_id - cross reference id to an object.  In most cases, you can
+  use the name of the object instead of the API
 
 > Some of the information stored in objects is maintained as json and will appear as nested data.
 
 ### API Headers & Response Patterns
 
-The OpenCrowbar REST API uses HTTP "content-type" metadata header tags to help clients quickly identify the information being returned by the API.
+The OpenCrowbar REST API uses HTTP `content-type` metadata header tags
+to help clients quickly identify the information being returned by the API.
 
-The API adds ="application/vnd.crowbar.[type].[form]+json; version=2.0"= to the content-type tag.
+The API adds ="application/vnd.crowbar.[type].[form]+json;version=2.0"= to the content-type tag.
+
+If you only care about certian attributes being returned for an API
+call, you can set the `x-return-attributes` header to a JSON array of
+the attributes you want to return.
 
 * [type] is the object type being returned.  E.g.: node, deployment, jig, etc
 * [form] describes how the objects are formed
@@ -127,12 +132,12 @@ The API adds ="application/vnd.crowbar.[type].[form]+json; version=2.0"= to the 
    * empty = nothing
    * error = error.
 
-REST results should be returned with the appropriate standard HTTP rGETesponse code, such as:
+REST results should be returned with the appropriate standard HTTP response code, such as:
 
 * 200 = ok
 * 404 = object not found
 * 500 = application error
-* [complete list](http://en.wikipedia.org/wiki/List_of_HTTP_status_codes) 
+* [complete list](http://en.wikipedia.org/wiki/List_of_HTTP_status_codes)
 
 ### Example Documentation
 
@@ -174,58 +179,203 @@ The following table should be populated for all API calls:
 
 Node JSON Data: /tmp/node_sample.json
     {
-      "admin": false,
-      "alias": "newtest",
       "alive": true,
-      "allocated": false,
-      "available": true,
       "bootenv": "local",
       "description": "Testing Only - should be automatically removed",
-      "hint": "{}",
       "name": "newtest.cr0wbar.com",
-      "order": 100
-    1}
+    }
 
 Curl command to create the node:
 
-   \#> curl --digest -u 'developer:Cr0wbar!' --data @/temp/node_samples.json -H "Content-Type:application/json" --url http://127.0.0.1:3000/api/v2/nodes
+    \#> curl --digest -u $(cat /etc/crowbar.install.key) \
+    -X POST \
+    --data @/temp/node_sample.json \
+    -H "Content-Type:application/json" \
+    --url http://127.0.0.1:3000/api/v2/nodes
 
-   {"admin":false,"alias":"simaa","alive":true,"allocated":false,"available":true,"bootenv":"local","created_at":"2013-12-21T05:49:00Z","deployment_id":1,"description":"devBDD Testing Only - should be automatically removed","discovery":{},"hint":"{}","id":41,"name":"simaa.cr0wbar.com","order":100,"target_role_id":null,"updated_at":"2013-12-21T05:49:00Z"}
+This will return:
+    {
+    "admin":false,
+    "alias":"newtest",
+    "alive":true,
+    "allocated":false,
+    "available":true,
+    "bootenv":"local",
+    "created_at":"2013-12-21T05:49:00Z",
+    "deployment_id":1,
+    "description":"Testing Only - should be automatically removed",
+    "discovery":{},
+    "hint":{},
+    "id":41,
+    "name":"newtest.cr0wbar.com",
+    "order":100,
+    "target_role_id":null,
+    "updated_at":"2013-12-21T05:49:00Z"
+    }
 
-### Some workflow examples
+### Some workflow examples (using the Crowbar CLI)
 
-#### Pushing new capabilites to a node
+#### Installing an operating system on a node
 
-You need to know the following information to start this
+##### Get the names of the nodes you want to install:
 
-- the name of the node you want to push to the 
-- id of role you want to use (it is possible but currently untested that the name will work as the id)
+* CLI: `crowbar nodes list --attributes name`
+* API: `curl --digest -u $(cat /etc/crowbar.install.key)
+    -X GET
+    -H "Content-Type:application/json"
+    -H 'x-return-attributes:["name"]'
+    --url http://127.0.0.1:3000/api/v2/nodes`
 
-Start by creating the deployment
+Returns:
 
-POST api/v2/deployments 
+    [
+      {
+        "name": "78e3be198029.smoke.test"
+      },
+      {
+        "name": "d52-54-05-3f-00-00.smoke.test"
+      }
+    ]
 
-	json = {"name":"this is a new deployment"}
+##### Create a deployment to deploy the nodes into:
 
-Update the target node with the new deployment that you just created
+* CLI: `crowbar deployments create '{"name": "test1"}'`
+* API: `curl --digest -u $(cat /etc/crowbar.install.key)
+    -X POST
+    -H "Content-Type:application/json"
+    --url http://127.0.0.1:3000/api/v2/deployments
+    -d '{"name": "test1"}'`
 
-PUT api/v2/node/node name
+Returns:
 
-	json = {"deployment_id":"3"}
+    {
+      "system": false,
+      "created_at": "2014-03-03T04:40:07.351Z",
+      "snapshot_id": 2,
+      "parent_id": 1,
+      "description": null,
+      "updated_at": "2014-03-03T04:40:07.351Z",
+      "id": 2,
+      "name": "test1"
+    }
 
-Create a node-role to link the node and the role you wish to push
+##### Update the target node with the new deployment that you just created:
 
-POST api/v2/node\_roles 
+* CLI: `crowbar nodes move d52-54-05-3f-00-00.smoke.test to test1`
+* API: `curl --digest -u $(cat /etc/crowbar.install.key)
+    -X PUT
+    -H "Content-Type:application/json"
+    --url http://127.0.0.1:3000/api/v2/nodes/d52-54-05-3f-00-00.smoke.test
+    -d '{"deployment": "test1"}'`
 
-	json = {"node\_id":"3", "role\_id":"3"}
+Returns:
 
-Now commit the snapshot to send it to the annealer - which will sort out the dependencies and push them to the node
+    {
+      "alias": "d52-54-05-3f-00-00",
+      "description": null,
+      "target_role_id": null,
+      "deployment_id": 2,
+      "alive": true,
+      "hint": {
+        "admin_macs": [
+          "52:54:05:3f:00:00"
+        ]
+      },
+      "bootenv": "sledgehammer",
+      "admin": false,
+      "created_at": "2014-03-03T04:35:19.642Z",
+      "name": "d52-54-05-3f-00-00.smoke.test",
+      "id": 2,
+      "order": 10000,
+      "discovery": {},
+      "available": true,
+      "allocated": false,
+      "updated_at": "2014-03-03T04:41:13.342Z"
+    }
 
-The snapshot_id reference can be read from the deployment instance
+##### Create a node-role to bind the role to the node:
 
-	PUT api/v2/snapshot/snapshot_id/commit
+* CLI: `crowbar roles bind crowbar-installed-node to d52-54-05-3f-00-00.smoke.test`
+* API: `curl --digest -u $(cat /etc/crowbar.install.key)
+    -X POST
+    -H "Content-Type:application/json"
+    --url http://127.0.0.1:3000/api/v2/node_roles
+    -d '{"node": "d52-54-05-3f-00-00.smoke.test", "role": "crowbar-installed-node"}'`
 
-Using the API python bindings this looks like
+Returns:
+
+    {
+      "id": 25,
+      "role_id": 3,
+      "state": 4,
+      "run_count": 0,
+      "node_id": 2,
+      "snapshot_id": 2,
+      "available": true,
+      "runlog": "",
+      "order": 10000,
+      "created_at": "2014-03-03T04:47:43.856Z",
+      "updated_at": "2014-03-03T04:47:43.860Z",
+      "cohort": 10,
+      "status": null
+    }
+
+##### (Optional) Change the operating system to deploy onto the node:
+
+* CLI: `crowbar nodes set d52-54-05-3f-00-00.smoke.test attrib
+  provisioner-target_os to '{"value": "ubuntu-12.04"}'`
+* API: `curl --digest -u $(cat /etc/crowbar.install.key)
+    -X PUT
+    -H "Content-Type:application/json"
+    --url http://127.0.0.1:3000/api/v2/nodes/d52-54-05-3f-00-00.smoke.test/attribs/provisioner-target_os
+    -d '{"value": "ubuntu-12.04"}'`
+
+Returns:
+
+    {
+      "updated_at": "2014-03-03T16:37:43.478Z",
+      "description": "The operating system to install on a node",
+      "writable": true,
+      "barclamp_id": 7,
+      "value": "ubuntu-12.04",
+      "order": 10000,
+      "name": "provisioner-target_os",
+      "id": 37,
+      "role_id": 24,
+      "created_at": "2014-03-03T16:37:43.466Z",
+      "schema": {
+        "required": true,
+        "enum": [
+          "ubuntu-12.04",
+          "redhat-6.5",
+          "centos-6.5"
+        ],
+        "type": "str"
+      },
+      "map": "crowbar/target_os"
+    }
+
+##### Commit the deployment:
+* CLI: `crowbar deployments commit test1`
+* API: `curl --digest -u $(cat /etc/crowbar.install.key)
+    -X PUT
+    -H "Content-Type:application/json"
+    --url http://127.0.0.1:3000/api/v2/deployments/test1/commit`
+
+Returns:
+
+    {
+      "name": "test1",
+      "system": false,
+      "parent_id": 1,
+      "id": 2,
+      "created_at": "2014-03-03T04:40:07.351Z",
+      "snapshot_id": 2,
+      "updated_at": "2014-03-03T04:40:07.351Z",
+      "description": null
+    }
+
+### Using the API python bindings this looks like
 
 ```
 from api import cb2_Api

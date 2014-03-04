@@ -129,7 +129,6 @@ Crowbar::Application.routes.draw do
         scope ':version' do
           # These are not restful.  They poke the annealer and wait if you pass "sync=true".
           get "anneal", :to => "node_roles#anneal", :as => :anneal
-          post "make_admin", :to => "nodes#make_admin", :as => :make_admin
           resources :attribs
           resources :barclamps
           resources :deployment_roles do
@@ -140,7 +139,11 @@ Crowbar::Application.routes.draw do
             get :next
             resources :roles
             resources :nodes
-            put 'claim/:node_id' => "deployments#claim"
+            resources :attribs
+            # These just do the appropriate action on the relavent snapshot.
+            put :propose
+            put :commit
+            put :recall
           end
           resources :groups do
             member do
@@ -172,17 +175,19 @@ Crowbar::Application.routes.draw do
             put :redeploy
           end
           resources :node_roles do
+            resources :attribs
             put :retry
           end
           resources :roles do
+            resources :attribs
             resources :deployment_roles
-            put 'template/:key/:value' => "roles#template"
           end
           resources :snapshots do
             resources :node_roles
             resources :nodes
             resources :roles
             resources :deployment_roles
+            resources :attribs
             get :graph
             put :propose
             put :commit

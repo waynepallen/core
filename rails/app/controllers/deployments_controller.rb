@@ -61,7 +61,35 @@ class DeploymentsController < ApplicationController
     render_snaps(deploy.head.next)
   end
 
-  private 
+  def propose
+    @deploy = Deployment.find_key(params[:deployment_id])
+    @deploy.snapshot.propose params[:name]
+    @deploy.reload
+    respond_to do |format|
+      format.html { redirect_to deployment_path(@deploy.id)}
+      format.json { render api_show @deploy }
+    end
+  end
+
+  def commit
+    @deploy = Deployment.find_key(params[:deployment_id])
+    @deploy.snapshot.commit
+    respond_to do |format|
+      format.html { redirect_to deployment_path(@deploy.id)}
+      format.json { render api_show @deploy }
+    end
+  end
+
+  def recall
+    @deploy = Deployment.find_key(params[:deployment_id])
+    @deploy.snapshot.recall
+        respond_to do |format|
+      format.html { redirect_to deployment_path(@deploy.id)}
+      format.json { render api_show @deploy }
+    end
+  end
+
+  private
 
   def render_snaps(snap)
     respond_to do |format|

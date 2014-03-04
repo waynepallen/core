@@ -12,10 +12,7 @@ Unlike node-roles, they do not store any inbound or system data.
 | GET  | api/v2/deployment_roles/:id | Specific Item |
 | PUT  | api/v2/deployment_roles/:id | Update Item |
 | POST  | api/v2/deployment_roles | Create Item |
+| GET  | /api/v2/deployment_roles/[:deployment_role_id]/attribs  | none   | List Attribs for a specific deployment_role| - | 
+| GET  | /api/v2/deployment_roles/[:deployment_role_id]/attribs/[:id]  | none   | Show Attrib (including value) for a specific Deployment_Role| - | 
+| PUT  | /api/v2/deployment_roles/[:deployment_role_id]/attribs/[:id]  | none   | Update Attrib |
 | DELETE  | - | NOT SUPPORTED |
-
-The API includes shortcuts for 
-
-   * deployment -> provide the name, resolved into snapshot_id of the deployment.head
-   * snapshot -> provide the name, resolved into snapshot_id
-   * role -> provide the name, resolved into role_id

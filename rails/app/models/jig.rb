@@ -126,6 +126,8 @@ class Jig < ActiveRecord::Base
       res["crowbar_wall"] ||= Hash.new
       res["crowbar_wall"]["reservations"] = nr.node.discovery["reservations"]
     end
+    # Add any hints.
+    res["hints"] = nr.node.hint
     # And we are done.
     res
   end
@@ -149,7 +151,7 @@ class Jig < ActiveRecord::Base
         next unless (this_nr.wall["crowbar_wall"]["reservations"] rescue nil)
         res.deep_merge!(this_nr.wall["crowbar_wall"]["reservations"])
       end
-      nr.node.discovery=({"reservations" => res})
+      nr.node.discovery.merge({"reservations" => res})
     end
     return nr
   end

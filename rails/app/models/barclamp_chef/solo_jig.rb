@@ -109,12 +109,7 @@ class BarclampChef::SoloJig < Jig
       return finish_run(nr)
     end
     from_node = JSON.parse(IO.read(node_out_json))
-    Node.transaction do
-      discovery = nr.node.discovery
-      discovery["ohai"] = from_node["automatic"]
-      nr.node.discovery = discovery
-      nr.node.save!
-    end
+    nr.node.discovery_merge({"ohai" => from_node["automatic"]})
     nr.wall = from_node["normal"]
     nr.state = ok ? NodeRole::ACTIVE : NodeRole::ERROR
     finish_run(nr)

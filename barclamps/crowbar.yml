@@ -88,4 +88,13 @@ attribs:
   - name: 'number_of_drives'
     description: 'RAID set'
     map: 'ohai/block_device'
-
+  # Node specific hints.
+  - name: 'hint-admin-macs'
+    description: 'Hint for Admin MAC addresses'
+    map: 'admin_macs'
+    schema:
+      type: seq
+      required: true
+      sequence:
+        - type: str
+          pattern: '/([0-9a-fA-F]{2}:){5}[0-9a-fA-F]/'

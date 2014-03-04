@@ -395,7 +395,7 @@ class CrowbarProxy
 
   def []=(k,v)
     raise("Cannot modify #{k}") if k =~ /(^(name|order))|(.*_(id|at))$/
-    do_update({k => v}.to_json)
+    do_update_Json({k => v}.to_json)
   end
 
   def id
@@ -440,7 +440,33 @@ class CrowbarProxy
   end
 end
 
-class Node < CrowbarProxy
+# Handy helper for dealing with objects that have Crowbar attribs.
+class ProxyWithAttribs < CrowbarProxy
+
+  def do_attribs(*rest)
+    objs,res = REST.get("#{self.class.path}/#{id}/attribs")
+    maybe_json_die(objs,res)
+    objs.map{|o|Attrib.new(o)}
+  end
+
+  def do_get_attrib_Attrib(attrib,*rest)
+    obj,res = REST.get("#{self.class.path}/#{id}/attribs/#{attrib.id}")
+    maybe_json_die(obj,res)
+    Attrib.new(obj)
+  end
+
+  def do_set_attrib_Attrib_to_Json(attrib,value,*rest)
+    unless value.keys == ["value"]
+      raise "JSON passed to set an attrib must have a single key named value"
+    end
+    obj,res = REST.put("#{self.class.path}/#{id}/attribs/#{attrib.id}",value)
+    maybe_json_die(obj,res)
+    Attrib.new(obj)
+  end
+
+end
+
+class Node < ProxyWithAttribs
 
   def name
     @blob["name"]
@@ -474,27 +500,18 @@ class Node < CrowbarProxy
     self
   end
 
-
   def do_noderoles(*rest)
     objs,res = REST.get("#{self.class.path}/#{id}/node_roles")
     maybe_json_die(objs,res)
     objs.map{|o|NodeRole.new(o)}
   end
 
-  def do_attribs(*rest)
-    objs,res = REST.get("#{self.class.path}/#{id}/attribs")
-    maybe_json_die(objs,res)
-    objs.map{|o|Attrib.new(o)}
-  end
-
   def do_move_to_Deployment(deploy,*rest)
-    obj,res = REST.put("#{self.class.path}/#{id}/move/#{deploy.id}")
-    maybe_json_die(obj,res)
-    Node.new(obj)
+    do_update_Json({"deployment_id" => deploy.id})
   end
 end
 
-class Deployment < CrowbarProxy
+class Deployment < ProxyWithAttribs
   def name
     @blob["name"]
   end
@@ -503,19 +520,25 @@ class Deployment < CrowbarProxy
     Snapshot.new(@blob["snapshot_id"])
   end
 
-  def do_propose(*rest)
-    snapshot.do_propose(*rest)
-    reload
+    def do_propose(*rest)
+    obj,res = REST.put("#{self.class.path}/#{id}/propose")
+    maybe_json_die(obj,res)
+    @blob = obj
+    self
   end
 
   def do_commit(*rest)
-    snapshot.do_commit(*rest)
-    reload
+    obj,res = REST.put("#{self.class.path}/#{id}/commit")
+    maybe_json_die(obj,res)
+    @blob = obj
+    self
   end
 
   def do_recall(*rest)
-    snapshot.do_recall(*rest)
-    reload
+    obj,res = REST.put("#{self.class.path}/#{id}/recall")
+    maybe_json_die(obj,res)
+    @blob = obj
+    self
   end
 
   def do_nodes(*rest)
@@ -526,7 +549,7 @@ class Deployment < CrowbarProxy
 
 end
 
-class Role < CrowbarProxy
+class Role < ProxyWithAttribs
 
   def name
     @blob["name"]
@@ -540,19 +563,20 @@ class Role < CrowbarProxy
 
 end
 
-class DeploymentRole < CrowbarProxy
+class DeploymentRole < ProxyWithAttribs
   def self.path
     "api/v2/deployment_roles"
   end
 end
 
-class NodeRole < CrowbarProxy
+class NodeRole < ProxyWithAttribs
   def self.path
     "api/v2/node_roles"
   end
+
 end
 
-class Snapshot < CrowbarProxy
+class Snapshot < ProxyWithAttribs
 
   def name
     @blob["name"]
@@ -582,6 +606,8 @@ end
 class Barclamp < CrowbarProxy; end
 class User < CrowbarProxy; end
 class Attrib < CrowbarProxy; end
+
+class Jig < CrowbarProxy; end
 
 class Network < CrowbarProxy
   def self.path

@@ -13,12 +13,54 @@
 # limitations under the License.
 #
 
+require 'yaml'
+require 'kwalify'
 class Attrib < ActiveRecord::Base
+
+  validate :schema_is_valid
+  serialize :schema
+
+  # Will be thrown unless the attribute is writable.
+  class AttribReadOnly < Exception
+    def initialize(attr)
+      @errstr = "Attrib #{attr.name} is read-only"
+    end
+
+    def to_s
+      @errstr
+    end
+
+    def to_str
+      to_s
+    end
+  end
 
   belongs_to      :role
   belongs_to      :barclamp
 
   scope           :by_name,              ->(name) { where(:name=>name) }
+
+  def wrap_schema(fragment)
+    {"type" => "map",
+      "required" => true,
+      "mapping" => {
+        name => fragment
+      }
+    }
+  end
+
+  # Returns an array of schema validation errors.
+  # If the array is empty, the validation passed.
+  # Fragment must be a string full of YAML.
+  def validate_schema(fragment)
+    Rails.logger.info("Attrib: Validating schema for #{name}")
+    test_schema = wrap_schema(fragment)
+    Rails.logger.info("Attrib: #{name}: Schema:\n#{test_schema.to_yaml}")
+    validator = Kwalify::MetaValidator.instance
+    schema_errors = validator.validate(test_schema)
+    Rails.logger.info("Attrib: Schema validation for #{name} passed.") if schema_errors.empty?
+    schema_errors
+  end
 
   # Return a deeply nested hash table built from the map with this attribute's
   # data at the end.
@@ -32,8 +74,8 @@ class Attrib < ActiveRecord::Base
     res
   end
 
-  def self.get(name, from, source=:discovery)
-    (name.is_a?(ActiveRecord::Base) ? name : Attrib.find_key(name)).get(from, source)
+  def self.get(name, from, source=:all)
+    (name.is_a?(Attrib) ? name : Attrib.find_key(name)).get(from, source)
   end
 
   # Get the attribute value from the passed object.
@@ -51,8 +93,8 @@ class Attrib < ActiveRecord::Base
           end
         when from.is_a?(DeploymentRole)
           case source
-          when :all then from.wall.deep_merge(from.data)
-          when :hint, :user then from.data
+          when :all then from.wall.deep_merge(from.all_data)
+          when :hint, :user then from.all_data
           when :wall then from.wall
           else from.data
           end
@@ -61,8 +103,7 @@ class Attrib < ActiveRecord::Base
           when :all then from.attrib_data
           when :wall then from.wall
           when :system then from.sysdata
-          when :user then from.data
-          when :hint then from_orig.hint
+          when :user,:hint then from.data
           else raise("#{from} is not a valid source to read noderole data from!")
           end
         when from.is_a?(Role) then from.template
@@ -112,43 +153,76 @@ class Attrib < ActiveRecord::Base
     Attrib.find_key(name).set(to,value,type)
   end
 
+  class AttribValidationFailed < Exception
+    def initialize(attr,data,errors)
+      @errstr = "Attrib #{attr.name}: New requested data #{data.to_json} failed schema validation\n"
+      errors.each do |e|
+        @errstr << "[#{e.path}]: #{e.message}\n"
+      end
+    end
+
+    def to_s
+      @errstr
+    end
+
+    def to_str
+      to_s
+    end
+  end
+
+  def kwalify_validate(value)
+    return if schema.nil?
+    test_schema = wrap_schema(schema)
+    test_value = { name => value }
+    validator = Kwalify::Validator.new(test_schema)
+    errors = validator.validate(test_value)
+    return true if errors.empty?
+    raise AttribValidationFailed.new(self,value,errors)
+  end
+
   private
 
-  # used to create a mapping for discovery values from the map
-  def map_set_value(map,value)
-    return ( map =~ /^([^\/]*)\/(.*)/ ? { $1 => map_set_value($2, value)} : { map => value } )
+  def schema_is_valid
+    return if schema.nil?
+    validate_schema(schema).each do |e|
+      errors.add(:schema,"[#{e.path}]: #{e.message}")
+    end
   end
 
   # If we were asked to do something with an attribute on a node,
   # but that attribute is part of a node role bound to that node,
   # use the node role instead.
   def __resolve(to)
-    return to unless to.is_a?(Node) && self.role_id
-    res = to.node_roles.where(:role_id => self.role_id).first
-    raise("#{self.name} belongs to role #{role.name}, but node #{to.name} does not have a binding for it!") unless res
-    res
+    case
+    when (to.is_a?(Node) && self.role_id) then to.node_roles.find_by!(:role_id => self.role_id)
+    when to.is_a?(Snapshot) then to.deployment_roles.find_by!(:role_id => self.role_id)
+    when [Node,Role,DeploymentRole,NodeRole].any?{|klass|to.is_a?(klass)} then to
+    else raise "#{to.class.name} is not something that we can use Attribs with!"
+    end
   end
 
   # Set a new value for this attribute onto the passed object.
   # The last parameter is what area the new attribute should be placed on
   def __set(to_orig,value,target=:system)
+    raise AttribReadOnly.new(self) unless writable
+    kwalify_validate(value)
+    to_merge = template(value)
     to = __resolve(to_orig)
+    Rails.logger.debug("Attrib: Attempting to update #{name} on #{to.class.name}:#{to.name} to #{value} with #{to_merge.inspect}")
     case
     when to.is_a?(Node)
       case target
-      when :hint then to.hint_update(map_set_value("#{role.name}/#{map}", value))
-      when :discovery then  to.discovery_update(map_set_value(map,value))
-      else raise("#{target} is not a valid target to write node data to!")
+      when :discovery then to.discovery_update(to_merge)
+      else to.hint_update(to_merge)
       end
-    when to.is_a?(Role) then to.template_update(value)
+    when to.is_a?(Role) then to.template_update(to_merge)
     when to.is_a?(DeploymentRole)
-      target == :system ? to.wall_update(value) : to.data_update(value)
+      target == :system ? to.wall_update(to_merge) : to.data_update(to_merge)
     when to.is_a?(NodeRole)
       case target
-      when :system then to.sysdata_update(value)
-      when :user then to.data_update(value)
-      when :hint then to_orig.hint_update(map_set_value("#{role.name}/#{map}", value))
-      when :wall then to.wall_update(value)
+      when :system then to.sysdata_update(to_merge)
+      when :user,:hint then to.data_update(to_merge)
+      when :wall then to.wall_update(to_merge)
       else raise("#{target} is not a valid target to write noderole data to!")
       end
     else raise("Cannot write attribute data to #{to.class.to_s}")

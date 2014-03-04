@@ -44,11 +44,6 @@ class BarclampsController < ApplicationController
   def create
     render api_not_supported 'post', 'barclamp'
   end
-  
-  # Redirects the requested to the snapshot that is the requested template
-  def template
-    redirect_to snapshot_path(:id=>barclamp.template_id)
-  end
 
   #
   # Barclamp catalog

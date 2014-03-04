@@ -115,6 +115,8 @@ class NodeRole < ActiveRecord::Base
     PROPOSED => 'proposed'
   }
 
+  after_create :create_initial_datum
+
   class InvalidTransition < Exception
     def initialize(node_role,from,to,str=nil)
       @errstr = "#{node_role.name}: Invalid state transition from #{NodeRole.state_name(from)} to #{NodeRole.state_name(to)}"
@@ -168,13 +170,22 @@ class NodeRole < ActiveRecord::Base
   end
 
   def deployment_role
-    DeploymentRole.snapshot_and_role(snapshot,role).first
+    DeploymentRole.find_by(snapshot_id: snapshot_id,
+                           role_id: role_id)
+  end
+
+  def deployment_data
+    res = {}
+    dr = deployment_role
+    res.deep_merge!(dr.data)
+    res.deep_merge!(dr.wall)
+    res
   end
 
   def available
     read_attribute("available")
   end
-  
+
   def available=(b)
     NodeRole.transaction do
       write_attribute("available",!!b)
@@ -193,67 +204,48 @@ class NodeRole < ActiveRecord::Base
   end
 
   def data
-    raw = current_data
-    raw.nil? ? {} : JSON.parse(raw.data)
+    current_data.data
   end
 
   def data=(arg)
     raise I18n.t('node_role.cannot_edit_data') unless snapshot.proposed?
-    arg = JSON.generate(arg) if arg.is_a? Hash
-
-    ## TODO Validate the config file
-    raise I18n.t('node_role.data_parse_error') unless true
     new_data(:data, arg)
   end
 
   def data_update(val)
-    d = data.clone
-    d.deep_merge!(val)
-    self.data= d
+    NodeRole.transaction do
+      self.data = self.data.deep_merge(val)
+    end
   end
 
   def sysdata
     return role.sysdata(self) if role.respond_to?(:sysdata)
-    raw = current_data
-    raw.nil? ? {} : JSON.parse(raw.sysdata)
+    current_data.sysdata
   end
 
   def sysdata=(arg)
     raise("#{role.name} dynamically overwrites sysdata, cannot write to it!") if role.respond_to?(:sysdata)
-    new_data(:sysdata,JSON.generate(arg))
+    new_data(:sysdata,arg)
   end
 
   def sysdata_update(val)
     NodeRole.transaction do
-      d = sysdata.clone
-      d.deep_merge!(val)
-      sysdata = d
+      self.sysdata = self.sysdata.deep_merge(val)
     end
   end
 
-  def data_schema
-    { :type=>:map, :required=>true, :mapping=>{ } }
-  end
-
   def wall
-    raw = current_data
-    raw.nil? ? {} : JSON.parse(raw.wall)
+    current_data.wall
   end
 
   def wall=(arg)
-    new_data(:wall,JSON.generate(arg))
+    new_data(:wall, arg)
   end
 
   def wall_update(val)
     NodeRole.transaction do
-      d = wall.clone
-      d.deep_merge!(val)
-      wall = d
+      self.wall = self.wall.deep_merge(val)
     end
-  end
-
-  def wall_schema
-    { :type=>:map, :required=>true, :mapping=>{ } }
   end
 
   def active?
@@ -283,15 +275,6 @@ class NodeRole < ActiveRecord::Base
 
   def runnable?
     node.available && node.alive && jig.active
-  end
-
-  def deployment_data
-    res = {}
-    DeploymentRole.where(:snapshot_id => snapshot.id,:role_id => role.id).each do |dr|
-      res.deep_merge!(dr.data)
-      res.deep_merge!(dr.wall)
-    end
-    res
   end
 
   def all_my_data
@@ -495,6 +478,12 @@ class NodeRole < ActiveRecord::Base
 
   private
 
+  def create_initial_datum
+    NodeRoleDatum.create!(:node_role_id => id,
+                          :snapshot_id => snapshot_id,
+                          :current => true)
+  end
+  
   def block_or_todo
     NodeRole.transaction do
       if (parents.current.count == 0) || (parents.current.not_in_state(ACTIVE).count == 0)
