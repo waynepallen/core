@@ -33,7 +33,6 @@ Crowbar::Application.configure do
   # Enable threaded mode
   # config.threadsafe! unless $rails_rake_task
   config.log_level = :info
-  config.paths['log'] = "log/#{Rails.env}.log"
 
   CROWBAR_VERSION = "v2.0-dev"
 end

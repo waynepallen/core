@@ -40,11 +40,7 @@ class AttribsController < ApplicationController
   end
 
   def create
-    if params.has_key? :node_id
-      render api_not_supported 'post', 'nodes/:node_id/attribs/:id'
-    else
-      render api_not_supported 'post', 'attribs'
-    end
+    render api_not_supported 'post', 'attribs'
   end
 
   def update

@@ -26,9 +26,7 @@
             = link_to t('user.sign_out'), main_app.destroy_user_session_path(), :method=>'delete' rescue t('error')
             )
           %nav
-            - Rails.logger.info  "ZEHICLE 1"
             = render_navigation :expand_all => true, :skip_if_empty => true
-            - Rails.logger.info  "ZEHICLE 2"
         - else
           %nav
             = link_to t('user.sign_in'),  main_app.new_user_session_path
