@@ -40,7 +40,7 @@ class CreateRoles < ActiveRecord::Migration
       # it has transitioned to active, it will not be run again.
       t.boolean     :destructive,       :null=>false, :default=>false
       t.belongs_to  :barclamp,          :null=>false
-      t.integer     :cohort
+      t.integer     :cohort,            :null=>false, :default=>0
       t.timestamps
     end
     #natural key
