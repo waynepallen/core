@@ -7,9 +7,9 @@ rootpw --iscrypted $1$H6F/NLec$Fps2Ut0zY4MjJtsa1O2yk0
 selinux --disabled
 firewall --disabled
 
-repo --name=a-base    --baseurl=http://mirror.centos.org/centos/6/os/$basearch
-repo --name=a-updates --baseurl=http://mirror.centos.org/centos/6/updates/$basearch
-repo --name=a-extras  --baseurl=http://mirror.centos.org/centos/6/extras/$basearch
+repo --name=a-base    --baseurl=http://mirrors.kernel.org/centos/6/os/$basearch
+repo --name=a-updates --baseurl=http://mirrors.kernel.org/centos/6/updates/$basearch
+repo --name=a-extras  --baseurl=http://mirrors.kernel.org/centos/6/extras/$basearch
 repo --name=a-live    --baseurl=http://www.nanotechnologies.qc.ca/propos/linux/centos-live/$basearch/live
 repo --name=a-wsman   --baseurl=http://download.opensuse.org/repositories/Openwsman/CentOS_CentOS-6
 %packages
