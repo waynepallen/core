@@ -129,6 +129,10 @@ EOF
 
 echo "PermitRootLogin without-password" >> /etc/ssh/sshd_config
 
+# Allow client to pass http proxy environment variables
+echo "AcceptEnv http_proxy https_proxy no_proxy" >> /etc/ssh/sshd_config
+
+
 curl -s -o /etc/init.d/crowbar_join.sh "<%=@web_path%>/crowbar_join.sh"
 chmod +x /etc/init.d/crowbar_join.sh
 ln -s /etc/init.d/crowbar_join.sh /etc/rc3.d/S80crowbar
