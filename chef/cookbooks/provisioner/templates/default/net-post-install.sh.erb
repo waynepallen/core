@@ -89,6 +89,9 @@ apt-get -y --force-yes update
 apt-get -y --force-yes remove apparmor
 
 echo "PermitRootLogin without-password" >> /etc/ssh/sshd_config
+# Allow client to pass http proxy environment variables
+echo "AcceptEnv http_proxy https_proxy no_proxy" >> /etc/ssh/sshd_config
+
 
 curl -u "$CROWBAR_KEY" --digest -L -X PUT -d "bootenv=local" \
     "http://<%=@admin_ip%>:3000/api/v2/nodes/$HOSTNAME"
