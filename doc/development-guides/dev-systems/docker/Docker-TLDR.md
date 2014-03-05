@@ -13,7 +13,7 @@ This is the TL;DR version; the full version is [here](docker-admin.md).
   3. `sudo usermod -a -G docker <your-user>` (to permanently run Docker
   without sudo)
 2. To build Sledgehammer:
-  1. `tools/build_sledgehammer.sh`
+  1. `tools/build_sledgehammer.sh` [Details](../../workflow/dev-build-sledgehammer.md)
 2. To run in development mode:
   1. `tools/docker-admin centos ./development.sh`
 3. To run in production mode:

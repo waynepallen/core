@@ -47,6 +47,9 @@ TCPKeepAlive yes
 # Allow client to pass locale environment variables
 AcceptEnv LANG LC_*
 
+# Allow client to pass http proxy environment variables
+AcceptEnv http_proxy https_proxy no_proxy
+
 Subsystem sftp /usr/lib/openssh/sftp-server
 
 # Set this to 'yes' to enable PAM authentication, account processing,

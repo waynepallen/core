@@ -17,6 +17,7 @@ class CreateRoleRequires < ActiveRecord::Migration
     create_table :role_requires do |t|
       t.belongs_to  :role,              :null=>false
       t.string      :requires,          :null=>false
+      t.integer     :required_role_id
       t.timestamps
     end
     add_index(:role_requires, [:role_id, :requires], :unique => true)

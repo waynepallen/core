@@ -24,19 +24,22 @@ class Role < ActiveRecord::Base
   validates_uniqueness_of   :name,  :scope => :barclamp_id
   validates_format_of       :name,  :with=>/\A[a-zA-Z][-_a-zA-Z0-9]*\z/, :message => I18n.t("db.lettersnumbers", :default=>"Name limited to [_a-zA-Z0-9]")
 
+  after_commit :resolve_requires_and_jig
+
   belongs_to      :barclamp
   belongs_to      :jig,               :foreign_key=>:jig_name, :primary_key=>:name
   has_many        :role_requires,     :dependent => :destroy
+  has_many        :active_role_requires, -> { where("required_role_id IS NOT NULL") }, class_name: "RoleRequire"
+  has_many        :role_requires_children, class_name: "RoleRequire", foreign_key: :requires, primary_key: :name
+  has_many        :parents, through: :active_role_requires, source: :parent
+  has_many        :children, through: :role_requires_children, source: :role
   has_many        :role_require_attribs, :dependent => :destroy
   has_many        :attribs,           :dependent => :destroy
   has_many        :wanted_attribs,    :through => :role_require_attribs, :class_name => "Attrib", :source => :attrib
-  has_many        :role_parents, :through => :role_requires, :class_name => "Role", :source => :upstream
   has_many        :node_roles,        :dependent => :destroy
   has_many        :deployment_roles,  :dependent => :destroy
   alias_attribute :requires,          :role_requires
 
-  #has_many        :upstreams,         :through => :role_requires
-  #scope           :downstreams,       ->(r) { joins(:role_requires).where(['requires=?', r.name]) }
   scope           :library,            -> { where(:library=>true) }
   scope           :implicit,           -> { where(:implicit=>true) }
   scope           :discovery,          -> { where(:discovery=>true) }
@@ -111,49 +114,21 @@ class Role < ActiveRecord::Base
     true
   end
 
-  # returns list of roles that are the parents of this role
-  def parents
-    res = []
-    res << jig.client_role if jig.client_role
-    res + role_parents
-  end
-
-  def reset_cohort
-    Role.transaction do
-      cohort = nil
-      save!
-      RoleRequire.where(:requires => name).each do |rr|
-        if rr.role 
-          rr.role.reset_cohort 
-        else
-          Rails.logger.warn "Role: Could not reset cohort for Role #{name} because required Role #{rr.id} does not have a role set"
-          raise "Role: role not set for role require"
-        end
-      end
-    end
-  end
-
   def name_safe
     I18n.t(name, :default=>name, :scope=>'common.roles').gsub("-","&#8209;").gsub(" ","&nbsp;")
   end
 
-  def cohort
+  def update_cohort
     Role.transaction do
-      c = read_attribute("cohort")
-      if c.nil?
-        c = 0
-        begin
-          parents.each do |parent|
-            p_c = parent.cohort || 0
-            c = p_c + 1 if p_c >= c
-          end
-          write_attribute("cohort",c)
-          save!
-        rescue
-          Rails.logger.info "Role: Could not calculate cohort for #{self.name} because requested parent role does not exist (could be OK due to late binding)"
-        end
+      c = (parents.maximum("cohort") || -1)
+      if c >= cohort
+        Rails.logger.info("Role: #{name}: Updating cohort from #{cohort} to #{c + 1}")
+        update_column(:cohort,  c + 1)
       end
-      return c
+    end
+    children.where('cohort <= ?',cohort).each do |child|
+      Rails.logger.info("Role: #{name}: Asking child role #{child.name} to update its cohort")
+      child.update_cohort
     end
   end
 
@@ -204,7 +179,7 @@ class Role < ActiveRecord::Base
   def add_to_node(node)
     add_to_node_in_snapshot(node,node.deployment.head)
   end
-  
+
   # Bind a role to a node in a snapshot.
   def add_to_node_in_snapshot(node,snap)
     # Roles can only be added to a node of their backing jig is active.
@@ -218,14 +193,17 @@ class Role < ActiveRecord::Base
         raise MISSING_JIG.new("Role: role '#{name}' cannot be added to node '#{node.name}' without '#{jig_name}' being active!")
       end
     end
+    
     # If we are already bound to this node in a snapshot, do nothing.
-    res = NodeRole.where(:node_id => node.id, :role_id => self.id).first
+    res = NodeRole.find_by(node_id: node.id, role_id: self.id)
     return res if res
     Rails.logger.info("Role: Trying to add #{name} to #{node.name}")
 
     # First pass throug the parents -- we just create any needed parent noderoles.
     # We will actually bind them after creating the noderole binding.
-    parents.each do |parent|
+    role_requires.each do |role_req|
+      raise "Parent role #{role_req.requires} for #{name} does not exist!" unless role_req.resolved?
+      parent = role_req.parent
       pnrs = find_noderoles_for_role(parent,snap)
       if pnrs.empty? || (parent.implicit && !pnrs.any?{|nr|nr.node_id == node.id})
         # If there are none, or the parent role has the implicit flag,
@@ -295,6 +273,23 @@ class Role < ActiveRecord::Base
   def <=>(other)
     return 0 if self.id == other.id
     self.cohort <=> other.cohort
+  end
+
+  private
+
+  def resolve_requires_and_jig
+    # Find all of the RoleRequires that refer to us,
+    # and resolve them.  This will also update the cohorts if needed.
+    role_requires_children.where(required_role_id: nil).each do |rr|
+      rr.resolve!
+    end
+    return true unless jig && jig.client_role &&
+      !RoleRequire.exists?(role_id: id,
+                           requires: jig.client_role_name)
+    # If our jig has already been loaded and it has a client role,
+    # create a RoleRequire for it.
+    RoleRequire.create!(role_id: id,
+                        requires: jig.client_role_name)
   end
 
 end

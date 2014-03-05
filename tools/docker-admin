@@ -119,7 +119,22 @@ if [[ ! $container = lxc ]]; then
         [[ $proxy_port ]] && docker_proxy+=":${proxy_port}"
         docker_args+=(-e "http_proxy=$docker_proxy")
         [[ $https_proxy ]] && docker_args+=(-e "https_proxy=$docker_proxy")
-        [[ $no_proxy ]] && docker_args+=(-e "no_proxy=$no_proxy")
+        declare -A wanted_no_proxy
+        wanted_no_proxy['localhost']=true
+        wanted_no_proxy['127.0.0.0/8']=true
+        wanted_no_proxy['::1']=true
+        wanted_no_proxy['172.16.0.0/12']=true
+        wanted_no_proxy['192.168.0.0/16']=true
+        if [[ $no_proxy ]]; then
+            IFS="," read -a no_proxy_parts <<<"$no_proxy"
+            for no_proxy_part in "${no_proxy_parts[@]}"; do
+                [[ ${wanted_no_proxy["$no_proxy_part"]} ]] && continue
+                wanted_no_proxy["$no_proxy_part"]=true
+            done
+        fi
+        no_proxy="$(printf '%s,' "${!wanted_no_proxy[@]}")"
+        no_proxy="${no_proxy%,}"
+        [[ $no_proxy ]] && docker_args+=(-e "no_proxy=${no_proxy}")
     fi
     # since 0.8.1 we need to run in privileged mode so we can change the networking
     docker_args+=("--privileged")

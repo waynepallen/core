@@ -131,7 +131,6 @@ class Barclamp < ActiveRecord::Base
                    {}
                  end
       # roles data import
-      ## TODO: Verify that adding the roles will not result in circular role dependencies.
       r = nil
       Role.transaction do
         r = role_type.find_or_create_by!(:name=>role_name,
@@ -149,11 +148,15 @@ class Barclamp < ActiveRecord::Base
                              :cluster=>flags.include?('cluster'))
         RoleRequire.where(:role_id=>r.id).delete_all
         RoleRequireAttrib.where(:role_id => r.id).delete_all
-        prerequisites.each { |req| RoleRequire.create :role_id => r.id, :requires => req }
+        prerequisites.each do |req|
+          RoleRequire.create! :role_id => r.id, :requires => req
+        end
         wanted_attribs.each do  |attr|
+          attr_name = attr.is_a?(Hash) ? attr["name"] : attr
+          attr_at = attr.is_a?(Hash) ? attr["at"] : nil
           RoleRequireAttrib.create!(:role_id => r.id,
-                                    :attrib_name => attr.is_a?(Hash) ? attr["name"] : attr,
-                                    :attrib_at => attr.is_a?(Hash) ? attr["at"] : nil)
+                                    :attrib_name => attr_name,
+                                    :attrib_at => attr_at)
         end
       end
       role['attribs'].each do |attrib|

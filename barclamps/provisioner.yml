@@ -44,6 +44,9 @@ roles:
       - name: provisioner-webserver
         description: 'The URL that managed nodes should use to contact the provisioner webserver.'
         map: 'crowbar/provisioner/server/webserver'
+      - name: provisioner-online
+        description: 'Whether or not the provisioner is operating in online mode..'
+        map: 'crowbar/provisioner/server/online'
       - name: provisioner-upstream_proxy
         description: "The upstream Web proxy that the proxy on the provisioner will use"
         map: 'crowbar/provisioner/server/upstream_proxy'
@@ -73,6 +76,9 @@ roles:
       - implicit
     wants-attribs:
       - provisioner-package-repos
+      - provisioner-proxy
+      - provisioner-webserver
+      - provisioner-online
   - name: provisioner-dhcp-server
     jig: chef-solo
     requires:

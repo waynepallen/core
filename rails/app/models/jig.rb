@@ -35,6 +35,7 @@ class Jig < ActiveRecord::Base
 
   has_many    :roles,     :primary_key=>:name, :foreign_key=>:jig_name
   belongs_to  :barclamp
+  after_create :make_role_requires
 
 
   def self.active(jig)
@@ -65,7 +66,7 @@ class Jig < ActiveRecord::Base
   def client_role
     crn = client_role_name
     return nil if crn.nil?
-    res = Role.where(:name => crn).first
+    res = Role.find_by(name: crn)
     # Jig client roles must be implicit roles.
     raise "#{crn} is not an implicit role!" unless res.implicit
     # Jig client roles cannot be implemented by the jig they implement
@@ -199,6 +200,14 @@ private
         Rails.logger.warn("Backtrace: #{exc.backtrace}")
       end
     }
+  end
+
+  def make_role_requires
+    return true unless client_role_name
+    roles.each do |r|
+      RoleRequire.create!(role_id: r.id,
+                          requires: client_role_name)
+    end
   end
 end
 
