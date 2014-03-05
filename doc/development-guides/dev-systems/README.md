@@ -16,10 +16,11 @@ Engineers value documentation that explains how to get a development workstation
       1. ubuntu: `sudo apt-get install squid squid-common`
     1. CNTLM proxy: 
       1. ubuntu: `sudo apt-get install cntlm`
-      1. make sure that you allow NON local hosts to use the proxy (in =/etc/cntlm.conf= set `gateway yes`)!  Containers are not "local" and require your CNTLM proxy to act as a gateway.
+      1. make sure that you allow NON local hosts to use the proxy (in `/etc/cntlm.conf` set `gateway yes`)!  Containers are not "local" and require your CNTLM proxy to act as a gateway.
     1. SAMBA share
       1. ubuntu: `sudo apt-get install samba`
     1. Passwordless sudo: `sudo sed -ie "s/%sudo\tALL=(ALL:ALL) ALL/%sudo ALL=(ALL) NOPASSWD: ALL/g" /etc/sudoers`
+  1. if you are stuck behind a proxy, make sure your environment does not use it for local addresses: `export no_proxy="127.0.0.1,[::1],localhost,192.168.124.0/24,172.16.0.0/12"`
   1. `apt-get install git`
 
 ###Position Boot Assets, see [docker/Docker-TLDR]
