@@ -51,11 +51,6 @@ puts()              -> log(puts, "*** HERE! ***").
 puts(Format)        -> log(puts, Format).  
 puts(Format, Data)  -> log(puts, Format, Data).
 
-% DEPRICATED! for debug statements that you want to leave in
-debug(Format)             -> log(debug, Format, []).
-debug(Format, Data)       -> log(debug, Format, Data).
-debug(Show, Format, Data) -> log(Show, Format, Data, "DEBUG").
-
 % FOR PERFORMANCE, always call with Config if available!
 log(Format)                       -> log(info, Format, []).
 log(Format, Data)                 -> log(info, Format, Data).

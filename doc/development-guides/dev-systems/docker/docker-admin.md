@@ -152,12 +152,12 @@ deployment at http://localhost:3000.  Once the admin node is finished
 deploying (or if anything goes wrong), you will be left at a running
 shell inside the container.
 
-### Booting slave VMs from the OpenCrowbar admin node
+### Booting slave VMs from the admin node
 
 #### Bare Metal (the easy way)
 If your development environment is running on bare metal (as opposed
 to running inside a VM), you can use `tools/kvm-slave &` to spawn a
-KVM virtual machine that will boot from the freshly-deployed OpenCrowbar
+KVM virtual machine that will boot from the freshly-deployed
 admin node.
 
 #### Virtual Box (the corporate way)

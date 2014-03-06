@@ -40,7 +40,20 @@ class AttribsController < ApplicationController
   end
 
   def create
-    render api_not_supported 'post', 'attribs'
+    params[:barclamp_id] = Barclamp.find_key(params[:barclamp]).id if params.has_key? :barclamp
+    params[:role_id] =  Role.find_key(params[:role]).id if params.has_key? :role
+    params.require(:name)
+    params.require(:barclamp_id)
+    @attrib = Attrib.create!(params.permit(:name,
+                                       :barclamp_id,
+                                       :role_id,
+                                       :type,
+                                       :description,
+                                       :writable,
+                                       :schema,
+                                       :order,
+                                       :map))
+    render api_show @attrib
   end
 
   def update
@@ -60,7 +73,9 @@ class AttribsController < ApplicationController
   end
 
   def destroy
-    render api_not_supported 'delete', 'attribs/:id'
+    @attrib = Attrib.find_key(params[:id] || params[:name])
+    @attrib.destroy
+    render api_delete @attrib
   end
 
   private
