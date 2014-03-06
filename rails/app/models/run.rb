@@ -21,10 +21,10 @@ class Run < ActiveRecord::Base
   scope :runnable,   -> { where(:running => false).sort{|a,b| a.sort_id <=> b.sort_id} }
   scope :running,    -> { where(:running => true) }
   scope :running_on, ->(node_id) { running.where(:node_id => node_id) }
-  scope :deletable,  -> { find_by_sql(%Q{select runs.* from runs INNER JOIN node_roles
-          ON runs.node_role_id = node_roles.id
-          where NOT ((node_roles.state = #{NodeRole::TRANSITION}) OR
-         (node_roles.state in (#{NodeRole::TODO}, #{NodeRole::ACTIVE}) AND NOT runs.running))}) }
+  scope :deletable,  -> { where("id in (select r.id from runs r INNER JOIN node_roles nr
+          ON r.node_role_id = nr.id
+          where NOT ((nr.state = #{NodeRole::TRANSITION}) OR
+         (nr.state in (#{NodeRole::TODO}, #{NodeRole::ACTIVE}) AND NOT r.running)))") }
 
   def sort_id
     [node_role.cohort, node_role_id, id]
@@ -37,10 +37,7 @@ class Run < ActiveRecord::Base
     # Runs that are not running with a noderole in TODO or ACTIVE
     Run.transaction do
       ActiveRecord::Base.connection.execute("LOCK TABLE runs")
-      deletable.each do |j|
-        Rails.logger.info("Run: Deleting #{j.node_role.name}: state #{j.node_role.state}") unless j.node_role.nil?
-        j.destroy
-      end
+      deletable.destroy_all
     end
   end
 
@@ -63,12 +60,12 @@ class Run < ActiveRecord::Base
     Run.transaction do
       unless nr.runnable? &&
           ([NodeRole::ACTIVE, NodeRole::TODO, NodeRole::TRANSITION].member?(nr.state))
-        Rails.logger.info("Run: #{nr.name} is NOT enqueueable/runnable [nr.state #{nr.state} is Active/Todo/Trans && node.available #{nr.node.available} && node.alive #{nr.node.alive} && jig.active #{nr.role.jig.active}]")
+        Rails.logger.debug("Run: #{nr.name} is NOT enqueueable/runnable [nr.state #{nr.state} is Active/Todo/Trans && node.available #{nr.node.available} && node.alive #{nr.node.alive} && jig.active #{nr.role.jig.active}]")
       else
         ActiveRecord::Base.connection.execute("LOCK TABLE runs")
         current_run = Run.where(:node_id => nr.node_id).first
         if nr.todo? && !current_run.nil?
-          Rails.logger.info("Run: #{nr.name} in TODO and #{current_run.node_role.name} is already enqueued on #{nr.node.name}")
+          Rails.logger.debug("Run: #{nr.name} in TODO and #{current_run.node_role.name} is already enqueued on #{nr.node.name}")
         else
           if current_run
             Rails.logger.info("Run: Enqueing #{nr.name} after #{current_run.node_role.name}")
@@ -79,7 +76,6 @@ class Run < ActiveRecord::Base
                       :node_role_id => nr.id)
         end
       end
-      Rails.logger.info("Run: Queue: #{Run.all.map{|j|"#{j.node_role.name}: state #{j.node_role.state}"}}") rescue Rails.logger.info("Run: enqueue has nil node_roles")
     end
     run!
   end
@@ -96,7 +92,7 @@ class Run < ActiveRecord::Base
       # already have a noderole enqueued.
       NodeRole.runnable.order("cohort ASC, id ASC").each do |nr|
         if Run.where(:node_id => nr.node_id).count > 0
-          Rails.logger.info("Run: Skipping #{nr.name}")
+          Rails.logger.debug("Run: Skipping #{nr.name}")
         else
           Rails.logger.info("Run: Enqueing #{nr.name}")
           Run.create!(:node_id => nr.node_id,
@@ -112,7 +108,6 @@ class Run < ActiveRecord::Base
         # running on it, then skip it for now.
         next unless Run.running_on(j.node_id).count == 0
         raise "you cannot run job #{j.id} on node #{j.node_id} without a node_role." if j.node_role.nil?
-        Rails.logger.info("Run: Sending #{j.node_role.name} to delayed_jobs")
         j.node_role.state = NodeRole::TRANSITION
         j.running = true
         j.save!
@@ -131,7 +126,6 @@ class Run < ActiveRecord::Base
           j.node_role.runlog = ""
           j.node_role.save!
           run_data = j.node_role.jig.stage_run(j.node_role)
-          Rails.logger.info("Run: Running #{j.node_role.name} with attribs #{run_data.inspect}")
           j.node_role.jig.delay(:queue => "NodeRoleRunner").run(j.node_role,run_data)
           queued += 1
         rescue Exception => e
