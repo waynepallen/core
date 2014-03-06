@@ -68,6 +68,10 @@ class NodesController < ApplicationController
     node_action :redeploy!
   end
 
+  def commit
+    node_action :commit!
+  end
+
   # RESTfule POST of the node resource
   def create
     params[:deployment_id] = Deployment.find_key(params[:deployment]).id if params.has_key? :deployment
@@ -86,12 +90,13 @@ class NodesController < ApplicationController
                                        :available,
                                        :bootenv))
     # Keep suport for mac and ip hints in short form around for legacy Sledgehammer purposes
-    if params[:mac]
-      @node.attribs.find_by!(name: "hint-admin-macs").set(@node,[params[:mac]])
-    end
     if params[:ip]
       @node.attribs.find_by!(name: "hint-admin-v4addr").set(@node,params[:ip])
     end
+    if params[:mac]
+      @node.attribs.find_by!(name: "hint-admin-macs").set(@node,[params[:mac]])
+    end
+
 
     render api_show @node
   end

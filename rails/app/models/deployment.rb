@@ -49,29 +49,11 @@ class Deployment < ActiveRecord::Base
     head.state
   end
 
-  # Helper to atomically recommit a currently active or committed snapshot.
-  def recommit(&block)
-    raise "Can only be called on a system deployment" unless system?
-    raise "Recommit must be passed a block that will take a snapshot!" unless block_given?
-    Deployment.transaction do
-      # if the head is committed (in transistion) then we can add it otherwise, we need to clone it
-      new_c = (head.committed? ? head : head.deep_clone)
-      block.call(new_c)
-      new_c.save!
-      # move the pointer (could be skipped if this was already head)
-      self.snapshot_id = new_c.id 
-      # reset all the node roles to ensure we re-evaluate
-      new_c.node_roles.each { |nr| nr.commit! }
-      self.save!
-      return snapshot(true)
-    end
-  end
-
   # commit the current proposal (cannot be done if there is a committed proposal)
   def commit
     head.commit
   end
-  
+
   # is this a system deployment?
   def system?
     read_attribute("system")

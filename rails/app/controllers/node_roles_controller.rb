@@ -59,8 +59,6 @@ class NodeRolesController < ApplicationController
     node = Node.find_key(params[:node] || params[:node_id])
     role = Role.find_key(params[:role] || params[:role_id])
     snap ||= node.deployment.head
-    
-    raise "Cannot add noderole to snapshot in #{Snapshot.state_name(snap.state)}" unless snap.proposed?
     NodeRole.transaction do
       @node_role = role.add_to_node_in_snapshot(node,snap)
       if params[:data]

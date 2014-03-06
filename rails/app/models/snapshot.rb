@@ -118,16 +118,16 @@ class Snapshot < ActiveRecord::Base
   def status
     node_roles.each { |nr| s[nr.id] = nr.status if nr.error?  }
   end
-  
-    # commit the current proposal (cannot be done if there is a committed proposal)
+
   def commit
-    raise I18n.t('deployment.commit.raise', :default=>'blocked: already 1 committed') unless proposed?
     NodeRole.transaction do
       node_roles.in_state(NodeRole::PROPOSED).each { |nr| nr.commit! }
     end
-    parent.archive unless parent.nil?
-    write_attribute("state",COMMITTED)
-    save!
+    if proposed?
+      parent.archive unless parent.nil?
+      write_attribute("state",COMMITTED)
+      save!
+    end
     Run.run!
     self
   end

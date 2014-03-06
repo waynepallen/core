@@ -13,9 +13,10 @@ When Nodes are created, updated or deleted, roles and jigs are notified so they 
 |POST |	api/v2/nodes |	Create Item, notifies all jigs and roles|
 |DELETE |	api/v2/nodes/:id |	Delete Item + notifies all jigs and roles|
 |GET |	api/v2/nodes/:id/node_roles |	Shows all the roles that the node is using (including their status)|
-| GET  | /api/v2/nodes/[:node_id]/attribs  | none   | List Attribs for a specific node| - | 
-| GET  | /api/v2/nodes/[:node_id]/attribs/[:id]  | none   | Show Attrib (including value) for a specific Node| - | 
-| PUT  | /api/v2/nodes/[:node_id]/attribs/[:id]  | none   | Update Attrib |
+| GET  | /api/v2/nodes/[:node_id]/attribs  | List Attribs for a specific node| - | 
+| GET  | /api/v2/nodes/[:node_id]/attribs/[:id]  | Show Attrib (including value) for a specific Node| - | 
+| PUT  | /api/v2/nodes/[:node_id]/commit  | Commit all the noderoles in proposed on a specific node|
+| PUT  | /api/v2/nodes/[:node_id]/attribs/[:id]  | Update Attrib |
 
 Details:
 

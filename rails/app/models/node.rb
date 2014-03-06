@@ -20,7 +20,7 @@ class Node < ActiveRecord::Base
 
   before_validation :default_population
   before_destroy :tear_down_roles
-  after_create :add_default_roles
+  after_create :on_create_hooks
   after_save :after_save_handler
 
   # Make sure we have names that are legal
@@ -243,6 +243,14 @@ class Node < ActiveRecord::Base
     self.reboot
   end
 
+  def commit!
+    self.available = true
+    self.save!
+    node_roles.committed.in_state(NodeRole::PROPOSED).order("cohort ASC").each do |nr|
+      nr.commit!
+    end
+  end
+
   def redeploy!
     Node.transaction do
       self.bootenv = "sledgehammer"
@@ -313,12 +321,14 @@ class Node < ActiveRecord::Base
   private
 
   def after_save_handler
-    return unless changed?
+    return unless changed? 
     Rails.logger.info("Node: calling all role on_node_change hooks for #{name}")
+    # We only call on_node_change when the node is available to prevent Crowbar
+    # from noticing changes it should not notice yet.
     Role.all_cohorts.each do |r|
       Rails.logger.info("Node: Calling #{r.name} on_node_change for #{self.name}")
       r.on_node_change(self)
-    end
+    end if available?
     if changes["available"] || changes["alive"]
       if alive && available
         Rails.logger.info("Node: #{name} is alive and available, enqueing noderoles to run.")
@@ -360,14 +370,7 @@ class Node < ActiveRecord::Base
     end
   end
 
-  def add_default_roles
-    raise "you must have at least 1 deployment" unless Deployment.count > 0
-    Deployment.system_root.first.recommit do |snap|
-      (self.admin ? Role.bootstrap.active : Role.discovery.active).sort.each do |r|
-        r.add_to_node_in_snapshot(self,snap)
-      end
-    end
-
+  def on_create_hooks
     # Call all role on_node_create hooks with ourself.
     # These should happen synchronously.
     # do the low cohorts first
@@ -377,4 +380,5 @@ class Node < ActiveRecord::Base
       r.on_node_create(self)
     end
   end
+
 end

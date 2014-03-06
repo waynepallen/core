@@ -164,6 +164,35 @@ class NodeRole < ActiveRecord::Base
     state == ERROR
   end
 
+  def active?
+    state == ACTIVE
+  end
+
+  def todo?
+    state == TODO
+  end
+
+  def transition?
+    state == TRANSITION
+  end
+
+  def blocked?
+    state == BLOCKED
+  end
+
+  def proposed?
+    state == PROPOSED
+  end
+
+  def activatable?
+    (parents.current.count == 0) ||
+      (parents.current.not_in_state(ACTIVE).count == 0)
+  end
+
+  def runnable?
+    node.available && node.alive && jig.active
+  end
+
   # convenience methods
   def name
     "#{deployment.name}: #{node.name}: #{role.name}" rescue I18n.t('unknown')
@@ -208,7 +237,7 @@ class NodeRole < ActiveRecord::Base
   end
 
   def data=(arg)
-    raise I18n.t('node_role.cannot_edit_data') unless snapshot.proposed?
+    raise I18n.t('node_role.cannot_edit_data') unless proposed? || snapshot.proposed?
     new_data(:data, arg)
   end
 
@@ -246,35 +275,6 @@ class NodeRole < ActiveRecord::Base
     NodeRole.transaction do
       self.wall = self.wall.deep_merge(val)
     end
-  end
-
-  def active?
-    state == ACTIVE
-  end
-
-  def todo?
-    state == TODO
-  end
-
-  def transition?
-    state == TRANSITION
-  end
-
-  def blocked?
-    state == BLOCKED
-  end
-
-  def proposed?
-    state == PROPOSED
-  end
-
-  def activatable?
-    (parents.current.count == 0) ||
-      (parents.current.not_in_state(ACTIVE).count == 0)
-  end
-
-  def runnable?
-    node.available && node.alive && jig.active
   end
 
   def all_my_data
@@ -327,7 +327,7 @@ class NodeRole < ActiveRecord::Base
   end
 
   def deactivate
-    return if self.state == PROPOSED
+    return if proposed?
     block_or_todo
   end
 
@@ -355,6 +355,8 @@ class NodeRole < ActiveRecord::Base
     case val
     when ERROR
       # We can only go to ERROR from TRANSITION
+      # but we silently ignore the transition if in BLOCKED
+      return if cstate == BLOCKED
       unless (cstate == TRANSITION) || (cstate == ACTIVE)
         raise InvalidTransition.new(self,cstate,val)
       end
@@ -368,6 +370,8 @@ class NodeRole < ActiveRecord::Base
       end
     when ACTIVE
       # We can only go to ACTIVE from TRANSITION
+      # but we silently ignore the transition if in BLOCKED
+      return if cstate == BLOCKED
       unless cstate == TRANSITION
         raise InvalidTransition.new(self,cstate,val)
       end
@@ -416,9 +420,9 @@ class NodeRole < ActiveRecord::Base
       save!
       run_hook
     when BLOCKED
-      # We can only go to BLOCKED from PROPOSED or TODO,
-      # or if any our parents are in BLOCKED or TODO or ERROR.
-      unless parents.any?{|nr|nr.blocked? || nr.todo? || nr.error?} ||
+      # We can only go to BLOCKED from PROPOSED, TODO, or ACTIVE,
+      # or if any our parents are in BLOCKED, PROPOSED, TODO or ERROR.
+      unless parents.any?{|nr|nr.blocked? || nr.todo? || nr.error? || nr.proposed?} ||
           (cstate == PROPOSED || cstate == TODO) || (cstate == ACTIVE)
         raise InvalidTransition.new(self,cstate,val)
       end
@@ -430,17 +434,15 @@ class NodeRole < ActiveRecord::Base
         c.save!
       end
     when PROPOSED
-      # Only new node_roles can be in proposed
-      raise InvalidTransition.new(self,cstate,val) unless snapshot.proposed?
       write_attribute("state",val)
       save!
+      run_hook
       all_children.each do |c|
         unless c.deployment.id == self.deployment.id
           raise InvalidTransition.new(c,cstate,val,"NodeRole #{c.name} not in same deployment as #{self.name}")
         end
         c.send(:write_attribute,"state",BLOCKED)
         c.save!
-        run_hook
       end
     else
       # No idea what this is.  Just die.

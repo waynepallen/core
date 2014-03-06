@@ -175,35 +175,38 @@ The following table should be populated for all API calls:
       "updated_at":"2013-11-01T03:23:27Z"
     }
 
-### Node Create Example:
 
-Node JSON Data: /tmp/node_sample.json
-    {
-      "alive": true,
-      "bootenv": "local",
-      "description": "Testing Only - should be automatically removed",
-      "name": "newtest.cr0wbar.com",
-    }
+### Some workflow examples (using the Crowbar CLI)
 
-Curl command to create the node:
+#### Creating a Node for a system that already has an OS:
 
-    \#> curl --digest -u $(cat /etc/crowbar.install.key) \
+This example will show how to create a new node in Crowbar for an
+already-installed system that we want to bring under Crowbar
+management.  This example assumes that it has a non-conflicting IP
+address that is already in the nodes range of the admin network, that
+the public key of the Crowbar user will let the Script jig run things
+as root on the node, and that there is already a Crowbar-compatible
+operating system installed.
+
+* CLI: `crowbar nodes create '{"name": "newtest.cr0wbar.com", "bootenv": "local"}`
+* API: `curl --digest -u $(cat /etc/crowbar.install.key) \
     -X POST \
-    --data @/temp/node_sample.json \
+    -d "name=newtest.cr0wbar.com" \
+    -d "bootenv=local" \
     -H "Content-Type:application/json" \
-    --url http://127.0.0.1:3000/api/v2/nodes
+    --url http://127.0.0.1:3000/api/v2/nodes`
 
 This will return:
     {
     "admin":false,
     "alias":"newtest",
-    "alive":true,
+    "alive":false,
     "allocated":false,
-    "available":true,
+    "available":false,
     "bootenv":"local",
     "created_at":"2013-12-21T05:49:00Z",
     "deployment_id":1,
-    "description":"Testing Only - should be automatically removed",
+    "description":"",
     "discovery":{},
     "hint":{},
     "id":41,
@@ -213,7 +216,45 @@ This will return:
     "updated_at":"2013-12-21T05:49:00Z"
     }
 
-### Some workflow examples (using the Crowbar CLI)
+After creating the node, we still need to set the hint for the Admin
+IP to have Crowbar try and use the one it already has:
+
+* CLI: `crowbar nodes set newtest.cr0wbar.com attrib hint-admin-v4addr
+to '{"value": "192.168.124.99/24"}`
+* API: `curl --digest -u $(cat /etc/crowbar.install.key)
+    -X PUT
+    -H "Content-Type:application/json"
+    --url http://127.0.0.1:3000/api/v2/nodes/newtest.cr0wbar.com/attribs/hint-admin-v4addr
+    -d '{"value": "192.168.124.99/24"}'`
+
+We then need to bind a useful set of default noderoles to the node:
+
+* CLI: `crowbar roles bind crowbar-managed-node to newtest.cr0wbar.com`
+* API: `curl --digest -u $(cat /etc/crowbar.install.key)
+    -X POST
+    -H "Content-Type:application/json"
+    --url http://127.0.0.1:3000/api/v2/node_roles
+    -d '{"node": "newtest.cr0wbar.com", "role": "crowbar-managed-node"}'`
+
+Commit the node, which will move the newly-created noderoles from
+proposed to todo or blocked, and mark the node as available:
+
+* CLI: `crowbar nodes commit newtest.cr0wbar.com`
+* API: `curl --digest -u $(cat /etc/crowbar.install.key)
+    -X PUT
+    -H "Content-Type:application/json"
+    --url http://127.0.0.1:3000/api/v2/nodes/newtest.cr0wbar.com/commit`
+
+Mark the node as alive, which will allow the annealer to do its thing:
+
+* CLI: `crowbar nodes update newtest.cr0wbar.com '{"alive": true}'`
+* API: `curl --digest -u $(cat /etc/crowbar.install.key)
+    -X PUT
+    -H "Content-Type:application/json"
+    --url http://127.0.0.1:3000/api/v2/nodes/newtest.cr0wbar.com
+    -d 'alive=true'`
+
+
 
 #### Installing an operating system on a node
 

@@ -49,7 +49,6 @@ if ! [[ $CROWBAR_KEY && $PROVISIONER_WEB && $CROWBAR_WEB && \
     exit 1
 fi
 
-# Figure out where we PXE booted from.
 if [[ $(cat /proc/cmdline) =~ $bootif_re ]]; then
     MAC="${BASH_REMATCH[1]//-/:}"
     MAC="${MAC#*:}"
@@ -100,90 +99,14 @@ if ! [[ $(ip -4 -o addr show dev $BOOTDEV) =~ $bootdev_ip_re ]]; then
     exit 1
 fi
 
-# Let Crowbar know what is happening.
-if ! [[ $(cat /proc/cmdline) =~ $host_re ]]; then
-    export HOSTNAME="d${MAC//:/-}.${DOMAIN}"
-    curl -f -g --digest -u "$CROWBAR_KEY" -X POST \
-        -d "name=$HOSTNAME" \
-        -d "mac=$MAC" \
-        "$CROWBAR_WEB/api/v2/nodes/"
-else
-    export HOSTNAME="${BASH_REMATCH[1]}"
-    curl -f -g --digest -u "$CROWBAR_KEY" \
-        -X PUT "$CROWBAR_WEB/api/v2/nodes/$HOSTNAME" \
-        -d 'alive=false' \
-        -d 'bootenv=sledgehammer'
-fi
-
-# Figure out what IP addresses we should have.
-netline=$(curl -f -g --digest -u "$CROWBAR_KEY" \
-    -X GET "$CROWBAR_WEB/api/v2/networks/admin/allocations" \
-    -d "node=$HOSTNAME")
-
-# Bye bye to DHCP.
-killall dhclient || :
-ip addr flush "$BOOTDEV"
-
-# Add our new IP addresses.
-nets=(${netline//,/ })
-for net in "${nets[@]}"; do
-    [[ $net =~ $ip_re ]] || continue
-    net=${BASH_REMATCH[1]}
-    # Make this more complicated and exact later.
-    ip addr add "$net" dev "$BOOTDEV" || :
-done
-
-# Set our hostname for everything else.
-if is_suse; then
-    echo "$HOSTNAME" > /etc/HOSTNAME
-else
-    if [ -f /etc/sysconfig/network ] ; then
-      sed -i -e "s/HOSTNAME=.*/HOSTNAME=${HOSTNAME}/" /etc/sysconfig/network
-    fi
-    echo "${HOSTNAME#*.}" >/etc/domainname
-fi
-hostname "$HOSTNAME"
-
-# Update our /etc/resolv.conf with the IP address of our DNS servers,
-# which were passed to us via kernel param.
-chattr -i /etc/resolv.conf || :
-echo "domain $DOMAIN" >/etc/resolv.conf.new
-
-for server in ${DNS_SERVERS//,/ }; do
-    echo "nameserver ${server}" >> /etc/resolv.conf.new
-done
-
-mv -f /etc/resolv.conf.new /etc/resolv.conf
-
-# Force reliance on DNS
-echo '127.0.0.1 localhost' >/etc/hosts
-echo '::1 localhost6' >>/etc/hosts
-
-# Wait for up to 30 seconds for Crowbar to notice that we are alive.
-for (( count=0; count < 30; count=$count + 1)); do
-    ping6 -c 1 -w 1 "$HOSTNAME" && break
-    sleep 1
-done
-
-if [[ $? != 0 ]]; then
-    echo "Crowbar did not register that we exist!"
-    exit 1
-fi
-
-while [[ ! -x /tmp/control.sh ]]; do
-    curl -s -f -L -o /tmp/control.sh "$PROVISIONER_WEB/nodes/$HOSTNAME/control.sh" || :
-    if grep -q '^exit 0$' /tmp/control.sh && \
-        head -1 /tmp/control.sh | grep -q '^#!/bin/bash'; then
-        chmod 755 /tmp/control.sh
+while ! [[ -x /tmp/start-up.sh ]]; do
+    curl -s -f -L -o /tmp/start-up.sh "$PROVISIONER_WEB/nodes/start-up.sh" || :
+    if grep -q '/tmp/control.sh' /tmp/start-up.sh && \
+        head -1 /tmp/start-up.sh | grep -q '^#!/bin/bash'; then
+        chmod 755 /tmp/start-up.sh
         break
     fi
     sleep 1
 done
 
-export CROWBAR_KEY PROVISIONER_WEB CROWBAR_WEB
-export MAC BOOTDEV DOMAIN HOSTNAME
-
-[[ -x /tmp/control.sh ]] && exec /tmp/control.sh
-
-echo "Did not get control.sh from $PROVISIONER_WEB/nodes/$HOSTNAME/control.sh"
-exit 1
+. /tmp/start-up.sh

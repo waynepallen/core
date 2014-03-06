@@ -120,6 +120,11 @@ crowbar nodes create "$admin_node"
 #    -d 'alive=false' \
 #    -d 'bootenv=local'
 
+# Bind the admin role to it, and commit the resulting
+# proposed noderoles.
+crowbar roles bind crowbar-admin-node to "$FQDN"
+crowbar nodes commit "$FQDN"
+
 # Figure out what IP addresses we should have, and add them.
 netline=$(curl -f --digest -u $CROWBAR_KEY \
     -X GET "http://localhost:3000/api/v2/networks/admin/allocations" \

@@ -227,7 +227,7 @@ class Role < ActiveRecord::Base
     # create ourselves and bind our parents.
     NodeRole.transaction do
       add_to_snapshot(snap)
-      res = NodeRole.create({ :node => node,
+      res = NodeRole.create!({ :node => node,
                               :role => self,
                               :snapshot => snap,
                               :cohort => 0})
@@ -264,6 +264,7 @@ class Role < ActiveRecord::Base
       end
       res.save!
     end
+    res.reload
     # If there is an on_proposed hook for this role, call it now with our fresh node_role.
     self.send(:on_proposed,res) if self.respond_to?(:on_proposed) && res
     res
