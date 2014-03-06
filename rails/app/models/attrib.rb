@@ -18,6 +18,8 @@ require 'kwalify'
 class Attrib < ActiveRecord::Base
 
   validate :schema_is_valid
+  validates_inclusion_of :type, :in => %w(wall system user hint discovery), :message => I18n.t("db.attrib_type", :default=>"Illegal attrib type")
+
   serialize :schema
 
   # Will be thrown unless the attribute is writable.
@@ -37,8 +39,6 @@ class Attrib < ActiveRecord::Base
 
   belongs_to      :role
   belongs_to      :barclamp
-
-  scope           :by_name,              ->(name) { where(:name=>name) }
 
   def wrap_schema(fragment)
     {"type" => "map",

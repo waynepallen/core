@@ -15,5 +15,6 @@
 
 class Scaffolds::AttribsController < ApplicationController
   active_scaffold :attrib do |conf|
+    list.columns.exclude :schema
   end
 end 
