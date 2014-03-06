@@ -171,7 +171,7 @@ admin node.
 
 #### Virtual Box (the corporate way)
 
-> This approach expects that you've added an ethernet device (not up'd) to your VM that will be the admin network for slave VMs. Also, if using vmware, you'll need to use E1000 Nics and make sure your nertwork settings are set to "Allow" promiscuous mode. 
+> This approach expects that you've added an ethernet device (not up'd) to your VM that will be the admin network for slave VMs. Also, if using vmware, you'll need to use E1000 Nics and make sure your network settings are set to "Allow" promiscuous mode. 
 
 If your development environment is running in VMs then:
 
