@@ -7,9 +7,10 @@ Engineers value documentation that explains how to get a development workstation
 > An attempt has been made to pre-stage downloads so several steps can be done in parallel
 
 ###Base OS Installed
-  1. VirtualBox, TWO network interfaces
+  1. VirtualBox, THREE network interfaces
     1. bridge external (assumed to be on eth0)
     1. host-only on 192.168.124.x (assumed to be on eth1)
+    1. host-only WITHOUT IP assignment or `interfaces` configuration (assumed to be eth2)
   1. Setup an .ssh keypair using `rssh-keygen`
   1. Optional Items that we find handy if you are developing on Windows using VMs behind corporate firewalls
     1. Squid Proxy (to cache packages)
