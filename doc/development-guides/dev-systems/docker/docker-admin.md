@@ -13,7 +13,16 @@ Instructions for installing Docker on the most common Linux distributions are at
 
 ### Configure Docker in your development environment
 
-Once Docker is installed, you need to configure it to use the
+We assume you have given yourself permission to run docker without sudo.  
+To do this, add your user to the docker group.
+
+  *  `sudo usermod -a -G docker <your-user>` (to permanently run Docker
+  without sudo)
+  * you will need to reboot after this change (but you can wait until we tell you to reboot later)
+
+> if you don't want this to be permanent or active before the reboot use, `sudo chmod 666 /var/run/docker.sock`
+
+Configure docker to use the
 devicemapper storage backend and to talk through your HTTP proxy (if
 any)  We need to use the devicemapper storage backend because there
 are directory permissions bugs in the AUFS driver that our CentOS
