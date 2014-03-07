@@ -23,7 +23,7 @@ Engineers value documentation that explains how to get a development workstation
   1. if you are stuck behind a proxy, make sure your environment does not use it for local addresses: `export no_proxy="127.0.0.1,[::1],localhost,192.168.124.0/24,172.16.0.0/12"`
   1. `apt-get install git`
 
-###Position Boot Assets, see [docker/Docker-TLDR]
+###Position Boot Assets, see [docker/Docker-TLDR](docker/Docker-TLDR)
     1. Copy the ISOs that you want for nodes to `$HOME/.cache/opencrowbar/tftpboot/isos`
 
 ###Checkout Code 
