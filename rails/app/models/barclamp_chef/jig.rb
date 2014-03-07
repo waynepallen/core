@@ -35,79 +35,84 @@ class BarclampChef::Jig < Jig
   end
 
   def stage_run(nr)
-    prep_chef_auth
-    unless (Chef::Role.load(nr.role.name) rescue nil)
-      # If we did not find the role in question, then the chef
-      # data from the barclamp has not been uploaded.
-      # Do that here, and then set chef_role.
-      chef_path = File.join(nr.barclamp.source_path, on_disk_name)
-      unless File.directory?(chef_path)
-        raise("No Chef data at #{chef_path}")
-      end
-      role_path = "#{chef_path}/roles"
-      data_bag_path = "#{chef_path}/data_bags"
-      cookbook_path = "#{chef_path}/cookbooks"
-      FileUtils.cd(cookbook_path) do
-        unless BarclampChef.knife("cookbook upload -o . -a")
-          raise "Could not upload all Chef cookbook components from #{cookbook_path}"
-        end
-      end if File.directory?(cookbook_path)
-      Dir.glob(File.join(data_bag_path,"*.json")).each do |d|
-        data_bag_name = d.split('/')[-1]
-        next unless File.directory?(d)
-        next if (data_bag_name == "..") || (data_bag_name == ".")
-        unless BarclampChef.knife("data bag from file '#{data_bag_name}' '#{d}'")
-          raise "Could not upload Chef data bags from #{data_bag_path}/#{data_bag_name}"
-        end
-      end if File.directory?(data_bag_path)
-      if nr.role.respond_to?(:jig_role)
-        Chef::Role.json_create(nr.role.jig_role(nr)).save
-      elsif File.exist?("#{role_path}/#{nr.role.name}.rb")
-        @@load_role_mutex.synchronize do
-          Chef::Config[:role_path] = role_path
-          Chef::Role.from_disk(nr.role.name, "ruby").save
-        end
-      else
-        raise "Could not find or synthesize a Chef role for #{nr.name}"
-      end
-    end
     return {
       :runlist => make_run_list(nr),
-      :data => nr.all_transition_data
+      :data => super(nr)
     }
   end
 
   def run(nr,data)
-    prep_chef_auth
-    chef_node, chef_noderole = chef_node_and_role(nr.node)
-    chef_noderole.default_attributes(data[:data])
-    chef_noderole.run_list(data[:runlist])
-    chef_noderole.save
-    # For now, be bloody stupid.
-    # We should really be much more clever about building
-    # and maintaining the run list, but this will do to start off.
-    chef_node.attributes.normal = {}
-    chef_node.save
-    chef_node.run_list(Chef::RunList.new(chef_noderole.to_s))
-    chef_node.save
-    # SSH into the node and kick chef-client.
-    # If it passes, go to ACTIVE, otherwise ERROR.
-    nr.runlog, ok = BarclampCrowbar::Jig.ssh("root@#{nr.node.name} chef-client")
-    # Reload the node, find any attrs on it that map to ones this
-    # node role cares about, and write them to the wall.
-    chef_node, chef_noderole = chef_node_and_role(nr.node)
-    Node.transaction do
-      node_disc = nr.node.discovery
-      node_disc["ohai"] = chef_node.attributes.automatic
-      nr.node.discovery_merge(node_disc)
+    begin
+      prep_chef_auth
+      unless (Chef::Role.load(nr.role.name) rescue nil)
+        # If we did not find the role in question, then the chef
+        # data from the barclamp has not been uploaded.
+        # Do that here, and then set chef_role.
+        chef_path = File.join(nr.barclamp.source_path, on_disk_name)
+        unless File.directory?(chef_path)
+          raise("No Chef data at #{chef_path}")
+        end
+        role_path = "#{chef_path}/roles"
+        data_bag_path = "#{chef_path}/data_bags"
+        cookbook_path = "#{chef_path}/cookbooks"
+        FileUtils.cd(cookbook_path) do
+          unless BarclampChef.knife("cookbook upload -o . -a")
+            raise "Could not upload all Chef cookbook components from #{cookbook_path}"
+          end
+        end if File.directory?(cookbook_path)
+        Dir.glob(File.join(data_bag_path,"*.json")).each do |d|
+          data_bag_name = d.split('/')[-1]
+          next unless File.directory?(d)
+          next if (data_bag_name == "..") || (data_bag_name == ".")
+          unless BarclampChef.knife("data bag from file '#{data_bag_name}' '#{d}'")
+            raise "Could not upload Chef data bags from #{data_bag_path}/#{data_bag_name}"
+          end
+        end if File.directory?(data_bag_path)
+        if nr.role.respond_to?(:jig_role)
+          Chef::Role.json_create(nr.role.jig_role(nr)).save
+        elsif File.exist?("#{role_path}/#{nr.role.name}.rb")
+          @@load_role_mutex.synchronize do
+            Chef::Config[:role_path] = role_path
+            Chef::Role.from_disk(nr.role.name, "ruby").save
+          end
+        else
+          raise "Could not find or synthesize a Chef role for #{nr.name}"
+        end
+      end
+      chef_node, chef_noderole = chef_node_and_role(nr.node)
+      chef_noderole.default_attributes(data[:data])
+      chef_noderole.run_list(data[:runlist])
+      chef_noderole.save
+      # For now, be bloody stupid.
+      # We should really be much more clever about building
+      # and maintaining the run list, but this will do to start off.
+      chef_node.attributes.normal = {}
+      chef_node.save
+      chef_node.run_list(Chef::RunList.new(chef_noderole.to_s))
+      chef_node.save
+      # SSH into the node and kick chef-client.
+      # If it passes, go to ACTIVE, otherwise ERROR.
+      nr.runlog, ok = BarclampCrowbar::Jig.ssh("root@#{nr.node.name} chef-client")
+      # Reload the node, find any attrs on it that map to ones this
+      # node role cares about, and write them to the wall.
+      chef_node, chef_noderole = chef_node_and_role(nr.node)
+      Node.transaction do
+        node_disc = nr.node.discovery
+        node_disc["ohai"] = chef_node.attributes.automatic
+        nr.node.discovery_merge(node_disc)
+      end
+      new_attrs = chef_node.attributes.normal
+      nr.wall = deep_diff(data,new_attrs)
+      chef_noderole.default_attributes(data.deep_merge(new_attrs))
+      chef_noderole.save
+      nr.state = ok ? NodeRole::ACTIVE : NodeRole::ERROR
+      # Return ourselves
+      finish_run(nr)
+    rescue Exception => e
+      nr.runlog = "#{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}"
+      nr.state = NodeRole::ERROR
+      finish_run(nr)
     end
-    new_attrs = chef_node.attributes.normal
-    nr.wall = deep_diff(data,new_attrs)
-    chef_noderole.default_attributes(data.deep_merge(new_attrs))
-    chef_noderole.save
-    nr.state = ok ? NodeRole::ACTIVE : NodeRole::ERROR
-    # Return ourselves
-    finish_run(nr)
   end
 
   def create_node(node)
