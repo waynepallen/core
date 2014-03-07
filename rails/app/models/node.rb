@@ -19,9 +19,9 @@ require 'open3'
 class Node < ActiveRecord::Base
 
   before_validation :default_population
-  before_destroy :tear_down_roles
-  after_create :on_create_hooks
-  after_save :after_save_handler
+  after_commit :on_create_hooks, on: :create
+  after_commit :after_commit_handler, on: :update
+  after_commit :on_destroy_hooks, on: :destroy
 
   # Make sure we have names that are legal
   # requires at least three domain elements "foo.bar.com", cause the admin node shouldn't
@@ -320,25 +320,23 @@ class Node < ActiveRecord::Base
 
   private
 
-  def after_save_handler
-    return unless changed? 
+  def after_commit_handler
+    Rails.logger.debug("Node: after_commit hook called")
     Rails.logger.info("Node: calling all role on_node_change hooks for #{name}")
     # We only call on_node_change when the node is available to prevent Crowbar
     # from noticing changes it should not notice yet.
     Role.all_cohorts.each do |r|
-      Rails.logger.info("Node: Calling #{r.name} on_node_change for #{self.name}")
+      Rails.logger.debug("Node: Calling #{r.name} on_node_change for #{self.name}")
       r.on_node_change(self)
     end if available?
-    if changes["available"] || changes["alive"]
-      if alive && available
-        Rails.logger.info("Node: #{name} is alive and available, enqueing noderoles to run.")
-        Run.run!
-      end
-      if changes["alive"] && !alive
-        Rails.logger.info("Node: #{name} is not alive, deactivating noderoles on this node.")
-        node_roles.deactivatable.each do |nr|
-          nr.deactivate
-        end
+    if alive && available && node_roles.runnable.count > 0
+      Rails.logger.info("Node: #{name} is alive and available, kicking the annealer.")
+      Run.run!
+    end
+    unless alive?
+      Rails.logger.info("Node: #{name} is not alive, deactivating noderoles on this node.")
+      node_roles.deactivatable.each do |nr|
+        nr.deactivate
       end
     end
   end
@@ -357,7 +355,7 @@ class Node < ActiveRecord::Base
   end
 
   # Call the on_node_delete hooks.
-  def tear_down_roles
+  def on_destroy_hooks
     # do the low cohorts last
     Rails.logger.info("Node: calling all role on_node_delete hooks for #{name}")
     Role.all_cohorts_desc.each do |r|

@@ -71,6 +71,7 @@ class BarclampProvisioner::DhcpDatabase < Role
         }
       }
     }
+    to_enqueue = []
     NodeRole.transaction do
       node_roles.committed.each do |nr|
         if nr.sysdata == new_sysdata
@@ -79,9 +80,13 @@ class BarclampProvisioner::DhcpDatabase < Role
         end
         nr.sysdata = new_sysdata
         nr.save!
-        Rails.logger.info("DHCP database: enqueing #{nr.name}")
-        Run.enqueue(nr)
+        to_enqueue << nr
       end
+    end
+    to_enqueue.each do |nr|
+      next unless nr.active? || nr.transition?
+      Rails.logger.info("DHCP database: enqueing #{nr.name}")
+      Run.enqueue(nr)
     end
   end
 

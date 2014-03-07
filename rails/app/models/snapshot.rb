@@ -27,6 +27,8 @@ class Snapshot < ActiveRecord::Base
     ACTIVE => "active",
     ERROR => "error"
   }
+
+  after_commit :run_if_any_runnable, on: [:create, :update]
   
   belongs_to      :deployment
 
@@ -186,4 +188,15 @@ class Snapshot < ActiveRecord::Base
       newsnap
     end
   end
+
+  private
+
+  def run_if_any_runnable
+    Rails.logger.debug("Snapshot: after_commit hook called")
+    if node_roles.runnable.count > 0
+      Rails.logger.info("Snapshot: #{name} is committed, kicking the annealer.")
+      Run.run!
+    end
+  end
+  
 end

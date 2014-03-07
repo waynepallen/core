@@ -53,14 +53,12 @@ class BarclampDns::Database < Role
   private
 
   def rerun_my_noderoles
-    NodeRole.transaction do
-      node_roles.committed.each do |nr|
-        next unless nr.active? || nr.transition?
-        # We need to re-enqueue for both active and transition here,
-        # as the previous run might not have finished yet.
-        Rails.logger.info("dns-database: Enqueuing run for #{nr.name}") 
-        Run.enqueue(nr)
-      end
+    node_roles.committed.each do |nr|
+      next unless nr.active? || nr.transition?
+      # We need to re-enqueue for both active and transition here,
+      # as the previous run might not have finished yet.
+      Rails.logger.info("dns-database: Enqueuing run for #{nr.name}") 
+      Run.enqueue(nr)
     end
   end
 

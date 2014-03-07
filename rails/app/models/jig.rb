@@ -133,15 +133,6 @@ class Jig < ActiveRecord::Base
     res
   end
 
-  # Run a single noderole.
-  # The noderole must be in TRANSITION state.
-  # This function is intended to be overridden by the jig subclasses,
-  # and only used for debugging purposes.
-  # Runs will be run in the background by the dalayed_job information.
-  def run(nr,data)
-    raise "Cannot call run on the top-level Jig!"
-  end
-
   def finish_run(nr)
     nr.run_count += 1 if nr.active?
     nr.save!
@@ -155,6 +146,40 @@ class Jig < ActiveRecord::Base
       nr.node.discovery.merge({"reservations" => res})
     end
     return nr
+  end
+
+  # Run a single noderole.
+  # The noderole must be in TRANSITION state.
+  # This function is intended to be overridden by the jig subclasses,
+  # and only used for debugging purposes.
+  # Runs will be run in the background by the dalayed_job information.
+  def run(nr,data)
+    raise "Cannot call run on the top-level Jig!"
+  end
+
+  def run_job(job,data)
+    Rails.logger.debug("Run: Running job #{job.id}")
+    nr = job.node_role
+    begin
+      NodeRole.transaction do
+        nr.state = NodeRole::TRANSITION
+        nr.runlog = ""
+        nr.save!
+        nr.reload
+      end
+      run(nr,data)
+      nr.state = NodeRole::ACTIVE
+    rescue Exception => e
+      nr.runlog = "#{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}"
+      nr.state = NodeRole::ERROR
+    ensure
+      Run.locked_transaction do
+        Rails.logger.debug("Run: Deleting finished job #{job.id}")
+        job.delete
+      end
+    end
+    finish_run(nr)
+    Run.run!
   end
 
   # Return all keys from hash A that do not exist in hash B, recursively
@@ -219,7 +244,6 @@ class NoopJig < Jig
 
   def run(nr,data)
     nr.state = NodeRole::ACTIVE
-    finish_run(nr)
   end
 
 end

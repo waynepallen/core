@@ -17,6 +17,8 @@ require 'json'
 
 class NodeRole < ActiveRecord::Base
 
+  after_commit :run_on_todo, on: :update
+
   belongs_to      :node
   belongs_to      :role
   belongs_to      :snapshot
@@ -190,7 +192,7 @@ class NodeRole < ActiveRecord::Base
   end
 
   def runnable?
-    node.available && node.alive && jig.active
+    node.available && node.alive && jig.active && snapshot.committed?
   end
 
   # convenience methods
@@ -323,7 +325,6 @@ class NodeRole < ActiveRecord::Base
       write_attribute("state",TODO)
       save!
     end
-    Run.run!
   end
 
   def deactivate
@@ -448,8 +449,6 @@ class NodeRole < ActiveRecord::Base
       # No idea what this is.  Just die.
       raise InvalidState.new("Unknown state #{s.inspect}")
     end
-    # Kick the runner every time something transitions.
-    Run.run! if val == ACTIVE || val == TODO
     self
   end
 
@@ -519,6 +518,12 @@ class NodeRole < ActiveRecord::Base
             end
       nrd.save!
     end
+  end
+
+  def run_on_todo
+    return unless todo? && runnable?
+    Rails.logger.info("NodeRole #{name} is runnable, kicking the annealer.")
+    Run.run!
   end
 
 end
