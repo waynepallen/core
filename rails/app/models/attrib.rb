@@ -18,7 +18,6 @@ require 'kwalify'
 class Attrib < ActiveRecord::Base
 
   validate :schema_is_valid
-  validates_inclusion_of :type, :in => %w(wall system user hint discovery), :message => I18n.t("db.attrib_type", :default=>"Illegal attrib type")
 
   serialize :schema
 
