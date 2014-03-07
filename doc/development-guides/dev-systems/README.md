@@ -25,7 +25,14 @@ Engineers value documentation that explains how to get a development workstation
   1. `apt-get install git`
 
 ###Position Boot Assets, see [docker/Docker-TLDR](docker/Docker-TLDR)
-    1. Copy the ISOs that you want for nodes to `$HOME/.cache/opencrowbar/tftpboot/isos`
+  
+Copy the ISOs that you want for nodes to `$HOME/.cache/opencrowbar/tftpboot/isos`.  It's OK to have more than 1 but make sure you have the space!
+
+Examples:
+  1. `mkdir -p $HOME/.cache/opencrowbar/tftpboot/isos`
+  1. `cd $HOME/.cache/opencrowbar/tftpboot/isos`
+  1. Centos: `wget http://centos.mirror.ndchost.com/6.5/isos/x86_64/CentOS-6.5-x86_64-bin-DVD1.iso`
+  1. Ubuntu: `wget http://releases.ubuntu.com/12.04.4/ubuntu-12.04.4-server-amd64.iso`
 
 ###Checkout Code 
   1. get git
