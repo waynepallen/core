@@ -4,7 +4,7 @@ Engineers value documentation that explains how to get a development workstation
 
 ##Installation and Configuration Information
 
-> An attempt has been made to pre-stage downloads so several steps can be done in parallel
+> An attempt has been made to pre-stage downloads so several steps can be done in parallel.  The docker image pull also has a large download it's OK to read ahead and start that too.
 
 ###Base OS Installed
   1. VirtualBox, TWO network interfaces
@@ -23,14 +23,24 @@ Engineers value documentation that explains how to get a development workstation
   1. if you are stuck behind a proxy, make sure your environment does not use it for local addresses: `export no_proxy="127.0.0.1,[::1],localhost,192.168.124.0/24,172.16.0.0/12"`
   1. `apt-get install git`
 
-###Position Boot Assets, see [docker/Docker-TLDR]
-    1. Copy the ISOs that you want for nodes to `$HOME/.cache/opencrowbar/tftpboot/isos`
+###Position Boot Assets
+  
+> We'll need this for later but it takes a while so we do it now....
+
+Copy the ISOs that you want for nodes to `$HOME/.cache/opencrowbar/tftpboot/isos`.  It's OK to have more than 1 but make sure you have the space!
+
+Examples:
+  1. `mkdir -p $HOME/.cache/opencrowbar/tftpboot/isos`
+  1. `cd $HOME/.cache/opencrowbar/tftpboot/isos`
+  1. Centos: `wget http://centos.mirror.ndchost.com/6.5/isos/x86_64/CentOS-6.5-x86_64-bin-DVD1.iso`
+  1. Ubuntu: `wget http://releases.ubuntu.com/12.04.4/ubuntu-12.04.4-server-amd64.iso`
 
 ###Checkout Code 
   1. get git
     1. ubuntu: `sudo apt-get install git`
   1. get the code: `git clone https://github.com/opencrowbar/core`
-    1. if you want to commit, please review [the Contributor guide](../contributing.md)
+
+If you want to **commit code or docs fixes**, please review [the Contributor guide](../contributing.md)
 
 ###Build Sledgehammer (do 1 time, but takes a while)
   1. prep for sledgehammer requirements: 
