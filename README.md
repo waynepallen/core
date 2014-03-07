@@ -10,7 +10,7 @@ Please refer to the [/doc directories](/doc/Index.md) for detailed information. 
 
 > Please, do NOT add documentation in locations outside of the  **/doc** directory trees!  If necessary, expand this README to include pointers to important **/doc** information.
 
-We've also made it easy to setup and run Crowbar using our [**Fast-Start with Docker**](/doc/development-guides/dev-systems/docker/Docker-TLDR.md) as a rapid-fire code/test/commit cycle tool.  Read the [TL;DR](/doc/development-guides/dev-systems/docker/Docker-TLDR.md) document. For those seeking a detailed *_Good Oil(tm)_*  document check [HERE](/doc/development-guides/dev-systems/docker/docker-admin.md)
+We've also made it easy to setup and run Crowbar using our [**Fast-Start (with Docker)**](/doc/development-guides/dev-systems) as a rapid-fire code/test/commit cycle tool.  
 
 ## Join Our Community
 
