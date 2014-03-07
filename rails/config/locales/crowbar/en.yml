@@ -1,4 +1,4 @@
-# Copyright 2013, Dell 
+# Copyright 2013-4, Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -70,7 +70,10 @@ en:
     bootenv: &bootenv
       local: "Local Boot"
       sledgehammer: "Discovery / Sledgehammer"
-
+    roles:
+      crowbar-managed-node: 'Node Discovered'
+      crowbar-installed-node: 'OS Installed'
+      crowbar-admin-node: 'Crowbar Admin'
 
   # Layout
   nav:
@@ -425,6 +428,7 @@ en:
       fast_refresh: 'Fast Reload'
       millis: 'milliseconds'
       debug: 'Debug Hints'
+      noop_roles: 'System Roles Only'
       expand: 'Expand Error'
       doc_sources: 'Doc Source'
       edge: "Edge UI"

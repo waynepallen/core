@@ -47,7 +47,7 @@ en:
     role: role
     save: "Save"
     roles:
-      network-server: "Network Bus Map"
+      network-server: "Hardware NetBus Map"
       network-admin: "Admin Network"
       network-public: "Public Network"
       network-private: "Private Network"
