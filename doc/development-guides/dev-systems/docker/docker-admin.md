@@ -4,6 +4,8 @@ It is possible (and convienent) to run a OpenCrowbar admin node in a
 CentOS 6.5 based Docker container.  To do so, you need to be running
 in a development environment that can run Docker.  
 
+> Once the admin node is running in a container, it will keep running until you kill the container using `docker kill [cid]` or `exit` from the container prompt.  We recommend looking at the Docker commands for additional options.
+
 ### Install Docker
 
 Instructions for installing Docker on the most common Linux distributions are at
