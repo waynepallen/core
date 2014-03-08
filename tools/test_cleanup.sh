@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2014, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,33 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-.#*
-*~
-*.dia.autosave
+cd BDD
 
-# BDD files
-/BDD/erl_crash.dump
-/BDD/*.beam
-/BDD/default.config
-/BDD/dev.config
-/BDD/.*.erl.swp
-erl_crash.dump
-
-# Coverage 
-/core/rails/coverage/
-
-# Docs Index
-/doc/README.md.new
-
-# Rails chaff (especially from dev mode)
-/rails/tmp/
-/rails/log/
-/rails/coverage
-/rails/db/schema.rb
-/rails/Gemfile.lock
-/rails/.bundle/
-/rails/bin/
-/rails/vendor/
-/rails/public/assets/
-
+# Clean-up
+rm -f *.beam ../erl_crash.dump /tmp/trace_*.txt
