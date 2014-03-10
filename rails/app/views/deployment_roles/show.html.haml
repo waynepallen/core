@@ -1,0 +1,6 @@
+%h1
+  = link_to @deployment_role.snapshot.name, snapshot_path(@deployment_role.snapshot.id)
+  = link_to @deployment_role.role.name, role_path(@deployment_role.role.id)
+
+%pre.code
+  = JSON.pretty_generate @deployment_role.data
