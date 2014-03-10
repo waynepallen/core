@@ -114,8 +114,16 @@ class Role < ActiveRecord::Base
     true
   end
 
+  def noop?
+    jig.name.eql? 'noop'
+  end
+
+  def name_i18n
+    I18n.t(name, :default=>name, :scope=>'common.roles')
+  end
+
   def name_safe
-    I18n.t(name, :default=>name, :scope=>'common.roles').gsub("-","&#8209;").gsub(" ","&nbsp;")
+    name_i18n.gsub("-","&#8209;").gsub(" ","&nbsp;")
   end
 
   def update_cohort

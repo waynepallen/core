@@ -37,7 +37,9 @@ validate(JSON) when is_record(JSON, obj) ->
       bdd_utils:is_a(J, string, map), 
       bdd_utils:is_a(J, dbid, role_id), 
       bdd_utils:is_a(J, dbid, barclamp_id), 
-      bdd_utils:is_a(J, length, 9),
+      bdd_utils:is_a(J, boolean, writable), 
+      bdd_utils:is_a(J, string, schema), 
+      bdd_utils:is_a(J, length, 11),
       crowbar_rest:validate(J)],
   bdd_utils:assert(R).
   
@@ -51,21 +53,32 @@ json(Name, Description, Order) ->
 inspector() -> 
   bdd_restrat:inspector(attrib).  % shared inspector works here, but may not always
 
-% Common Routine
-
-step(_Global, {step_given, {Scenario, _N}, ["REST creates the", attrib, Name, "with map",Map]}) -> 
-  JSON = crowbar:json([{name, Name}, {description, g(description)}, {order, g(order)}, {map, Map}]),
-  bdd_restrat:create(g(path), JSON, attrib, Scenario);
-
-step(_Given, {step_when, {_Scenario, _N}, ["REST sets the", Attrib, "on", Node, "to", Value]}) -> 
-  Path = eurl:path([node:g(path), Node, "attribs", Attrib]),
+set_attrib(Type, Name, Attrib, Value) ->
+  Path = eurl:path([apply(Type, g, [path]), Name, "attribs", Attrib]),
   % this ASSUMES that the Value is valid JSON
   JSON = crowbar:json([{value, Value}]),
-  bdd_utils:log(debug, attrib, step, "~p PUT ~p", [Path, JSON]),
+  bdd_utils:log(debug, attrib, step, "~p ~p PUTS ~p", [Type, Path, JSON]),
   % now update 
   Result = eurl:put_post(Path, JSON, put),
   O = bdd_restrat:get_object(Result),
-  [Result, O];
+  [Result, O].
+
+% Common Routine
+
+step(_Global, {step_given, {Scenario, _N}, ["REST creates the", attrib, Name, "with map",Map]}) -> 
+  JSON = crowbar:json([{name, Name}, {description, g(description)}, {barclamp, 'test'}, {order, g(order)}, {writable, true}, {map, Map}]),
+  bdd_restrat:create(g(path), JSON, attrib, Scenario);
+
+step(_Given, {step_when, {_Scenario, _N}, ["REST sets the node", Attrib, "on", Node, "to", Value]}) -> 
+  set_attrib(node, Node, Attrib, Value);
+
+step(_Given, {step_when, {_Scenario, _N}, ["REST sets the role", Attrib, "on", Role, "to", Value]}) -> 
+  set_attrib(role, Role, Attrib, Value);
+
+step(_Given, {step_when, {_Scenario, _N}, ["REST sets the", Attrib, "on", Node, "to", Value]}) -> 
+  bdd_utils:depricate({2014, 7, 1}, attrib, step, attrib, step, 
+    [_Given, {step_when, {_Scenario, _N}, ["REST sets the node", Attrib, "on", Node, "to", Value]}]);
+
 
 step(_Global, {step_given, {_Scenario, _N}, ["REST sets the discovery on",Node, "to", JSON]}) -> 
   Path = eurl:path([node:g(path), Node]),
