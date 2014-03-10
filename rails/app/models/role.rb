@@ -161,14 +161,7 @@ class Role < ActiveRecord::Base
 
   # Make sure there is a deployment role for ourself in the snapshot.
   def add_to_snapshot(snap)
-    # make sure there's a deployment role before we add a node role
-    if DeploymentRole.snapshot_and_role(snap, self).size == 0
-      Rails.logger.info("Role: Adding deployment role #{name} to #{snap.name}")
-      args = ActionController::Parameters.new(:role_id=>self.id,
-                                              :snapshot_id=>snap.id,
-                                              :data=>self.template).permit!
-      DeploymentRole.create!(args)
-    end
+    DeploymentRole.find_or_create_by!(role_id: self.id, snapshot_id: snap.id)
   end
 
   def find_noderoles_for_role(role,snap)
