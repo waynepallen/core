@@ -8,9 +8,9 @@ Engineers value documentation that explains how to get a development workstation
 
 ###Base OS Installed
   1. VirtualBox, THREE network interfaces
-    1. bridge external (assumed to be on eth0)
-    1. host-only on 192.168.124.x (assumed to be on eth1)
-    1. host-only WITHOUT IP assignment or `interfaces` configuration (assumed to be eth2)
+    1. (assumed to be eth0) bridge external 
+    1. (assumed to be eth1) on a host-only network 192.168.124.0/24.  Give it a reasonable unused IP. 192.168.124.7 is good.
+    1. (assumed to be eth2) on a host-only network 192.168.124.0/24.  *NO IP assignment* or OS interface configuration (`/etc/network/interfaces` or `/etc/sysconfig`). .  Setup bridging as in [docker/docker-admin.md](docker/docker-admin.md)
   1. Setup an .ssh keypair using `rssh-keygen`
   1. Optional Items that we find handy if you are developing on Windows using VMs behind corporate firewalls
     1. Squid Proxy (to cache packages)
