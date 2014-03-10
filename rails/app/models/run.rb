@@ -117,11 +117,10 @@ class Run < ActiveRecord::Base
     # Now that we have things that are runnable, loop through them to see
     # what we can actually run.
     jobs.values.each do |j|
-      j.node_role.state = NodeRole::TRANSITION
       if j.node_role.role.destructive && j.node_role.run_count > 0
         Rails.logger.info("Run: #{j.node_role.name} is destructive and has already run.")
+        j.node_role.state = NodeRole::TRANSITION
         j.node_role.state = NodeRole::ACTIVE
-        j.node_role.save!
         j.destroy
         next
       end
@@ -129,22 +128,9 @@ class Run < ActiveRecord::Base
       # We do this so that the jig gets fed data that is consistent for this point
       # in time, as opposed to picking up whatever is lying around when delayed_jobs
       # gets around to actually doing its thing, which may not be what we expect.
-      begin
-        run_data = {}
-        NodeRole.transaction do
-          j.node_role.runlog = ""
-          j.node_role.save!
-          run_data = j.node_role.jig.stage_run(j.node_role)
-        end
-        j.node_role.jig.delay(:queue => "NodeRoleRunner").run_job(j,run_data)
-      rescue Exception => e
-        NodeRole.transaction do
-          j.node_role.runlog = j.node_role.runlog << "EXCEPTION:\n#{e.message}\n#{e.backtrace.join("\n")}"
-          Rails.logger.error(j.node_role.runlog)
-          j.node_role.state = NodeRole::ERROR
-          j.node_role.save!
-        end
-      end
+      run_data = j.node_role.jig.stage_run(j.node_role)
+      j.node_role.state = NodeRole::TRANSITION
+      j.node_role.jig.delay(:queue => "NodeRoleRunner").run_job(j,run_data)
     end
     Rails.logger.info("Run: #{jobs.length} handled this pass, #{Run.running.count} in delayed_jobs")
     begin

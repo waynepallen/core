@@ -21,12 +21,19 @@ class BarclampDns::Database < Role
     rerun_my_noderoles
   end
 
+  def on_node_change(n)
+    Rails.logger.info("dns-database: Updating for new node #{n.name}")
+    rerun_my_noderoles
+  end
+
   def on_node_delete(n)
     Rails.logger.info("dns-database: Updating for removed node #{n.name}")
     rerun_my_noderoles
   end
 
-  def sysdata(nr)
+  private
+
+  def rerun_my_noderoles
     hosts = {}
     # Record our host entry information first.
     Role.transaction do
@@ -42,25 +49,23 @@ class BarclampDns::Database < Role
       end
     end
     # Populate the rest of the zone information
-    return { "crowbar" => {
+    new_sysdata = {
+      "crowbar" => {
         "dns" => {
           "hosts" => hosts
         }
       }
     }
-  end
-
-  private
-
-  def rerun_my_noderoles
-    node_roles.committed.each do |nr|
-      next unless nr.active? || nr.transition?
-      # We need to re-enqueue for both active and transition here,
-      # as the previous run might not have finished yet.
-      Rails.logger.info("dns-database: Enqueuing run for #{nr.name}") 
-      Run.enqueue(nr)
+    to_enqueue = []
+    NodeRole.transaction do
+      node_roles.committed.each do |nr|
+        next if nr.sysdata == new_sysdata
+        nr.sysdata = new_sysdata
+        nr.save!
+        to_enqueue << nr
+      end
     end
+    to_enqueue.each {|nr| Run.enqueue(nr)}
   end
-
 end
 

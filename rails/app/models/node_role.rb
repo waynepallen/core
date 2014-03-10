@@ -17,7 +17,7 @@ require 'json'
 
 class NodeRole < ActiveRecord::Base
 
-  after_commit :run_on_todo, on: :update
+  after_commit :run_hooks, on: [:update, :create]
 
   belongs_to      :node
   belongs_to      :role
@@ -332,122 +332,77 @@ class NodeRole < ActiveRecord::Base
     block_or_todo
   end
 
-  def run_hook
-    # There are some limits to running hooks:
-    # 1: Snapshot has to be committed.
-    # 2: noderole must be available.
-    # 3: role mist not be destructive, or
-    #    it must have a run count of 0 (if not active),
-    #    or 1 (if active)
-    meth = "on_#{STATES[state]}".to_sym
-    return unless snapshot.committed? &&
-      available &&
-      ((!role.destructive) || (run_count == self.active? ? 1 : 0))
-    role.send(meth,self)
-  end
-
   # Implement the node role state transition rules
   # by guarding state assignment.
   def state=(val)
     cstate = state
     return val if val == cstate
+    @oldstate = state
     Rails.logger.info("NodeRole: transitioning #{self.role.name}:#{self.node.name} from #{STATES[cstate]} to #{STATES[val]}")
-
-    case val
-    when ERROR
-      # We can only go to ERROR from TRANSITION
-      # but we silently ignore the transition if in BLOCKED
-      return if cstate == BLOCKED
-      unless (cstate == TRANSITION) || (cstate == ACTIVE)
-        raise InvalidTransition.new(self,cstate,val)
-      end
-      write_attribute("state",val)
-      save!
-      run_hook
-      # All children of a node_role in ERROR go to BLOCKED.
-      children.each do |c|
-        next unless c.snapshot.committed?
-        c.state = BLOCKED
-      end
-    when ACTIVE
-      # We can only go to ACTIVE from TRANSITION
-      # but we silently ignore the transition if in BLOCKED
-      return if cstate == BLOCKED
-      unless cstate == TRANSITION
-        raise InvalidTransition.new(self,cstate,val)
-      end
-      if !node.alive
-        block_or_todo
-        return self
-      end
-      write_attribute("state",val)
-      save!
-      run_hook
-      # Immediate children of an ACTIVE node go to TODO
-      children.each do |c|
-        next unless c.snapshot.committed? && c.activatable?
-        c.state = TODO
-      end
-    when TODO
-      # We can only go to TODO when:
-      # 1. We were in PROPOSED or BLOCKED or ERROR or ACTIVE
-      # 2. All our parents are in ACTIVE
-      unless ((cstate == PROPOSED) || (cstate == BLOCKED)) ||
-          (cstate == ERROR) || (cstate == ACTIVE) ||
-          (!node.alive && cstate == TRANSITION)
-        raise InvalidTransition.new(self,cstate,val)
-      end
-      unless activatable?
-        raise InvalidTransition.new(self,cstate,val,"Not all parents are ACTIVE")
-      end
-      write_attribute("state",val)
-      save!
-      run_hook
-      # Going into TODO transitions all our children into BLOCKED.
-      children.each do |c|
-        c.state = BLOCKED
-      end
-    when TRANSITION
-      # We can only go to TRANSITION from TODO
-      # As an optimization, we may also want to allow a transition from
-      # BLOCKED to TRANSITION directly -- the goal would be to allow a jig
-      # to batch up noderole runs by noticing that a noderole it was handed
-      # in TRANSITION has children on the same node utilizing the same jig
-      # in BLOCKED, and preemptivly grabbing them to batch them up.
-      unless (cstate == TODO) || (cstate == ACTIVE)
-        raise InvalidTransition.new(self,cstate,val)
-      end
-      write_attribute("state",val)
-      save!
-      run_hook
-    when BLOCKED
-      # We can only go to BLOCKED from PROPOSED, TODO, or ACTIVE,
-      # or if any our parents are in BLOCKED, PROPOSED, TODO or ERROR.
-      unless parents.any?{|nr|nr.blocked? || nr.todo? || nr.error? || nr.proposed?} ||
-          (cstate == PROPOSED || cstate == TODO) || (cstate == ACTIVE)
-        raise InvalidTransition.new(self,cstate,val)
-      end
-      # If we are blocked, so are all our children.
-      write_attribute("state",val)
-      save!
-      all_children.each do |c|
-        c.send(:write_attribute,"state",BLOCKED)
-        c.save!
-      end
-    when PROPOSED
-      write_attribute("state",val)
-      save!
-      run_hook
-      all_children.each do |c|
-        unless c.deployment.id == self.deployment.id
-          raise InvalidTransition.new(c,cstate,val,"NodeRole #{c.name} not in same deployment as #{self.name}")
+    NodeRole.transaction do
+      case val
+      when ERROR
+        # We can only go to ERROR from TRANSITION
+        # but we silently ignore the transition if in BLOCKED
+        return if cstate == BLOCKED
+        unless (cstate == TRANSITION) || (cstate == ACTIVE)
+          raise InvalidTransition.new(self,cstate,val)
         end
-        c.send(:write_attribute,"state",BLOCKED)
-        c.save!
+        write_attribute("state",val)
+        save!
+        # All children of a node_role in ERROR go to BLOCKED.
+        all_children.where(["state NOT IN(?,?)",PROPOSED,TRANSITION]).update_all(state: BLOCKED)
+      when ACTIVE
+        # We can only go to ACTIVE from TRANSITION
+        # but we silently ignore the transition if in BLOCKED
+        return if cstate == BLOCKED
+        unless cstate == TRANSITION
+          raise InvalidTransition.new(self,cstate,val)
+        end
+        if !node.alive
+          block_or_todo
+          return self
+        end
+        write_attribute("state",val)
+        save!
+      when TODO
+        # We can only go to TODO when:
+        # 1. We were in PROPOSED or BLOCKED or ERROR or ACTIVE
+        # 2. All our parents are in ACTIVE
+        unless ((cstate == PROPOSED) || (cstate == BLOCKED)) ||
+            (cstate == ERROR) || (cstate == ACTIVE) ||
+            (!node.alive && cstate == TRANSITION)
+          raise InvalidTransition.new(self,cstate,val)
+        end
+        unless activatable?
+          raise InvalidTransition.new(self,cstate,val,"Not all parents are ACTIVE")
+        end
+        write_attribute("state",val)
+        save!
+        # Going into TODO transitions all our children into BLOCKED.
+        all_children.where(["state NOT IN(?,?)",PROPOSED,TRANSITION]).update_all(state: BLOCKED)
+      when TRANSITION
+        # We can only go to TRANSITION from TODO or ACTIVE
+        unless (cstate == TODO) || (cstate == ACTIVE) || !activatable?
+          raise InvalidTransition.new(self,cstate,val)
+        end
+        write_attribute("state",val)
+        save!
+      when BLOCKED
+        # We can pretty much always go to BLOCKED.
+        write_attribute("state",val)
+        save!
+        all_children.where(["state NOT IN(?,?)",PROPOSED,TRANSITION]).update_all(state: BLOCKED)
+      when PROPOSED
+        # We can also pretty much always go into PROPOSED,
+        # and it does not affect the state of our children until
+        # we go back out of PRPOPSED.
+        write_attribute("state",val)
+        save!
+      else
+        # No idea what this is.  Just die.
+        raise InvalidState.new("Unknown state #{s.inspect}")
       end
-    else
-      # No idea what this is.  Just die.
-      raise InvalidState.new("Unknown state #{s.inspect}")
     end
     self
   end
@@ -520,10 +475,33 @@ class NodeRole < ActiveRecord::Base
     end
   end
 
-  def run_on_todo
-    return unless todo? && runnable?
-    Rails.logger.info("NodeRole #{name} is runnable, kicking the annealer.")
-    Run.run!
+  def run_hooks
+    meth = "on_#{STATES[state]}".to_sym
+    if proposed? && previous_changes.empty?
+      # on_proposed only runs on initial noderole creation.
+      Rails.logger.debug("NodeRole #{name}: Calling #{meth} hook.")
+      role.send(meth,self)
+      return
+    end
+    return unless previous_changes["state"]
+    if snapshot.committed? && available &&
+        ((!role.destructive) || (run_count == self.active? ? 1 : 0))
+      Rails.logger.debug("NodeRole #{name}: Calling #{meth} hook.")
+      role.send(meth,self)
+    end
+    if todo? && runnable?
+      Rails.logger.info("NodeRole #{name} is runnable, kicking the annealer.")
+      Run.run!
+    end
+    if active?
+      # Immediate children of an ACTIVE node go to TODO
+      NodeRole.transaction do
+        children.where(state: BLOCKED).each do |c|
+          Rails.logger.debug("NodeRole #{name}: testing to see if #{c.name} is runnable")
+          next unless c.activatable?
+          c.state = TODO
+        end
+      end
+    end
   end
-
 end

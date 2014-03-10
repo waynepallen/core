@@ -55,18 +55,16 @@ class BarclampNetwork::Role < Role
   end
 
   def on_proposed(nr)
-    NodeRole.transaction do
-      node = nr.node(true)
-      return if network.allocations.node(node).count != 0
-      addr_range = if node.is_admin? && network.ranges.exists?(name: "admin")
-                     network.ranges.find_by!(name: "admin")
-                   else
-                     network.ranges.find_by!(name: "host")
-                   end
-      # get the suggested ip address (if any) - nil = automatically assign
-      suggestion = node.attribs.find_by!(name: "hint-#{network.name}-v4addr").get(node)
-      addr_range.allocate(nr.node, suggestion)
-    end
+    node = nr.node(true)
+    return if network.allocations.node(node).count != 0
+    addr_range = if node.is_admin? && network.ranges.exists?(name: "admin")
+                   network.ranges.find_by!(name: "admin")
+                 else
+                   network.ranges.find_by!(name: "host")
+                 end
+    # get the suggested ip address (if any) - nil = automatically assign
+    suggestion = node.attribs.find_by!(name: "hint-#{network.name}-v4addr").get(node)
+    addr_range.allocate(nr.node, suggestion)
   end
 
 end

@@ -265,8 +265,6 @@ class Role < ActiveRecord::Base
       res.save!
     end
     res.reload
-    # If there is an on_proposed hook for this role, call it now with our fresh node_role.
-    self.send(:on_proposed,res) if self.respond_to?(:on_proposed) && res
     res
   end
 

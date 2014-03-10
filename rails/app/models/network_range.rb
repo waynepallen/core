@@ -51,8 +51,7 @@ class NetworkRange < ActiveRecord::Base
     return res if res
     begin
       Rails.logger.info("NetworkRange: allocating address from #{fullname} for #{node.name} with suggestion #{suggestion}")
-      NetworkAllocation.transaction(requires_new: true) do
-        ActiveRecord::Base.connection.execute("LOCK TABLE network_allocations")
+      NetworkAllocation.locked_transaction do
         if suggestion
           suggestion = IP.coerce(suggestion)
           if (self === suggestion) &&
@@ -68,9 +67,6 @@ class NetworkRange < ActiveRecord::Base
           res = NetworkAllocation.create!(:network_range_id => self.id, :node_id => node.id, :address => addr.to_s)
         end
       end
-    rescue ActiveRecord::StatementInvalid
-      sleep(0.2+rand(5))
-      retry
     end
     Rails.logger.info("NetworkRange: #{node.name} allocated #{res.address} from #{fullname}")
     network.make_node_role(node)

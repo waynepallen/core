@@ -162,9 +162,8 @@ class Jig < ActiveRecord::Base
     nr = job.node_role
     begin
       NodeRole.transaction do
-        nr.state = NodeRole::TRANSITION
         nr.runlog = ""
-        nr.save!
+        nr.state = NodeRole::TRANSITION
         nr.reload
       end
       run(nr,data)
