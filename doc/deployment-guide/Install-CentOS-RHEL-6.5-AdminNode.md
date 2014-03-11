@@ -133,7 +133,7 @@ Execute the following:#> cd /root
 Change directory:
 
      #> cd ocb
-     #> ./script/install.sh 
+     #> ./scripts/install.sh 
 
 **Note:** The contents of the ocb-install.sh file are:
 
