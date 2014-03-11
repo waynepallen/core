@@ -170,8 +170,8 @@ class Jig < ActiveRecord::Base
       nr.active!
     rescue Exception => e
       Rails.logger.debug("Run: Finished job #{job.id}, exceptions raised.")
-      Rails.logger.error("#{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}")
-      nr.runlog = "#{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}"
+      Rails.logger.error("#{e.class.name}: #{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}")
+      nr.runlog = "#{e.class.name}: #{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}"
       nr.error!
     ensure
       Run.locked_transaction do
