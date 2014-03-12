@@ -13,38 +13,42 @@
       %td{:width=>'100%', :align=>'right'}
         = link_to t('.retry'), node_role_retry_path(@node_role.id), :class => 'button', :method=>:put
 
+%h3= t '.data'
 
-= form_for :node_role, :'data-remote' => true, :url => node_role_path(:id=>@node_role), :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic" } do |f|
-  - if @node_role.proposed?
-    %p{:style => 'float:right'}
-      %input.button{:type => "submit", :name => "save", :value => t('.save')}
-  %h3= t '.data'
+- begin
   - p = "barclamp_#{@node_role.barclamp.name}/node_roles/#{@node_role.role.name.gsub("-","_")}"
-  - begin
-    - if params.include? :raw
-      = render :partial => 'raw', :locals => { :data => @node_role.data, :template => @node_role.role.template }
-    - else
-      = render :partial => p, :locals  => { :data => @node_role.data, :hide => false, :template => @node_role.role.template }
-  - rescue Exception => e
-    = render :partial => 'raw', :locals => { :data => @node_role.data, :hide => false, :template => @node_role }
-    - if e.message.starts_with? "Missing partial #{p}"
-      %p= t '.no_overlay', :overlay=>p
-    - else
+  - if params.include? :raw
+    = render :partial => 'raw', :locals => { :node_role => @node_role }
+  - else
+    = render :partial => p, :locals  => { :data => @node_role.data, :hide => false, :template => @node_role.role.template }
+- rescue Exception => e
+  = render :partial => 'raw', :locals => { :node_role => @node_role }
+  - if e.message.starts_with? "Missing partial #{p}"
+    - if current_user and current_user.settings(:ui).debug
       %p
-        = t 'error'
-        = e.message
+        %em= t 'debug'
+        = t '.no_overlay', :overlay=>p
+  - else
+    %p
+      = t 'error'
+      = e.message
 
 %h3
-  %a.toggle.with_label{:href => "#", :id => "#sysdata_toggle", :rel => "sysdata"}= t '.sysdata'
+  %a.toggle.with_label{:href => "#", :id => "#data_toggle", :rel => "rawdata"}= t '.rawdata'
 
-%pre.code{:id=>"sysdata", :style =>"display:none"}= JSON.pretty_generate @node_role.sysdata
+%div{:id=>"rawdata", :style =>"display:none"}
 
-%h3
-  %a.toggle.with_label{:href => "#", :id => "#wall_toggle", :rel => "wall"}= t '.wall'
+  %p
+    %h4= t '.data'
+    %pre= JSON.pretty_generate @node_role.data
 
-%pre.code{:id=>"wall", :style =>"display:none"}= JSON.pretty_generate @node_role.wall
+  %p
+    %h4= t '.sysdata'
+    %pre= JSON.pretty_generate @node_role.sysdata
 
-%hr 
+  %p
+    %h4= t '.wall'
+    %pre= JSON.pretty_generate @node_role.wall
 
 %h3= t '.upstream'
 = render :partial=>'index', :locals => { :list => @node_role.parents }

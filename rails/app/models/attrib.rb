@@ -39,6 +39,11 @@ class Attrib < ActiveRecord::Base
   belongs_to      :role
   belongs_to      :barclamp
 
+
+  def name_i18n
+    I18n.t(name, :default=>name.humanize, :scope=>'common.attribs')
+  end
+
   def wrap_schema(fragment)
     {"type" => "map",
       "required" => true,
