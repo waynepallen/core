@@ -93,11 +93,11 @@ class BarclampChef::Jig < Jig
     # If it passes, go to ACTIVE, otherwise ERROR.
     out,err,ok = BarclampCrowbar::Jig.ssh("root@#{nr.node.name} chef-client")
     raise("Chef jig run for #{nr.name} failed\nOut: #{out}\nErr:#{err}") unless ok.success?
-    nr.runlog = out
     # Reload the node, find any attrs on it that map to ones this
     # node role cares about, and write them to the wall.
     chef_node, chef_noderole = chef_node_and_role(nr.node)
     Node.transaction do
+      nr.update!(runlog: out)
       node_disc = nr.node.discovery
       node_disc["ohai"] = chef_node.attributes.automatic
       nr.node.discovery_merge(node_disc)

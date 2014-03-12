@@ -91,65 +91,67 @@ class Jig < ActiveRecord::Base
     res = {}
     # Figure out which attribs will be satisfied from node data vs.
     # which will be satisfied from noderoles.
-    node_req_attrs,role_req_attrs = nr.role.role_require_attribs.partition do |rrr|
-      attr = rrr.attrib
-      raise("RoleRequiresAttrib: Cannot find required attrib #{rrr.attrib_name}") if attr.nil?
-      attr.role_id.nil?
-    end
-    # For all the node attrs, resolve them.  Prefer hints.
-    # Start with the node data.
-    node_req_attrs.each do |req_attr|
-      Rails.logger.info("Jig: Adding node attribute #{req_attr.attrib_name} to attribute blob for #{nr.name} run")
-      res.deep_merge!(req_attr.get(nr.node))
-    end
-    # Next, build up the node specific part of the attrib blob.
-    # All parent noderoles that are on the same node get their attribs pulled
+    NodeRole.transaction do
+      node_req_attrs,role_req_attrs = nr.role.role_require_attribs.partition do |rrr|
+        attr = rrr.attrib
+        raise("RoleRequiresAttrib: Cannot find required attrib #{rrr.attrib_name}") if attr.nil?
+        attr.role_id.nil?
+      end
+      # For all the node attrs, resolve them.  Prefer hints.
+      # Start with the node data.
+      node_req_attrs.each do |req_attr|
+        Rails.logger.info("Jig: Adding node attribute #{req_attr.attrib_name} to attribute blob for #{nr.name} run")
+        res.deep_merge!(req_attr.get(nr.node))
+      end
+      # Next, build up the node specific part of the attrib blob.
+      # All parent noderoles that are on the same node get their attribs pulled
     # in by default.
-    nr.all_parents.on_node(nr.node).order("cohort ASC").each do |parent_nr|
-      res.deep_merge!(parent_nr.deployment_data)
-      res.deep_merge!(parent_nr.all_my_data)
-    end
-    # Next, do the same for the attribs we want from a noderole.
-    role_req_attrs.each do |req_attr|
-      source = if req_attr.attrib.role.implicit
-                 # If we are requesting an attribute provided by an implicit role, then
-                 # that attribute must come from a noderole bound to the same node as we are.
-                 nr.all_parents.where(:role_id => req_attr.attrib.role_id, :node_id => nr.node_id).first
-               else
-                 # Otherwise, it can come from any parent noderole.
+      nr.all_parents.on_node(nr.node).order("cohort ASC").each do |parent_nr|
+        res.deep_merge!(parent_nr.deployment_data)
+        res.deep_merge!(parent_nr.all_my_data)
+      end
+      # Next, do the same for the attribs we want from a noderole.
+      role_req_attrs.each do |req_attr|
+        source = if req_attr.attrib.role.implicit
+                   # If we are requesting an attribute provided by an implicit role, then
+                   # that attribute must come from a noderole bound to the same node as we are.
+                   nr.all_parents.where(:role_id => req_attr.attrib.role_id, :node_id => nr.node_id).first
+                 else
+                   # Otherwise, it can come from any parent noderole.
                  nr.all_parents.where(:role_id => req_attr.attrib.role_id).first
-               end
-      raise("Cannot find source for wanted attrib #{req_attr.attrib_name}") unless source
-      Rails.logger.info("Jig: Adding role attribute #{req_attr.attrib_name} from #{source.name} to attribute blob for #{nr.name} run")
-      res.deep_merge!(req_attr.get(source))
-    end
-    # Add this noderole's attrib data.
-    Rails.logger.info("Jig: Merging attribute data from #{nr.name} for jig run.")
-    res.deep_merge!(nr.attrib_data)
-    # Add information about the resource reservations this node has in place
-    unless nr.node.discovery["reservations"]
+                 end
+        raise("Cannot find source for wanted attrib #{req_attr.attrib_name}") unless source
+        Rails.logger.info("Jig: Adding role attribute #{req_attr.attrib_name} from #{source.name} to attribute blob for #{nr.name} run")
+        res.deep_merge!(req_attr.get(source))
+      end
+      # Add this noderole's attrib data.
+      Rails.logger.info("Jig: Merging attribute data from #{nr.name} for jig run.")
+      res.deep_merge!(nr.attrib_data)
+      # Add information about the resource reservations this node has in place
+      unless nr.node.discovery["reservations"]
       res["crowbar_wall"] ||= Hash.new
-      res["crowbar_wall"]["reservations"] = nr.node.discovery["reservations"]
+        res["crowbar_wall"]["reservations"] = nr.node.discovery["reservations"]
+      end
+      # Add any hints.
+      res["hints"] = nr.node.hint
+      # And we are done.
     end
-    # Add any hints.
-    res["hints"] = nr.node.hint
-    # And we are done.
     res
   end
 
   def finish_run(nr)
-    nr.run_count += 1 if nr.active?
-    nr.save!
-    # Handle updating our global idea about reservations if our wall has any.
-    if (nr.wall["crowbar_wall"]["reservations"] rescue nil)
-      res = Hash.new
-      nr.node.node_roles.each do |this_nr|
-        next unless (this_nr.wall["crowbar_wall"]["reservations"] rescue nil)
-        res.deep_merge!(this_nr.wall["crowbar_wall"]["reservations"])
+    NodeRole.transaction do
+      nr.save!
+      # Handle updating our global idea about reservations if our wall has any.
+      if (nr.wall["crowbar_wall"]["reservations"] rescue nil)
+        res = Hash.new
+        nr.node.node_roles.each do |this_nr|
+          next unless (this_nr.wall["crowbar_wall"]["reservations"] rescue nil)
+          res.deep_merge!(this_nr.wall["crowbar_wall"]["reservations"])
+        end
+        nr.node.discovery.merge({"reservations" => res})
       end
-      nr.node.discovery.merge({"reservations" => res})
     end
-    return nr
   end
 
   # Run a single noderole.
@@ -161,26 +163,28 @@ class Jig < ActiveRecord::Base
     raise "Cannot call run on the top-level Jig!"
   end
 
-  def run_job(job,data)
-    Rails.logger.debug("Run: Running job #{job.id}")
+  def run_job(job)
     nr = job.node_role
+    Rails.logger.info("Run: Running job #{job.id} for #{nr.name}")
     begin
-      run(nr,data)
-      Rails.logger.debug("Run: Finished job #{job.id}, no exceptions raised.")
+      run(nr,job.run_data["data"])
+      Rails.logger.debug("Run: Finished job #{job.id} for #{nr.name}, no exceptions raised.")
       nr.active!
     rescue Exception => e
-      Rails.logger.debug("Run: Finished job #{job.id}, exceptions raised.")
+      NodeRole.transaction do
+        nr.update!(runlog: "#{e.class.name}: #{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}")
+        nr.error!
+      end
+      Rails.logger.debug("Run: Finished job #{job.id} for #{nr.name}, exceptions raised.")
       Rails.logger.error("#{e.class.name}: #{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}")
-      nr.runlog = "#{e.class.name}: #{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}"
-      nr.error!
     ensure
+      finish_run(nr)
       Run.locked_transaction do
-        Rails.logger.debug("Run: Deleting finished job #{job.id}")
+        Rails.logger.debug("Run: Deleting finished job #{job.id} for #{nr.name}")
         job.delete
       end
+      Run.run!
     end
-    finish_run(nr)
-    Run.run!
   end
 
   # Return all keys from hash A that do not exist in hash B, recursively

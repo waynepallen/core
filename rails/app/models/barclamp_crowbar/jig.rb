@@ -47,7 +47,7 @@ class BarclampCrowbar::Jig < Jig
     die("Copy failed! (status = #{$?.exitstatus})\nOut: #{out}\nErr: #{err}") unless ok.success?
     out,err,ok = nr.node.ssh("/bin/bash '#{remote_tmpdir}/runner' '#{remote_tmpdir}' '#{nr.role.name}'")
     die("Script jig run for #{nr.role.name} on #{nr.node.name} failed! (status = #{$?.exitstatus})\nOut: #{out}\nErr: #{err}") unless ok.success?
-    nr.runlog = out
+    nr.update!(runlog: out)
     # Now, we need to suck any written attributes back out.
     new_wall = {}
     out,err,ok = nr.node.scp_from("#{remote_tmpdir}/attrs","#{local_tmpdir}","-r")
