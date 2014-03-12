@@ -221,13 +221,15 @@ class NodeRole < ActiveRecord::Base
   end
 
   def add_parent(new_parent)
-    return if parents.any?{|p| p.id == new_parent.id}
-    if new_parent.cohort >= (self.cohort || 0)
-      self.cohort = new_parent.cohort + 1
-      save!
+    NodeRole.transaction do
+      return if parents.any?{|p| p.id == new_parent.id}
+      if new_parent.cohort >= (self.cohort || 0)
+        self.cohort = new_parent.cohort + 1
+        save!
+      end
+      Rails.logger.info("Role: Binding parent #{new_parent.name} to #{self.name}")
+      parents << new_parent
     end
-    Rails.logger.info("Role: Binding parent #{new_parent.name} to #{self.name}")
-    parents << new_parent
   end
 
   def data
@@ -324,14 +326,18 @@ class NodeRole < ActiveRecord::Base
   end
 
   def deactivate
-    return if proposed?
-    block_or_todo
+    NodeRole.transaction do
+      reload
+      return if proposed?
+      block_or_todo
+    end
   end
 
   def error!
     # We can also go to ERROR pretty much any time.
     # but we silently ignore the transition if in BLOCKED
     NodeRole.transaction do
+      reload
       return if blocked?
       update!(state: ERROR)
       # All children of a node_role in ERROR go to BLOCKED.
@@ -343,6 +349,7 @@ class NodeRole < ActiveRecord::Base
     # We can only go to ACTIVE from TRANSITION
     # but we silently ignore the transition if in BLOCKED
     NodeRole.transaction do
+      reload
       return if blocked?
       raise InvalidTransition.new(self,state,ACTIVE) unless transition?
       if !node.alive
@@ -357,6 +364,7 @@ class NodeRole < ActiveRecord::Base
   def todo!
     # You can pretty much always go back to TODO as long as all your parents are ACTIVE
     NodeRole.transaction do
+      reload
       raise InvalidTransition.new(self,state,TODO,"Not all parents are ACTIVE") unless activatable?
       update!(state: TODO)
       # Going into TODO transitions all our children into BLOCKED.
@@ -367,6 +375,7 @@ class NodeRole < ActiveRecord::Base
   def transition!
     # We can only go to TRANSITION from TODO or ACTIVE
     NodeRole.transaction do
+      reload
       unless todo? || active? || transition?
         raise InvalidTransition.new(self,state,TRANSITION)
       end
@@ -378,6 +387,7 @@ class NodeRole < ActiveRecord::Base
   def block!
     # We can pretty much always go to BLOCKED.
     NodeRole.transaction do
+      reload
       update!(state: BLOCKED)
       all_children.where(["state NOT IN(?,?)",PROPOSED,TRANSITION]).update_all(state: BLOCKED)
     end
@@ -387,7 +397,10 @@ class NodeRole < ActiveRecord::Base
     # We can also pretty much always go into PROPOSED,
     # and it does not affect the state of our children until
     # we go back out of PRPOPSED.
-    update!(state: PROPOSED)
+    NodeRole.transaction do
+      reload
+      update!(state: PROPOSED)
+    end
   end
 
   # convenience methods
@@ -397,11 +410,14 @@ class NodeRole < ActiveRecord::Base
 
   # Commit takes us back to TODO or BLOCKED, depending
   def commit!
-    unless self.snapshot.proposed? || self.deployment.system?
-      raise InvalidTransition.new(self,state,TODO,"Cannot commit! unless snapshot is in proposed!")
+    NodeRole.transaction do
+      reload
+      unless self.snapshot.proposed? || self.deployment.system?
+        raise InvalidTransition.new(self,state,TODO,"Cannot commit! unless snapshot is in proposed!")
+      end
+      return unless proposed? || blocked?
+      block_or_todo
     end
-    return unless proposed? || blocked?
-    block_or_todo
   end
 
   # convenience methods
