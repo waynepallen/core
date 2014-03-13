@@ -58,7 +58,7 @@ class BarclampDns::Database < Role
     }
     to_enqueue = []
     NodeRole.transaction do
-      node_roles.committed.each do |nr|
+      node_roles.committed.lock(true).each do |nr|
         next if nr.sysdata == new_sysdata
         nr.sysdata = new_sysdata
         nr.save!
