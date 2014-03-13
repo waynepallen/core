@@ -26,7 +26,7 @@ There are a number of documents that may be helpful. The following is a guide to
   1. OpenCrowbar Key Design [Concepts](./development-guides/concepts/concepts.md)
       1. More detailed [OpenCrowbar Design Information](./development-guides/concepts/OCB-DesignInfo.md)
            1. [Design Principles](./principles/README.md)
-              1. [Attribute Injection[(./principles/attribute_injection.md)
+              1. [Attribute Injection](./principles/attribute_injection.md)
               1. [Emergent Services](./principles/emergent_services.md)
               1. [Late Binding](./princples/late_binding.md)
               1. [Simulated Annealing](./principles/simulated_annealing.md)
