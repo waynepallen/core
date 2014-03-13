@@ -26,7 +26,6 @@ class NodeRole < ActiveRecord::Base
   has_one         :barclamp,          :through => :role
   has_many        :attribs,           :through => :role
   has_many        :runs,              :dependent => :destroy
-  has_many        :node_role_data,    :dependent => :destroy, :order => "id DESC"
 
   # find other node-roles in this snapshot using their role or node
   scope           :all_by_state,      ->(state) { where(['node_roles.state=?', state]) }
@@ -117,8 +116,6 @@ class NodeRole < ActiveRecord::Base
     PROPOSED => 'proposed'
   }
 
-  after_create :create_initial_datum
-
   class InvalidTransition < Exception
     def initialize(node_role,from,to,str=nil)
       @errstr = "#{node_role.name}: Invalid state transition from #{NodeRole.state_name(from)} to #{NodeRole.state_name(to)}"
@@ -183,12 +180,11 @@ class NodeRole < ActiveRecord::Base
   end
 
   def activatable?
-    (parents.current.count == 0) ||
-      (parents.current.not_in_state(ACTIVE).count == 0)
+    (parents.count == 0) || (parents.not_in_state(ACTIVE).count == 0)
   end
 
   def runnable?
-    node.available && node.alive && jig.active && snapshot.committed?
+    node.available && node.alive && jig.active && committed_data
   end
 
   # convenience methods
@@ -233,47 +229,44 @@ class NodeRole < ActiveRecord::Base
   end
 
   def data
-    current_data.data
+    proposed? ? proposed_data : committed_data
   end
 
   def data=(arg)
-    raise I18n.t('node_role.cannot_edit_data') unless proposed? || snapshot.proposed?
-    new_data(:data, arg)
+    raise I18n.t('node_role.cannot_edit_data') unless proposed?
+    update!(proposed_data: arg)
   end
 
   def data_update(val)
     NodeRole.transaction do
-      self.data = self.data.deep_merge(val)
+      update!(proposed_data: proposed_data.deep_merge(val))
     end
   end
 
   def sysdata
     return role.sysdata(self) if role.respond_to?(:sysdata)
-    current_data.sysdata
+    read_attribute("sysdata")
   end
 
   def sysdata=(arg)
     raise("#{role.name} dynamically overwrites sysdata, cannot write to it!") if role.respond_to?(:sysdata)
-    new_data(:sysdata,arg)
+    NodeRole.transaction do
+      write_attribute("sysdata", arg)
+      save!
+    end
   end
 
   def sysdata_update(val)
     NodeRole.transaction do
       self.sysdata = self.sysdata.deep_merge(val)
+      save!
     end
-  end
-
-  def wall
-    current_data.wall
-  end
-
-  def wall=(arg)
-    new_data(:wall, arg)
   end
 
   def wall_update(val)
     NodeRole.transaction do
       self.wall = self.wall.deep_merge(val)
+      save!
     end
   end
 
@@ -310,11 +303,20 @@ class NodeRole < ActiveRecord::Base
   end
 
   def all_transition_data
-    res = all_deployment_data
-    # This will get all parent data from all the active noderoles on this node.
-    res.deep_merge!(self.node.all_active_data)
-    res.deep_merge!(all_parent_data)
-    res.deep_merge(all_my_data)
+    dres = {}
+    sysres = {}
+    userres = {}
+    NodeRole.transaction(read_only: true) do
+      all_parents.include(:deployment_roles, :roles).each do |rent|
+        dres.deep_merge!(rent.deployment_data)
+        sysres.deep_merge!(rent.sysdata)
+        userres.deep_merge!(rent.committed_data)
+      end
+      dres.deep_merge!(deployment_data)
+      dres.deep_merge!(sysdata)
+      dres.deep_merge!(committed_data)
+    end
+    dres.deep_merge(sysres).deep_merge(userres)
   end
 
   def rerun
@@ -349,12 +351,11 @@ class NodeRole < ActiveRecord::Base
     # We can only go to ACTIVE from TRANSITION
     # but we silently ignore the transition if in BLOCKED
     NodeRole.transaction do
-      reload
-      return if blocked?
-      raise InvalidTransition.new(self,state,ACTIVE) unless transition?
+      update!(run_count: run_count + 1)
       if !node.alive
         block_or_todo
       else
+        raise InvalidTransition.new(self,state,ACTIVE) unless transition?
         update!(state: ACTIVE)
       end
     end
@@ -412,10 +413,11 @@ class NodeRole < ActiveRecord::Base
   def commit!
     NodeRole.transaction do
       reload
-      unless self.snapshot.proposed? || self.deployment.system?
-        raise InvalidTransition.new(self,state,TODO,"Cannot commit! unless snapshot is in proposed!")
+      unless proposed?
+        raise InvalidTransition.new(self,state,TODO,"Cannot commit! unless proposed")
       end
       return unless proposed? || blocked?
+      update!(committed_data: proposed_data)
       block_or_todo
     end
   end
@@ -431,40 +433,9 @@ class NodeRole < ActiveRecord::Base
 
   private
 
-  def create_initial_datum
-    NodeRoleDatum.create!(:node_role_id => id,
-                          :snapshot_id => snapshot_id,
-                          :current => true)
-  end
-  
   def block_or_todo
     NodeRole.transaction do
       update!(state: (activatable? ? TODO : BLOCKED))
-    end
-  end
-
-  def current_data
-    node_role_data.active.first
-  end
-
-  def new_data(kind,val)
-    NodeRoleDatum.transaction do
-      nrd = current_data
-      nrd = if nrd.nil?
-              NodeRoleDatum.new(:node_role_id => id,
-                               :snapshot_id => snapshot_id,
-                               :current => true,
-                               kind => val)
-            else
-              new_nrd = nrd.dup
-              nrd.current = false
-              nrd.save!
-              new_nrd.node_role_id = nrd.node_role_id
-              new_nrd.snapshot_id = nrd.snapshot_id
-              new_nrd[kind] = val
-              new_nrd
-            end
-      nrd.save!
     end
   end
 

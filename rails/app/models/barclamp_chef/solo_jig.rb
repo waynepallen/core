@@ -85,7 +85,7 @@ class BarclampChef::SoloJig < Jig
     raise("Chef Solo jig run for #{nr.name} did not copy attributes back\nOut: #{out}\nErr:#{err}") unless ok.success?
     from_node = JSON.parse(IO.read(node_out_json))
     nr.node.discovery_merge({"ohai" => from_node["automatic"]})
-    nr.wall = from_node["normal"]
+    nr.update!(wall: from_node["normal"])
   end
 end
     

@@ -103,7 +103,7 @@ class BarclampChef::Jig < Jig
       nr.node.discovery_merge(node_disc)
     end
     new_attrs = chef_node.attributes.normal
-    nr.wall = deep_diff(data,new_attrs)
+    nr.update!(wall: deep_diff(data,new_attrs))
     chef_noderole.default_attributes(data.deep_merge(new_attrs))
     chef_noderole.save
   end

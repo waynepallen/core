@@ -76,7 +76,7 @@ class BarclampCrowbar::Jig < Jig
         w[k[-1]] = v
       end
     end
-    nr.wall = new_wall
+    nr.update!(wall: new_wall)
     system("sudo -H chown -R crowbar.crowbar #{local_tmpdir}")
     system("sudo rm -rf '#{local_tmpdir}")
     # Clean up after ourselves.
