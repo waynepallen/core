@@ -34,7 +34,7 @@ First, we started with best of field DevOps infrastructure: Opscode Chef.  There
 
   * _Network Abstraction_ – Crowbar dramatically extended our DevOps network abstraction.  We’ve learned that a networking is the key to success for deployment and upgrade so we’ve made Crowbar networking flexible and concise.  Crowbar networking works with attribute injection so that you can avoid hardwiring networking into DevOps scripts.
   
-* _Out of band control_ – when the Annealer hands off work, Crowbar gives the worker implementation flexibility to do it on the node (using SSH) or remotely (using an API).  Making agents optional means allows operators and developers make the best choices for the actions that they need to take.
+  * _Out of band control_ – when the Annealer hands off work, Crowbar gives the worker implementation flexibility to do it on the node (using SSH) or remotely (using an API).  Making agents optional means allows operators and developers make the best choices for the actions that they need to take.
 
   * _Technical Debt Paydown_ - We’ve also updated the Crowbar infrastructure to use the latest libraries like Ruby 2, Rails 4, Chef 11.  Even more importantly, we’re dramatically simplified the code structure including in repo documentation and a Docker based developer environment that makes building a working Crowbar environment fast and repeatable.
 
