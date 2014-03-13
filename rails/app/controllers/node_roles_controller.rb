@@ -59,7 +59,7 @@ class NodeRolesController < ApplicationController
     node = Node.find_key(params[:node] || params[:node_id])
     role = Role.find_key(params[:role] || params[:role_id])
     snap ||= node.deployment.head
-    NodeRole.transaction do
+    NodeRole.locked_transaction do
       @node_role = role.add_to_node_in_snapshot(node,snap)
       if params[:data]
         @node_role.data = params[:data]
