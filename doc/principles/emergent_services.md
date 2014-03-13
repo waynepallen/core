@@ -8,7 +8,7 @@ Effectively, we allow the overall infrastructure services configuration to evolv
 
 Emergent (aka iterative or evolutionary) design challenges the traditional assumption that all factors must be known before starting 
 
-* Dependency graph – multidimensional relationship
-* High degree of reuse via abstraction and isolation of service boundries.
-* Increasing complexity of deployments means more dependencies
-* Increasing revision rates of dependencies but with higher stability of APIs
+  * Dependency graph – multidimensional relationship
+  * High degree of reuse via abstraction and isolation of service boundries.
+  * Increasing complexity of deployments means more dependencies
+  * Increasing revision rates of dependencies but with higher stability of APIs

@@ -8,8 +8,8 @@ Many DevOps tooling leverages eventual consistency to create stable deployments.
 
 It’s not realistic to predict the exact configuration of a system in advance – 
 
-* the operational requirements recursively impact how the infratructre is configured
-* ops environments must be highly dynamic
-* resilience requires configurations to be change tolerant
+  * the operational requirements recursively impact how the infratructre is configured
+  * ops environments must be highly dynamic
+  * resilience requires configurations to be change tolerant
 
 Even more complex upgrade where the steps cannot be determined in advanced because the specifics of the deployment direct the upgrade.
