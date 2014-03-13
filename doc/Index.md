@@ -25,6 +25,7 @@ There are a number of documents that may be helpful. The following is a guide to
   1. Overview of the OpenCrowbar Software Installation - [Directory Layout](./OpenCrowbar-DirectoryLayout.md)
   1. OpenCrowbar Key Design [Concepts](./development-guides/concepts/concepts.md)
       1. More detailed [OpenCrowbar Design Information](./development-guides/concepts/OCB-DesignInfo.md)
+           1. [Design Principles](./principals/README.md) 
            1. [Application Program Interface (API)](./development-guides/api/.)
               1. [Description of APIs](./development-guides/api/api.md)
            1. [Barclamp Information](./development-guides/barclamps/.)
