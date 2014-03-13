@@ -37,6 +37,10 @@ class Jig < ActiveRecord::Base
   belongs_to  :barclamp
   after_create :make_role_requires
 
+  def die(str)
+    Rails.logger.error(str)
+    raise(str)
+  end
 
   def self.active(jig)
     Jig.where(:name=>jig, :active=>true).length > 0
@@ -161,16 +165,14 @@ class Jig < ActiveRecord::Base
     Rails.logger.debug("Run: Running job #{job.id}")
     nr = job.node_role
     begin
-      NodeRole.transaction do
-        nr.runlog = ""
-        nr.state = NodeRole::TRANSITION
-        nr.reload
-      end
       run(nr,data)
-      nr.state = NodeRole::ACTIVE
+      Rails.logger.debug("Run: Finished job #{job.id}, no exceptions raised.")
+      nr.active!
     rescue Exception => e
+      Rails.logger.debug("Run: Finished job #{job.id}, exceptions raised.")
+      Rails.logger.error("#{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}")
       nr.runlog = "#{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}"
-      nr.state = NodeRole::ERROR
+      nr.error!
     ensure
       Run.locked_transaction do
         Rails.logger.debug("Run: Deleting finished job #{job.id}")
@@ -242,7 +244,7 @@ class NoopJig < Jig
   end
 
   def run(nr,data)
-    nr.state = NodeRole::ACTIVE
+    return true
   end
 
 end

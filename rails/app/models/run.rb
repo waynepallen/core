@@ -57,6 +57,7 @@ class Run < ActiveRecord::Base
     raise "cannot enqueue a nil node_role!" if nr.nil?
     Run.locked_transaction do
       deletable.destroy_all
+      
       unless nr.runnable? &&
           ([NodeRole::ACTIVE, NodeRole::TODO, NodeRole::TRANSITION].member?(nr.state))
         Rails.logger.debug("Run: #{nr.name} is NOT enqueueable/runnable [nr.state #{nr.state} is Active/Todo/Trans && node.available #{nr.node.available} && node.alive #{nr.node.alive} && jig.active #{nr.role.jig.active}]")
@@ -119,8 +120,8 @@ class Run < ActiveRecord::Base
     jobs.values.each do |j|
       if j.node_role.role.destructive && j.node_role.run_count > 0
         Rails.logger.info("Run: #{j.node_role.name} is destructive and has already run.")
-        j.node_role.state = NodeRole::TRANSITION
-        j.node_role.state = NodeRole::ACTIVE
+        j.node_role.transition!
+        j.node_role.active!
         j.destroy
         next
       end
@@ -128,8 +129,9 @@ class Run < ActiveRecord::Base
       # We do this so that the jig gets fed data that is consistent for this point
       # in time, as opposed to picking up whatever is lying around when delayed_jobs
       # gets around to actually doing its thing, which may not be what we expect.
+      Rails.logger.info("Run: Job #{j.id} transitioning #{j.node_role.name}")
+      j.node_role.transition!
       run_data = j.node_role.jig.stage_run(j.node_role)
-      j.node_role.state = NodeRole::TRANSITION
       j.node_role.jig.delay(:queue => "NodeRoleRunner").run_job(j,run_data)
     end
     Rails.logger.info("Run: #{jobs.length} handled this pass, #{Run.running.count} in delayed_jobs")

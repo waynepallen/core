@@ -99,8 +99,7 @@ class NodeRolesController < ApplicationController
 
   def retry
     @node_role = NodeRole.find_key params[:node_role_id]
-    @node_role.state = NodeRole::TODO
-    @node_role.save!
+    @node_role.todo!
     respond_to do |format|
       format.html { render :action => :show }
       format.json { render api_show @node_role }

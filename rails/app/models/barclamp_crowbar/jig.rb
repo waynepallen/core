@@ -26,11 +26,11 @@ class BarclampCrowbar::Jig < Jig
 
   def run(nr,data)
     local_scripts = File.join nr.barclamp.source_path, 'script', 'roles', nr.role.name
-    raise "No local scripts @ #{local_scripts}" unless File.exists?(local_scripts)
+    die "No local scripts @ #{local_scripts}" unless File.exists?(local_scripts)
     remote_tmpdir,err,ok = nr.node.ssh("mktemp -d /tmp/scriptjig-XXXXXX")
     remote_tmpdir.strip!
     if remote_tmpdir.empty? || !ok.success?
-      raise "Did not create remote_tmpdir on #{nr.node.name} for some reason! (#{err})"
+      die "Did not create remote_tmpdir on #{nr.node.name} for some reason! (#{err})"
     end
     local_tmpdir = %x{mktemp -d /tmp/local-scriptjig-XXXXXX}.strip
     Rails.logger.info("Using local temp dir: #{local_tmpdir}")
@@ -44,14 +44,14 @@ class BarclampCrowbar::Jig < Jig
     FileUtils.cp_r(local_scripts,local_tmpdir)
     FileUtils.cp('/opt/opencrowbar/core/script/runner',local_tmpdir)
     out,err,ok = nr.node.scp_to("#{local_tmpdir}/.","#{remote_tmpdir}","-r")
-    raise("Copy failed! (status = #{$?.exitstatus})\nOut: #{out}\nErr: #{err}") unless ok.success?
+    die("Copy failed! (status = #{$?.exitstatus})\nOut: #{out}\nErr: #{err}") unless ok.success?
     out,err,ok = nr.node.ssh("/bin/bash '#{remote_tmpdir}/runner' '#{remote_tmpdir}' '#{nr.role.name}'")
-    raise("Script jig run for #{nr.role.name} on #{nr.node.name} failed! (status = #{$?.exitstatus})\nOut: #{out}\nErr: #{err}") unless ok.success?
+    die("Script jig run for #{nr.role.name} on #{nr.node.name} failed! (status = #{$?.exitstatus})\nOut: #{out}\nErr: #{err}") unless ok.success?
     nr.runlog = out
     # Now, we need to suck any written attributes back out.
     new_wall = {}
     out,err,ok = nr.node.scp_from("#{remote_tmpdir}/attrs","#{local_tmpdir}","-r")
-    raise("Copy of attrs back from #{nr.node.name} failed:\nOut: #{out}\nErr: #{err}") unless ok.success?
+    die("Copy of attrs back from #{nr.node.name} failed:\nOut: #{out}\nErr: #{err}") unless ok.success?
     FileUtils.cd(File.join(local_tmpdir,"attrs")) do
       # All new attributes should be saved in wall files.
       Dir.glob("**/wall") do |attrib|
