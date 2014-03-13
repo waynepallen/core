@@ -367,9 +367,10 @@ class NodeRole < ActiveRecord::Base
   def transition!
     # We can only go to TRANSITION from TODO or ACTIVE
     NodeRole.transaction do
-      unless todo? || active?
+      unless todo? || active? || transition?
         raise InvalidTransition.new(self,state,TRANSITION)
       end
+      Rails.logger.info("NodeRole: Transitioning #{name}")
       update!(state: TRANSITION, runlog: "")
     end
   end
