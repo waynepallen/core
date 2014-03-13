@@ -49,7 +49,6 @@ class Run < ActiveRecord::Base
     end
   end
 
-
   # Queue up a job to run.
   # Run.enqueue should only be called when you want to enqueue a noderole
   # that is in a state other than TODO, as those will be picked up by Run.run!
