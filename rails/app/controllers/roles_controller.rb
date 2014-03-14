@@ -41,9 +41,9 @@ class RolesController < ApplicationController
     if params.include? :deployment_id
       @deployment = Deployment.find_key params[:deployment_id]
       role = Role.find_key params[:deployment][:role_id].to_i 
-      role.add_to_snapshot @deployment.head
+      role.add_to_deployment @deployment
       respond_to do |format|
-        format.html { redirect_to snapshot_path(@deployment.head.id) }
+        format.html { redirect_to deployment_path(@deployment.id) }
         format.json { render api_show @deployment }
       end
     else

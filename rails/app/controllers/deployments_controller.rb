@@ -16,7 +16,7 @@
 class DeploymentsController < ApplicationController
 
   def index
-    @list = Deployment.all
+    @list = Deployment.order("id DESC").all
     respond_to do |format|
       format.html { }
       format.json { render api_index Deployment, @list }
@@ -26,21 +26,38 @@ class DeploymentsController < ApplicationController
   def show
     @deployment = Deployment.find_key params[:id]
     respond_to do |format|
-      format.html { }
+      format.html {
+        @roles = @deployment.deployment_roles.sort{|a,b|a.role.cohort <=> b.role.cohort}
+        # alpha lists by ID
+        @nodes = Node.order("name ASC").select do |n|
+          (n.deployment_id == @deployment.id) ||
+          (n.node_roles.where(:deployment_id => @deployment.id).count > 0)
+        end
+      }
       format.json { render api_show @deployment }
     end
   end
 
   def create
-    parent_id = params[:parent] || params[:parent_id] || "system"
-    @parent = Deployment.find_key(parent_id)
-    return api_not_found(parent_id,Deployment) unless @parent
+    if params[:parent] || params[:parent_id]
+      @parent = Deployment.find_key(params[:parent] || params[:parent_id])
+    else
+      @parent = Deployment.find_by!(system: true)
+    end
     params[:parent_id] = @parent.id
-    @deployment = Deployment.create! params.permit(:name,:parent_id,:description)
+    params.require(:name)
+    params.require(:parent_id)
+    @deployment = Deployment.create!(params.permit(:name,:parent_id,:description))
     respond_to do |format|
       format.html { redirect_to deployment_path(@deployment.id)}
       format.json { render api_show @deployment }
     end
+  end
+
+  def update
+    @deployment = Deployment.find_key params[:id]
+    @deployment.update_attributes!(params.permit(:name,:description))
+    render api_show @deployment
   end
 
   def destroy
@@ -49,54 +66,68 @@ class DeploymentsController < ApplicationController
     render api_delete @deployment
   end
 
-  # return the committed snapshot
-  def head
-    deploy = Deployment.find_key params[:deployment_id]
-    render_snaps(deploy.head)
+  def anneal
+    @deployment = Deployment.find_key params[:deployment_id]
+    @list = NodeRole.peers_by_state(@deployment, NodeRole::TRANSITION).order("cohort,id")
+    respond_to do |format|
+      format.html {  }
+      format.json { render api_index NodeRole, @list }
+    end
   end
 
-  # return the proposed snapshot
-  def next
-    deploy = Deployment.find_key params[:deployment_id]
-    render_snaps(deploy.head.next)
+  def cohorts
+    @deployment = Deployment.find_key params[:deployment_id]
+    respond_to do |format|
+      format.html {
+        @roles = @deployment.deployment_roles.sort{|a,b|a.role.cohort <=> b.role.cohort}
+        # alpha lists by ID
+        @nodes = Node.order("name ASC").select do |n|
+          (n.deployment_id == @deployment.deployment_id) ||
+          (n.node_roles.where(:deployment_id => @deployment.id).count > 0)
+        end
+      }
+    end
+
+  end
+
+  def graph
+    @deployment = Deployment.find_key params[:deployment_id]
+    respond_to do |format|
+      format.html {  }
+      format.json {
+        graph = []
+        @deployment.node_roles.each do |nr|
+          vertex = { "id"=> nr.id, "name"=> "#{nr.node.alias}: #{nr.role.name}", "data"=> {"$color"=>"#83548B"}, "$type"=>"square", "$dim"=>15, "adjacencies" =>[] }
+          nr.children.each do |c|
+            vertex["adjacencies"] << { "nodeTo"=> c.id, "nodeFrom"=> nr.id, "data"=> { "$color" => "#557EAA" } }
+          end
+          graph << vertex
+        end
+        render :json=>graph.to_json, :content_type=>cb_content_type(:list) 
+      }
+    end
   end
 
   def propose
-    @deploy = Deployment.find_key(params[:deployment_id])
-    @deploy.snapshot.propose params[:name]
-    @deploy.reload
+    @deployment = Deployment.find_key params[:deployment_id]
+    @deployment.propose
     respond_to do |format|
-      format.html { redirect_to deployment_path(@deploy.id)}
-      format.json { render api_show @deploy }
+      format.html { redirect_to deployment_path(@deployment.id) }
+      format.json { render api_show @deployment }
     end
   end
 
   def commit
-    @deploy = Deployment.find_key(params[:deployment_id])
-    @deploy.snapshot.commit
+    @deployment = Deployment.find_key params[:deployment_id]
+    @deployment.commit
     respond_to do |format|
-      format.html { redirect_to deployment_path(@deploy.id)}
-      format.json { render api_show @deploy }
+      format.html { redirect_to deployment_path(@deployment.id) }
+      format.json { render api_show @deployment }
     end
   end
 
   def recall
-    @deploy = Deployment.find_key(params[:deployment_id])
-    @deploy.snapshot.recall
-        respond_to do |format|
-      format.html { redirect_to deployment_path(@deploy.id)}
-      format.json { render api_show @deploy }
-    end
+    propose
   end
-
-  private
-
-  def render_snaps(snap)
-    respond_to do |format|
-      format.html { redirect_to snapshot_path(snap.id) }
-      format.json { render api_show snap }
-    end
-  end
-
 
 end

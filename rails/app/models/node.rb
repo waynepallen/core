@@ -48,8 +48,7 @@ class Node < ActiveRecord::Base
   has_many    :node_roles,         :dependent => :destroy
   has_many    :runs,               :dependent => :destroy
   has_many    :roles,              :through => :node_roles
-  has_many    :snapshots,          :through => :node_roles
-  has_many    :deployments,        :through => :snapshots
+  has_many    :deployments,        :through => :node_roles
   has_many    :network_allocations,:dependent => :destroy
   belongs_to  :deployment
   belongs_to  :target_role,        :class_name => "Role", :foreign_key => "target_role_id"
@@ -362,7 +361,7 @@ class Node < ActiveRecord::Base
     self.admin = true if Node.admin.count == 0    # first node, needs to be admin
     self.name = self.name.downcase
     self.alias ||= self.name.split(".")[0]
-    self.deployment ||= Deployment.system_root.first
+    self.deployment ||= Deployment.find_by!(system: true)
   end
 
   # Call the on_node_delete hooks.

@@ -30,9 +30,14 @@ Crowbar::Application.routes.draw do
   resources :barclamps
   resources :deployment_roles
   resources :deployments do
-    get :head
-    get :next
     resources :roles
+    resources :node_roles
+    get :graph
+    get :cohorts
+    put :propose
+    put :commit
+    put :recall
+
   end
   resources :docs, constraints: {id: /[^\?]*/}
 
@@ -42,14 +47,6 @@ Crowbar::Application.routes.draw do
     put :retry
   end
   resources :roles
-  resources :snapshots do
-    resources :node_roles
-    get :graph
-    get :cohorts
-    put :propose
-    put :commit
-    put :recall
-  end
 
   resources :interfaces
   resources :networks do
@@ -100,7 +97,6 @@ Crowbar::Application.routes.draw do
       resources :roles do as_routes end
       resources :role_requires do as_routes end
       resources :runs do as_routes end
-      resources :snapshots do as_routes end
     end
   end
 
@@ -122,7 +118,7 @@ Crowbar::Application.routes.draw do
       scope 'api' do
         scope 'status' do
           get "nodes(/:id)" => "nodes#status", :as => :nodes_status
-          get "snapshots(/:id)" => "snapshots#status", :as => :snapshots_status
+          get "deployments(/:id)" => "deployments#status", :as => :deployments_status
           get "queue" => "support#queue", :as => :queue_status
         end
         scope 'test' do
@@ -137,15 +133,15 @@ Crowbar::Application.routes.draw do
             resources :attribs
           end
           resources :deployments do
-            get :head
-            get :next
+            resources :node_roles
+            resources :deployment_roles
             resources :roles
             resources :nodes
             resources :attribs
-            # These just do the appropriate action on the relavent snapshot.
             put :propose
             put :commit
             put :recall
+            get :graph
           end
           resources :groups do
             member do
@@ -184,17 +180,6 @@ Crowbar::Application.routes.draw do
           resources :roles do
             resources :attribs
             resources :deployment_roles
-          end
-          resources :snapshots do
-            resources :node_roles
-            resources :nodes
-            resources :roles
-            resources :deployment_roles
-            resources :attribs
-            get :graph
-            put :propose
-            put :commit
-            put :recall
           end
           resources :users do
             post "admin", :controller => "users", :action => "make_admin"

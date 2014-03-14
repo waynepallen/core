@@ -82,9 +82,9 @@ class Network < ActiveRecord::Base
       nr = NodeRole.where(:node_id => node.id, :role_id => role.id).first
       # if not, we have to create one
       if nr.nil?
-        # we need to find a reasonable snapshot - use the current system head
-        snap = Deployment.system_root.first.head
-        nr = role.add_to_node_in_snapshot(node,snap)
+        # we need to find a reasonable deployemnt - use the current system head
+        snap = Deployment.find_by!(system: true)
+        nr = role.add_to_node_in_deployment(node,snap)
       end
     end
     nr

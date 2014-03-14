@@ -16,8 +16,8 @@
 class DeploymentRolesController < ApplicationController
 
   def index
-    @list = if params.has_key? :snapshot_id
-              Snapshot.find_key(params[:snapshot_id]).deployment_roles
+    @list = if params.has_key? :deployment_id
+              Deployment.find_key(params[:deployment_id]).deployment_roles
             elsif params.has_key? :role_id
               Role.find_key(params[:role_id]).deployment_roles
             else
@@ -42,12 +42,12 @@ class DeploymentRolesController < ApplicationController
     params[:role_id] = params[:add_role][:role_id] if params.has_key? :add_role
     # allows request by name
     params[:role_id] ||= Role.find_key(params[:role]).id if params.has_key? :role
-    params[:snapshot_id] ||= Deployment.find_key(params[:deployment]).head.id
+    params[:deployment_id] ||= Deployment.find_key(params[:deployment]).id
     params.require(:role_id)
-    params.require(:snapshot_id)
-    @deployment_role = DeploymentRole.create! params.permit(:data, :role_id, :snapshot_id)
+    params.require(:deployment_id)
+    @deployment_role = DeploymentRole.create! params.permit(:data, :role_id, :deployment_id)
     respond_to do |format|
-      format.html { redirect_to snapshot_path(params[:snapshot_id]) }
+      format.html { redirect_to deployment_path(params[:deployment_id]) }
       format.json { render api_show @deployment_role }
     end
   end

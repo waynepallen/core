@@ -11,8 +11,8 @@ tasks=("rake db:create"
     "rake assets:precompile"
     "rake railties:install:migrations"
     "rake db:migrate"
-    "script/rails generate delayed_job:active_record"
-    "script/rails generate rails_settings:migration"
+    "rails generate delayed_job:active_record"
+    "rails generate rails_settings:migration"
     "rake db:migrate"
     "rake db:seed")
 

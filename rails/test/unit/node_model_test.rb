@@ -23,10 +23,6 @@ class NodeModelTest < ActiveSupport::TestCase
     assert_not_nil d, 'we need at least 1 Deployment'
     #  We need a system deployment to create default proposals in.
     d.send(:write_attribute,"system",true)
-    # We also need a snapshot.
-    snap = Snapshot.create(:deployment_id=>d.id, :name => d.name, :description => d.description)
-    snap.save!
-    d.snapshot_id = snap.id
     d.save!
   end
 

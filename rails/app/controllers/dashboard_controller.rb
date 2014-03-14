@@ -21,7 +21,7 @@ class DashboardController < ApplicationController
     @layers = {}
     @status = {}
     taxmap["layers"].each { |k| @layers[k]=[] }
-    NodeRole.current.each do |nr|
+    NodeRole.all.each do |nr|
       layer = taxmap[nr.role.name] || 'apps'
       @layers[layer] << nr 
       if nr.state == NodeRole::ERROR

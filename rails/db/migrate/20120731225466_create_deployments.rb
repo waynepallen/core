@@ -15,10 +15,10 @@
 class CreateDeployments < ActiveRecord::Migration
   def change
     create_table :deployments do |t|
-      t.string      :name,        null: false, index: { unique: true }
+      t.integer     :state,       null: false, default: Deployment::PROPOSED
+      t.string      :name,        null: false, index: :unique
       t.string      :description, null: true
       t.boolean     :system,      null: false, default: false
-      t.references  :snapshot,    null: true, foreign_key: false
       t.references  :parent
       t.timestamps
     end

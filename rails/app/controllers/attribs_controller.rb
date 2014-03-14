@@ -85,8 +85,7 @@ class AttribsController < ApplicationController
     when params.has_key?(:node_id) then Node.find_key(params[:node_id])
     when params.has_key?(:role_id) then Role.find_key(params[:role_id])
     when params.has_key?(:node_role_id) then NodeRole.find_key(params[:node_role_id])
-    when params.has_key?(:snapshot_id) then Snapshot.find_key(params[:snapshot_id])
-    when params.has_key?(:deployment_id) then Deployment.find_key(params[:deployment_id]).snapshot
+    when params.has_key?(:deployment_id) then Deployment.find_key(params[:deployment_id])
     when params.has_key?(:deployment_role_id) then DeploymentRole.find_key(params[:deployment_role_id])
     else nil
     end
