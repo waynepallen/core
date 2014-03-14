@@ -54,11 +54,13 @@ class BarclampChef::SoloJig < Jig
     unless File.directory?(chef_path)
       raise("No Chef data at #{chef_path}")
     end
-    paths = ["#{chef_path}/roles", "#{chef_path}/data_bags", "#{chef_path}/cookbooks"].select{|d|File.directory?(d)}.join(' ')
+    paths = ["#{chef_path}/roles",
+             "#{chef_path}/data_bags",
+             "/var/tmp/barclamps/#{nr.role.barclamp.name}/chef",
+             "#{chef_path}/cookbooks"].select{|d|File.directory?(d)}.join(' ')
     # This needs to be replaced by rsync.
     out,err,ok = nr.node.scp_to(paths,"/var/chef","-r")
     raise("Chef Solo jig run for #{nr.name} failed to copy Chef information from #{paths.inspect}\nOut: #{out}\nErr: #{err}") unless ok.success?
-    
     File.open(role_json,"w") do |f|
       f.write(JSON.pretty_generate(data))
     end
