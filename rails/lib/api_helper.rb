@@ -24,11 +24,6 @@ end
 module ApiHelper
 #/lib/api_helper.rb
 
-  def self.included(base)
-    base.extend(ClassMethods)
-    base.extend(InstanceMethods)
-  end
-
   # for the top level classes (finders, etc)
   module ClassMethods
 
@@ -50,15 +45,65 @@ module ApiHelper
       end
     end
 
+    TRANSACTION_MAX_RETRIES = 3
+    def retriable_transaction(options = {},&block)
+      options[:isolation] ||= :repeatable_read
+      read_only = !!options.delete(:read_only)
+      unless connection.open_transactions.zero?
+        return yield
+      end
+      retries = 0
+      begin
+        simple_transaction(options) do
+          ActiveRecord::Base.connection.execute("SET TRANSACTION READ ONLY") if read_only
+          yield
+        end
+      rescue ActiveRecord::StatementInvalid => error
+        # Serialization errors should be immediately retried,
+        # and we expect that things will eventually serialize.
+        # At least, postgres ensures that at least 1 out of n transactions
+        # that can trigger a serialization failure will be committed.
+        retry if error.message =~ /PG::TRSerializationFailure/
+        raise error unless (retries <= TRANSACTION_MAX_RETRIES) &&
+          connection.open_transactions.zero? &&
+          (error.message =~ /(deadlock detected)|(The transaction might succeed if retried)/)
+        retries += 1
+        logger.error("Deadlock detected, retrying transaction (#{retries})")
+        retry
+      end
+    end
+
+    # Run a transaction with a lock on the table this class uses
+    def locked_transaction(&block)
+      unless connection.open_transactions.zero?
+        raise "locked_transaction cannot be called from within another transaction!"
+      end
+      retriable_transaction(isolation: :serializable) do
+        ActiveRecord::Base.connection.execute("LOCK TABLE #{table_name}")
+        yield if block_given?
+      end
+    end
+
     # Helper to determine if a given key is an ActiveRecord DB ID
     def db_id?(key)
       key.is_a?(Fixnum) or key.is_a?(Integer) or key =~ /^[0-9]+$/
     end
-  end 
+  end
 
   # for each instance (so we can use self)
   module InstanceMethods
 
+  end
+
+  def self.included(base)
+    base.extend(ClassMethods)
+    base.extend(InstanceMethods)
+    base.class_eval do
+      class <<self
+        alias_method :simple_transaction, :transaction
+        alias_method :transaction, :retriable_transaction
+      end
+    end
   end
 
 end

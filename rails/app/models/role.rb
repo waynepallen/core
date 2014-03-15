@@ -49,12 +49,22 @@ class Role < ActiveRecord::Base
   scope           :all_cohorts,        -> { active.order("cohort ASC, name ASC") }
   scope           :all_cohorts_desc,   -> { active.order("cohort DESC, name ASC") }
 
+  def unresolved_requires
+    RoleRequire.where("role_id in (select role_id from all_role_requires where required_role_id IS NULL AND role_id = ?)",id)
+  end
+
+  def all_parents
+    Role.where("id in (select required_role_id from all_role_requires where required_role_id IS NOT NULL AND role_id = ?)",id).order("cohort ASC")
+  end
+
+  def all_children
+    Role.where("id in (select role_id from all_role_requires where required_role_id = ?)",id).order("cohort ASC")
+  end
 
   # incremental update (merges with existing)
   def template_update(val)
     Role.transaction do
-      self.template = self.template.deep_merge(val)
-      save!
+      update!(template: template.deep_merge(val))
     end
   end
 
@@ -130,55 +140,33 @@ class Role < ActiveRecord::Base
     Role.transaction do
       c = (parents.maximum("cohort") || -1)
       if c >= cohort
-        Rails.logger.info("Role: #{name}: Updating cohort from #{cohort} to #{c + 1}")
         update_column(:cohort,  c + 1)
       end
     end
     children.where('cohort <= ?',cohort).each do |child|
-      Rails.logger.info("Role: #{name}: Asking child role #{child.name} to update its cohort")
       child.update_cohort
     end
   end
 
   def depends_on?(other)
-    return false if self.id == other.id
-    rents = parents
-    tested = Hash.new
-    loop do
-      return false if rents.empty?
-      new_parents = []
-      rents.each do |parent|
-        next if tested[parent.id] == true
-        raise "Role dependency graph for #{self.barclamp.name}:#{name} is circular!" if parent.id == self.id
-        return true if parent.id == other.id
-        tested[parent.id] = true
-        new_parents << parent.parents
-      end
-      rents = new_parents.flatten.reject{|i|tested[i.id]}
-    end
-    raise "Cannot happen examining dependencies for #{name} -> #{other.name}"
+    all_parents.exists?(other.id)
   end
 
   # Make sure there is a deployment role for ourself in the snapshot.
   def add_to_snapshot(snap)
-    # make sure there's a deployment role before we add a node role
-    if DeploymentRole.snapshot_and_role(snap, self).size == 0
-      Rails.logger.info("Role: Adding deployment role #{name} to #{snap.name}")
-      args = ActionController::Parameters.new(:role_id=>self.id,
-                                              :snapshot_id=>snap.id,
-                                              :data=>self.template).permit!
-      DeploymentRole.create!(args)
-    end
+    DeploymentRole.find_or_create_by!(role_id: self.id, snapshot_id: snap.id)
   end
 
   def find_noderoles_for_role(role,snap)
     csnap = snap
-    loop do
-      Rails.logger.info("Role: Looking for role '#{role.name}' binding in '#{snap.deployment.name}' deployment")
-      pnrs = NodeRole.peers_by_role(csnap,role)
-      return pnrs unless pnrs.empty?
-      csnap = (csnap.deployment.parent.snapshot rescue nil)
-      break if csnap.nil?
+    Deployment.transaction(read_only: true) do
+      loop do
+        Rails.logger.info("Role: Looking for role '#{role.name}' binding in '#{snap.deployment.name}' deployment")
+        pnrs = NodeRole.peers_by_role(csnap,role)
+        return pnrs unless pnrs.empty?
+        csnap = (csnap.deployment.parent.snapshot rescue nil)
+        break if csnap.nil?
+      end
     end
     Rails.logger.info("Role: No bindings for #{role.name} in #{snap.deployment.name} or any parents.")
     []
@@ -190,47 +178,44 @@ class Role < ActiveRecord::Base
 
   # Bind a role to a node in a snapshot.
   def add_to_node_in_snapshot(node,snap)
-    # Roles can only be added to a node of their backing jig is active.
-    unless active?
-      # if we are testing, then we're going to just skip adding and keep going
-      if Jig.active('test')
-        Rails.logger.info("Role: Test mode allows us to coerce role #{name} to use the 'test' jig instead of #{jig_name} when it is not active")
-        self.jig = Jig.find_by(name: 'test')
-        self.save
-      else
-        raise MISSING_JIG.new("Role: role '#{name}' cannot be added to node '#{node.name}' without '#{jig_name}' being active!")
-      end
-    end
-    
-    # If we are already bound to this node in a snapshot, do nothing.
-    res = NodeRole.find_by(node_id: node.id, role_id: self.id)
-    return res if res
-    Rails.logger.info("Role: Trying to add #{name} to #{node.name}")
+    Role.transaction do
+      # If we are already bound to this node in a snapshot, do nothing.
+      res = NodeRole.find_by(node_id: node.id, role_id: self.id)
+      return res if res
 
-    # First pass throug the parents -- we just create any needed parent noderoles.
-    # We will actually bind them after creating the noderole binding.
-    role_requires.each do |role_req|
-      raise "Parent role #{role_req.requires} for #{name} does not exist!" unless role_req.resolved?
-      parent = role_req.parent
-      pnrs = find_noderoles_for_role(parent,snap)
-      if pnrs.empty? || (parent.implicit && !pnrs.any?{|nr|nr.node_id == node.id})
-        # If there are none, or the parent role has the implicit flag,
-        # then bind the parent to ourself as well.
-        # This logic will need to grow into bind the parent to the best suited
-        # noderole in the current deployment eventually.
-        Rails.logger.info("Role: Parent #{parent.name} not bound in scope, binding it to #{node.name} in #{snap.deployment.name}")
+      # Check to see if there are any unresolved role_requires.
+      # If there are, then this role cannot be bound.
+      unresolved = unresolved_requires
+      unless unresolved.empty?
+        raise Role::MISSING_DEP.new("#{name} is missing required roles: #{unresolved.map(&:require).inspect}")
+      end
+      # Roles can only be added to a node of their backing jig is active.
+      unless active?
+        # if we are testing, then we're going to just skip adding and keep going
+        if Jig.active('test')
+          Rails.logger.info("Role: Test mode allows us to coerce role #{name} to use the 'test' jig instead of #{jig_name} when it is not active")
+          self.jig = Jig.find_by(name: 'test')
+          self.save
+        else
+          raise MISSING_JIG.new("Role: role '#{name}' cannot be added to node '#{node.name}' without '#{jig_name}' being active!")
+        end
+      end
+      Rails.logger.info("Role: Trying to add #{name} to #{node.name}")
+      # First pass throug the parents -- we just create any needed parent noderoles.
+      # We will actually bind them after creating the noderole binding.
+      all_parents.each do |parent|
+        next if NodeRole.exists?(role_id: parent.id, node_id: node.id)
+        next unless parent.implicit? || find_noderoles_for_role(parent,snap).empty?
         parent.add_to_node_in_snapshot(node,snap)
       end
-    end
-    # At this point, all the parent noderoles we need are bound.
-    # make sure that we also have a deployment role, then
-    # create ourselves and bind our parents.
-    NodeRole.transaction do
+      # At this point, all the parent noderoles we need are bound.
+      # make sure that we also have a deployment role, then
+      # create ourselves and bind our parents.
       add_to_snapshot(snap)
-      res = NodeRole.create({ :node => node,
-                              :role => self,
-                              :snapshot => snap,
-                              :cohort => 0})
+      res = NodeRole.create!(node_id:     node.id,
+                             role_id:     id,
+                             snapshot_id: snap.id,
+                             cohort:      0)
       Rails.logger.info("Role: Creating new noderole #{res.name}")
       # Second pass through our parent array.  Since we created all our
       # parent noderoles earlier, we can just concern ourselves with creating the bindings we need.
@@ -263,14 +248,12 @@ class Role < ActiveRecord::Base
         end
       end
       res.save!
+      res
     end
-    # If there is an on_proposed hook for this role, call it now with our fresh node_role.
-    self.send(:on_proposed,res) if self.respond_to?(:on_proposed) && res
-    res
   end
 
   def jig
-    Jig.where(["name = ?",jig_name]).first
+    Jig.find_by(name: jig_name)
   end
   def active?
     j = jig
@@ -288,16 +271,18 @@ class Role < ActiveRecord::Base
   def resolve_requires_and_jig
     # Find all of the RoleRequires that refer to us,
     # and resolve them.  This will also update the cohorts if needed.
-    role_requires_children.where(required_role_id: nil).each do |rr|
-      rr.resolve!
+    Role.transaction do
+      role_requires_children.where(required_role_id: nil).each do |rr|
+        rr.resolve!
+      end
+      return true unless jig && jig.client_role &&
+        !RoleRequire.exists?(role_id: id,
+                             requires: jig.client_role_name)
+      # If our jig has already been loaded and it has a client role,
+      # create a RoleRequire for it.
+      RoleRequire.create!(role_id: id,
+                          requires: jig.client_role_name)
     end
-    return true unless jig && jig.client_role &&
-      !RoleRequire.exists?(role_id: id,
-                           requires: jig.client_role_name)
-    # If our jig has already been loaded and it has a client role,
-    # create a RoleRequire for it.
-    RoleRequire.create!(role_id: id,
-                        requires: jig.client_role_name)
   end
 
 end

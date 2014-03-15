@@ -47,53 +47,45 @@ class BarclampChef::SoloJig < Jig
   end
 
   def run (nr,data)
-    begin
-      local_tmpdir = %x{mktemp -d /tmp/local-chefsolo-XXXXXX}.strip
-      chef_path = File.join(nr.barclamp.source_path, on_disk_name)
-      role_json = File.join(local_tmpdir,"crowbar_baserole.json")
-      node_json = File.join(local_tmpdir,"node.json")
-      unless File.directory?(chef_path)
-        raise("No Chef data at #{chef_path}")
-      end
-      paths = ["#{chef_path}/roles", "#{chef_path}/data_bags", "#{chef_path}/cookbooks"].select{|d|File.directory?(d)}.join(' ')
-      # This needs to be replaced by rsync.
-      out,err,ok = nr.node.scp_to(paths,"/var/chef","-r")
-      raise("Chef Solo jig run for #{nr.name} failed to copy Chef information from #{paths.inspect}\nOut: #{out}\nErr: #{err}") unless ok.success?
-    
-      File.open(role_json,"w") do |f|
-        f.write(JSON.pretty_generate(data))
-      end
-      File.open(node_json,"w") do |f|
-        JSON.dump({"run_list" => "role[crowbar_baserole]"},f)
-      end
-      if nr.role.respond_to?(:jig_role) && !File.exists?("#{chef_path}/roles/#{nr.role.name}.rb")
-        # Create a JSON version of the role we will need so that chef solo can pick it up
-        File.open("#{local_tmpdir}/#{nr.role.name}.json","w") do |f|
-          JSON.dump(nr.role.jig_role(nr),f)
-        end
-        out,err,ok = nr.node.scp_to("#{local_tmpdir}/#{nr.role.name}.json","/var/chef/roles/#{nr.role.name}.json")
-        raise("Chef Solo jig: #{nr.name}: failed to copy dynamic role to target\nOut: #{out}\nErr:#{err}") unless ok.success?
-      end
-      out,err,ok = nr.node.scp_to(role_json, "/var/chef/roles/crowbar_baserole.json")
-      raise("Chef Solo jig: #{nr.name}: failed to copy node attribs to target\nOut: #{out}\nErr:#{err}") unless ok.success?
-      out,err,ok = nr.node.scp_to(node_json, "/var/chef/node.json")
-      raise ("Chef Solo jig: #{nr.name}: failed to copy node to target\nOut: #{out}\nErr:#{err}") unless ok.success?
-      out,err,ok = nr.node.ssh("chef-solo -j /var/chef/node.json")
-      raise("Chef Solo jig run for #{nr.name} failed\nOut: #{out}\nErr:#{err}") unless ok.success?
-      nr.runlog = out
-      node_out_json = File.join(local_tmpdir, "node-out.json")
-      out,err,ok = nr.node.scp_from("/var/chef/node-out.json",local_tmpdir)
-      raise("Chef Solo jig run for #{nr.name} did not copy attributes back\nOut: #{out}\nErr:#{err}") unless ok.success?
-      from_node = JSON.parse(IO.read(node_out_json))
-      nr.node.discovery_merge({"ohai" => from_node["automatic"]})
-      nr.wall = from_node["normal"]
-      nr.state = ok ? NodeRole::ACTIVE : NodeRole::ERROR
-      finish_run(nr)
-    rescue Exception => e
-      nr.runlog = "#{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}"
-      nr.state = NodeRole::ERROR
-      finish_run(nr)
+    local_tmpdir = %x{mktemp -d /tmp/local-chefsolo-XXXXXX}.strip
+    chef_path = File.join(nr.barclamp.source_path, on_disk_name)
+    role_json = File.join(local_tmpdir,"crowbar_baserole.json")
+    node_json = File.join(local_tmpdir,"node.json")
+    unless File.directory?(chef_path)
+      raise("No Chef data at #{chef_path}")
     end
+    paths = ["#{chef_path}/roles", "#{chef_path}/data_bags", "#{chef_path}/cookbooks"].select{|d|File.directory?(d)}.join(' ')
+    # This needs to be replaced by rsync.
+    out,err,ok = nr.node.scp_to(paths,"/var/chef","-r")
+    raise("Chef Solo jig run for #{nr.name} failed to copy Chef information from #{paths.inspect}\nOut: #{out}\nErr: #{err}") unless ok.success?
+    
+    File.open(role_json,"w") do |f|
+      f.write(JSON.pretty_generate(data))
+    end
+    File.open(node_json,"w") do |f|
+      JSON.dump({"run_list" => "role[crowbar_baserole]"},f)
+    end
+    if nr.role.respond_to?(:jig_role) && !File.exists?("#{chef_path}/roles/#{nr.role.name}.rb")
+      # Create a JSON version of the role we will need so that chef solo can pick it up
+      File.open("#{local_tmpdir}/#{nr.role.name}.json","w") do |f|
+        JSON.dump(nr.role.jig_role(nr),f)
+      end
+      out,err,ok = nr.node.scp_to("#{local_tmpdir}/#{nr.role.name}.json","/var/chef/roles/#{nr.role.name}.json")
+      raise("Chef Solo jig: #{nr.name}: failed to copy dynamic role to target\nOut: #{out}\nErr:#{err}") unless ok.success?
+    end
+    out,err,ok = nr.node.scp_to(role_json, "/var/chef/roles/crowbar_baserole.json")
+    raise("Chef Solo jig: #{nr.name}: failed to copy node attribs to target\nOut: #{out}\nErr:#{err}") unless ok.success?
+    out,err,ok = nr.node.scp_to(node_json, "/var/chef/node.json")
+    raise ("Chef Solo jig: #{nr.name}: failed to copy node to target\nOut: #{out}\nErr:#{err}") unless ok.success?
+    out,err,ok = nr.node.ssh("chef-solo -j /var/chef/node.json")
+    raise("Chef Solo jig run for #{nr.name} failed\nOut: #{out}\nErr:#{err}") unless ok.success?
+    nr.update!(runlog: out)
+    node_out_json = File.join(local_tmpdir, "node-out.json")
+    out,err,ok = nr.node.scp_from("/var/chef/node-out.json",local_tmpdir)
+    raise("Chef Solo jig run for #{nr.name} did not copy attributes back\nOut: #{out}\nErr:#{err}") unless ok.success?
+    from_node = JSON.parse(IO.read(node_out_json))
+    nr.node.discovery_merge({"ohai" => from_node["automatic"]})
+    nr.update!(wall: from_node["normal"])
   end
 end
     

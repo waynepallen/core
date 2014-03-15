@@ -38,7 +38,9 @@ class BarclampProvisioner::DhcpDatabase < Role
       Node.all.each do |node|
         ints = (node.discovery["ohai"]["network"]["interfaces"] rescue nil)
         mac_list = Attrib.get("hint-admin-macs",node) || []
-
+        v4addr = node.addresses.reject{|a|a.v6?}.sort.first.to_s
+        # We have not been allocated an address yet, do nothing here.
+        next if v4addr.nil? || v4addr.empty?
         # scan interfaces to capture all the mac addresses discovered
         unless ints.nil?
           ints.each do |net, net_data|
@@ -57,7 +59,7 @@ class BarclampProvisioner::DhcpDatabase < Role
         # add this node to the DHCP clients list
         clients[node.name] = {
           "mac_addresses" => mac_list.map{|m|m.upcase}.sort.uniq,
-          "v4addr" => node.addresses.reject{|a|a.v6?}.sort.first.to_s,
+          "v4addr" => v4addr,
           "bootenv" => node.bootenv
         }
 
@@ -71,18 +73,15 @@ class BarclampProvisioner::DhcpDatabase < Role
         }
       }
     }
+    to_enqueue = []
     NodeRole.transaction do
       node_roles.committed.each do |nr|
-        if nr.sysdata == new_sysdata
-          Rails.logger.info("DHCP database: No changes, not enqueuing #{nr.name}") 
-          next
-        end
+        next if nr.sysdata == new_sysdata
         nr.sysdata = new_sysdata
         nr.save!
-        Rails.logger.info("DHCP database: enqueing #{nr.name}")
-        Run.enqueue(nr)
+        to_enqueue << nr
       end
     end
+    to_enqueue.each { |nr| Run.enqueue(nr) }
   end
-
 end

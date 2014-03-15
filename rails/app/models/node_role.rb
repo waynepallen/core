@@ -17,6 +17,8 @@ require 'json'
 
 class NodeRole < ActiveRecord::Base
 
+  after_commit :run_hooks, on: [:update, :create]
+
   belongs_to      :node
   belongs_to      :role
   belongs_to      :snapshot
@@ -24,7 +26,6 @@ class NodeRole < ActiveRecord::Base
   has_one         :barclamp,          :through => :role
   has_many        :attribs,           :through => :role
   has_many        :runs,              :dependent => :destroy
-  has_many        :node_role_data,    :dependent => :destroy, :order => "id DESC"
 
   # find other node-roles in this snapshot using their role or node
   scope           :all_by_state,      ->(state) { where(['node_roles.state=?', state]) }
@@ -115,8 +116,6 @@ class NodeRole < ActiveRecord::Base
     PROPOSED => 'proposed'
   }
 
-  after_create :create_initial_datum
-
   class InvalidTransition < Exception
     def initialize(node_role,from,to,str=nil)
       @errstr = "#{node_role.name}: Invalid state transition from #{NodeRole.state_name(from)} to #{NodeRole.state_name(to)}"
@@ -156,96 +155,8 @@ class NodeRole < ActiveRecord::Base
     I18n.t(STATES[state], :scope=>'node_role.state')
   end
 
-  def state
-    read_attribute("state")
-  end
-
   def error?
     state == ERROR
-  end
-
-  # convenience methods
-  def name
-    "#{deployment.name}: #{node.name}: #{role.name}" rescue I18n.t('unknown')
-  end
-
-  def deployment_role
-    DeploymentRole.find_by(snapshot_id: snapshot_id,
-                           role_id: role_id)
-  end
-
-  def deployment_data
-    res = {}
-    dr = deployment_role
-    res.deep_merge!(dr.data)
-    res.deep_merge!(dr.wall)
-    res
-  end
-
-  def available
-    read_attribute("available")
-  end
-
-  def available=(b)
-    NodeRole.transaction do
-      write_attribute("available",!!b)
-      save!
-    end
-  end
-
-  def add_parent(new_parent)
-    return if parents.any?{|p| p.id == new_parent.id}
-    if new_parent.cohort >= (self.cohort || 0)
-      self.cohort = new_parent.cohort + 1
-      save!
-    end
-    Rails.logger.info("Role: Binding parent #{new_parent.name} to #{self.name}")
-    parents << new_parent
-  end
-
-  def data
-    current_data.data
-  end
-
-  def data=(arg)
-    raise I18n.t('node_role.cannot_edit_data') unless snapshot.proposed?
-    new_data(:data, arg)
-  end
-
-  def data_update(val)
-    NodeRole.transaction do
-      self.data = self.data.deep_merge(val)
-    end
-  end
-
-  def sysdata
-    return role.sysdata(self) if role.respond_to?(:sysdata)
-    current_data.sysdata
-  end
-
-  def sysdata=(arg)
-    raise("#{role.name} dynamically overwrites sysdata, cannot write to it!") if role.respond_to?(:sysdata)
-    new_data(:sysdata,arg)
-  end
-
-  def sysdata_update(val)
-    NodeRole.transaction do
-      self.sysdata = self.sysdata.deep_merge(val)
-    end
-  end
-
-  def wall
-    current_data.wall
-  end
-
-  def wall=(arg)
-    new_data(:wall, arg)
-  end
-
-  def wall_update(val)
-    NodeRole.transaction do
-      self.wall = self.wall.deep_merge(val)
-    end
   end
 
   def active?
@@ -269,12 +180,94 @@ class NodeRole < ActiveRecord::Base
   end
 
   def activatable?
-    (parents.current.count == 0) ||
-      (parents.current.not_in_state(ACTIVE).count == 0)
+    (parents.count == 0) || (parents.not_in_state(ACTIVE).count == 0)
   end
 
   def runnable?
-    node.available && node.alive && jig.active
+    node.available && node.alive && jig.active && committed_data
+  end
+
+  # convenience methods
+  def name
+    "#{deployment.name}: #{node.name}: #{role.name}" rescue I18n.t('unknown')
+  end
+
+  def deployment_role
+    DeploymentRole.find_by(snapshot_id: snapshot_id,
+                           role_id: role_id)
+  end
+
+  def deployment_data
+    res = {}
+    dr = deployment_role
+    res.deep_merge!(dr.all_data)
+    res.deep_merge!(dr.wall)
+    res
+  end
+
+  def available
+    read_attribute("available")
+  end
+
+  def available=(b)
+    NodeRole.transaction do
+      write_attribute("available",!!b)
+      save!
+    end
+  end
+
+  def add_parent(new_parent)
+    NodeRole.transaction do
+      return if parents.any?{|p| p.id == new_parent.id}
+      if new_parent.cohort >= (self.cohort || 0)
+        self.cohort = new_parent.cohort + 1
+        save!
+      end
+      Rails.logger.info("Role: Binding parent #{new_parent.name} to #{self.name}")
+      parents << new_parent
+    end
+  end
+
+  def data
+    proposed? ? proposed_data : committed_data
+  end
+
+  def data=(arg)
+    raise I18n.t('node_role.cannot_edit_data') unless proposed?
+    update!(proposed_data: arg)
+  end
+
+  def data_update(val)
+    NodeRole.transaction do
+      update!(proposed_data: proposed_data.deep_merge(val))
+    end
+  end
+
+  def sysdata
+    return role.sysdata(self) if role.respond_to?(:sysdata)
+    read_attribute("sysdata")
+  end
+
+  def sysdata=(arg)
+    raise("#{role.name} dynamically overwrites sysdata, cannot write to it!") if role.respond_to?(:sysdata)
+    NodeRole.transaction do
+      write_attribute("sysdata", arg)
+      save!
+    end
+  end
+
+  def sysdata_update(val)
+    NodeRole.transaction do
+      self.sysdata = self.sysdata.deep_merge(val)
+      save!
+    end
+  end
+
+  def wall_update(val)
+    NodeRole.transaction do
+      self.wall = self.wall.deep_merge(val)
+      save!
+    end
   end
 
   def all_my_data
@@ -310,145 +303,105 @@ class NodeRole < ActiveRecord::Base
   end
 
   def all_transition_data
-    res = all_deployment_data
-    # This will get all parent data from all the active noderoles on this node.
-    res.deep_merge!(self.node.all_active_data)
-    res.deep_merge!(all_parent_data)
-    res.deep_merge(all_my_data)
+    dres = {}
+    sysres = {}
+    userres = {}
+    NodeRole.transaction(read_only: true) do
+      all_parents.include(:deployment_roles, :roles).each do |rent|
+        dres.deep_merge!(rent.deployment_data)
+        sysres.deep_merge!(rent.sysdata)
+        userres.deep_merge!(rent.committed_data)
+      end
+      dres.deep_merge!(deployment_data)
+      dres.deep_merge!(sysdata)
+      dres.deep_merge!(committed_data)
+    end
+    dres.deep_merge(sysres).deep_merge(userres)
   end
 
   def rerun
     NodeRole.transaction do
-      raise InvalidTransition(self,state,TODO,"Cannot rerun transition") unless state == ERROR
+      raise InvalidTransition(self,state,TODO,"Cannot rerun transition") unless error?
       write_attribute("state",TODO)
       save!
     end
-    Run.run!
   end
 
   def deactivate
-    return if self.state == PROPOSED
-    block_or_todo
+    NodeRole.transaction do
+      reload
+      return if proposed?
+      block_or_todo
+    end
   end
 
-  def run_hook
-    # There are some limits to running hooks:
-    # 1: Snapshot has to be committed.
-    # 2: noderole must be available.
-    # 3: role mist not be destructive, or
-    #    it must have a run count of 0 (if not active),
-    #    or 1 (if active)
-    meth = "on_#{STATES[state]}".to_sym
-    return unless snapshot.committed? &&
-      available &&
-      ((!role.destructive) || (run_count == self.active? ? 1 : 0))
-    role.send(meth,self)
-  end
-
-  # Implement the node role state transition rules
-  # by guarding state assignment.
-  def state=(val)
-    cstate = state
-    return val if val == cstate
-    Rails.logger.info("NodeRole: transitioning #{self.role.name}:#{self.node.name} from #{STATES[cstate]} to #{STATES[val]}")
-
-    case val
-    when ERROR
-      # We can only go to ERROR from TRANSITION
-      unless (cstate == TRANSITION) || (cstate == ACTIVE)
-        raise InvalidTransition.new(self,cstate,val)
-      end
-      write_attribute("state",val)
-      save!
-      run_hook
+  def error!
+    # We can also go to ERROR pretty much any time.
+    # but we silently ignore the transition if in BLOCKED
+    NodeRole.transaction do
+      reload
+      return if blocked?
+      update!(state: ERROR)
       # All children of a node_role in ERROR go to BLOCKED.
-      children.each do |c|
-        next unless c.snapshot.committed?
-        c.state = BLOCKED
-      end
-    when ACTIVE
-      # We can only go to ACTIVE from TRANSITION
-      unless cstate == TRANSITION
-        raise InvalidTransition.new(self,cstate,val)
-      end
+      all_children.where(["state NOT IN(?,?)",PROPOSED,TRANSITION]).update_all(state: BLOCKED)
+    end
+  end
+
+  def active!
+    # We can only go to ACTIVE from TRANSITION
+    # but we silently ignore the transition if in BLOCKED
+    NodeRole.transaction do
+      update!(run_count: run_count + 1)
       if !node.alive
         block_or_todo
-        return self
+      else
+        raise InvalidTransition.new(self,state,ACTIVE) unless transition?
+        update!(state: ACTIVE)
       end
-      write_attribute("state",val)
-      save!
-      run_hook
-      # Immediate children of an ACTIVE node go to TODO
-      children.each do |c|
-        next unless c.snapshot.committed? && c.activatable?
-        c.state = TODO
-      end
-    when TODO
-      # We can only go to TODO when:
-      # 1. We were in PROPOSED or BLOCKED or ERROR or ACTIVE
-      # 2. All our parents are in ACTIVE
-      unless ((cstate == PROPOSED) || (cstate == BLOCKED)) ||
-          (cstate == ERROR) || (cstate == ACTIVE) ||
-          (!node.alive && cstate == TRANSITION)
-        raise InvalidTransition.new(self,cstate,val)
-      end
-      unless activatable?
-        raise InvalidTransition.new(self,cstate,val,"Not all parents are ACTIVE")
-      end
-      write_attribute("state",val)
-      save!
-      run_hook
-      # Going into TODO transitions all our children into BLOCKED.
-      children.each do |c|
-        c.state = BLOCKED
-      end
-    when TRANSITION
-      # We can only go to TRANSITION from TODO
-      # As an optimization, we may also want to allow a transition from
-      # BLOCKED to TRANSITION directly -- the goal would be to allow a jig
-      # to batch up noderole runs by noticing that a noderole it was handed
-      # in TRANSITION has children on the same node utilizing the same jig
-      # in BLOCKED, and preemptivly grabbing them to batch them up.
-      unless (cstate == TODO) || (cstate == ACTIVE)
-        raise InvalidTransition.new(self,cstate,val)
-      end
-      write_attribute("state",val)
-      save!
-      run_hook
-    when BLOCKED
-      # We can only go to BLOCKED from PROPOSED or TODO,
-      # or if any our parents are in BLOCKED or TODO or ERROR.
-      unless parents.any?{|nr|nr.blocked? || nr.todo? || nr.error?} ||
-          (cstate == PROPOSED || cstate == TODO) || (cstate == ACTIVE)
-        raise InvalidTransition.new(self,cstate,val)
-      end
-      # If we are blocked, so are all our children.
-      write_attribute("state",val)
-      save!
-      all_children.each do |c|
-        c.send(:write_attribute,"state",BLOCKED)
-        c.save!
-      end
-    when PROPOSED
-      # Only new node_roles can be in proposed
-      raise InvalidTransition.new(self,cstate,val) unless snapshot.proposed?
-      write_attribute("state",val)
-      save!
-      all_children.each do |c|
-        unless c.deployment.id == self.deployment.id
-          raise InvalidTransition.new(c,cstate,val,"NodeRole #{c.name} not in same deployment as #{self.name}")
-        end
-        c.send(:write_attribute,"state",BLOCKED)
-        c.save!
-        run_hook
-      end
-    else
-      # No idea what this is.  Just die.
-      raise InvalidState.new("Unknown state #{s.inspect}")
     end
-    # Kick the runner every time something transitions.
-    Run.run! if val == ACTIVE || val == TODO
-    self
+    # Moving any BLOCKED noderoles to TODO will be handled in the after_commit hook.
+  end
+
+  def todo!
+    # You can pretty much always go back to TODO as long as all your parents are ACTIVE
+    NodeRole.transaction do
+      reload
+      raise InvalidTransition.new(self,state,TODO,"Not all parents are ACTIVE") unless activatable?
+      update!(state: TODO)
+      # Going into TODO transitions all our children into BLOCKED.
+      all_children.where(["state NOT IN(?,?)",PROPOSED,TRANSITION]).update_all(state: BLOCKED)
+    end
+  end
+
+  def transition!
+    # We can only go to TRANSITION from TODO or ACTIVE
+    NodeRole.transaction do
+      reload
+      unless todo? || active? || transition?
+        raise InvalidTransition.new(self,state,TRANSITION)
+      end
+      Rails.logger.info("NodeRole: Transitioning #{name}")
+      update!(state: TRANSITION, runlog: "")
+    end
+  end
+
+  def block!
+    # We can pretty much always go to BLOCKED.
+    NodeRole.transaction do
+      reload
+      update!(state: BLOCKED)
+      all_children.where(["state NOT IN(?,?)",PROPOSED,TRANSITION]).update_all(state: BLOCKED)
+    end
+  end
+
+  def propose!
+    # We can also pretty much always go into PROPOSED,
+    # and it does not affect the state of our children until
+    # we go back out of PRPOPSED.
+    NodeRole.transaction do
+      reload
+      update!(state: PROPOSED)
+    end
   end
 
   # convenience methods
@@ -458,13 +411,15 @@ class NodeRole < ActiveRecord::Base
 
   # Commit takes us back to TODO or BLOCKED, depending
   def commit!
-    unless self.snapshot.proposed? || self.deployment.system?
-      raise InvalidTransition.new(self,state,TODO,"Cannot commit! unless snapshot is in proposed!")
+    NodeRole.transaction do
+      reload
+      unless proposed?
+        raise InvalidTransition.new(self,state,TODO,"Cannot commit! unless proposed")
+      end
+      return unless proposed? || blocked?
+      update!(committed_data: proposed_data)
+      block_or_todo
     end
-    cstate = state
-    # commit! is a no-op for ACTIVE, TRANSITION, or TODO
-    return unless (cstate == PROPOSED) || (cstate == BLOCKED)
-    block_or_todo
   end
 
   # convenience methods
@@ -478,45 +433,39 @@ class NodeRole < ActiveRecord::Base
 
   private
 
-  def create_initial_datum
-    NodeRoleDatum.create!(:node_role_id => id,
-                          :snapshot_id => snapshot_id,
-                          :current => true)
-  end
-  
   def block_or_todo
     NodeRole.transaction do
-      if (parents.current.count == 0) || (parents.current.not_in_state(ACTIVE).count == 0)
-        self.state = TODO
-      else
-        self.state = BLOCKED
+      update!(state: (activatable? ? TODO : BLOCKED))
+    end
+  end
+
+  def run_hooks
+    meth = "on_#{STATES[state]}".to_sym
+    if proposed? && previous_changes.empty?
+      # on_proposed only runs on initial noderole creation.
+      Rails.logger.debug("NodeRole #{name}: Calling #{meth} hook.")
+      role.send(meth,self)
+      return
+    end
+    return unless previous_changes["state"]
+    if snapshot.committed? && available &&
+        ((!role.destructive) || (run_count == self.active? ? 1 : 0))
+      Rails.logger.debug("NodeRole #{name}: Calling #{meth} hook.")
+      role.send(meth,self)
+    end
+    if todo? && runnable?
+      Rails.logger.info("NodeRole #{name} is runnable, kicking the annealer.")
+      Run.run!
+    end
+    if active?
+      # Immediate children of an ACTIVE node go to TODO
+      NodeRole.transaction do
+        children.where(state: BLOCKED).each do |c|
+          Rails.logger.debug("NodeRole #{name}: testing to see if #{c.name} is runnable")
+          next unless c.activatable?
+          c.todo!
+        end
       end
     end
   end
-
-  def current_data
-    node_role_data.active.first
-  end
-
-  def new_data(kind,val)
-    NodeRoleDatum.transaction do
-      nrd = current_data
-      nrd = if nrd.nil?
-              NodeRoleDatum.new(:node_role_id => id,
-                               :snapshot_id => snapshot_id,
-                               :current => true,
-                               kind => val)
-            else
-              new_nrd = nrd.dup
-              nrd.current = false
-              nrd.save!
-              new_nrd.node_role_id = nrd.node_role_id
-              new_nrd.snapshot_id = nrd.snapshot_id
-              new_nrd[kind] = val
-              new_nrd
-            end
-      nrd.save!
-    end
-  end
-
 end

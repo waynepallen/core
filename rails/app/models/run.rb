@@ -18,37 +18,33 @@ class Run < ActiveRecord::Base
   belongs_to :node
   belongs_to :node_role
 
-  scope :runnable,   -> { where(:running => false).sort{|a,b| a.sort_id <=> b.sort_id} }
+  serialize :run_data
+
+  scope :runnable,   -> { where(:running => false).where("node_id NOT IN (select node_id from runs where running)").order("id ASC")}
   scope :running,    -> { where(:running => true) }
   scope :running_on, ->(node_id) { running.where(:node_id => node_id) }
-  scope :deletable,  -> { where("id in (select r.id from runs r INNER JOIN node_roles nr
-          ON r.node_role_id = nr.id
-          where NOT ((nr.state = #{NodeRole::TRANSITION}) OR
-         (nr.state in (#{NodeRole::TODO}, #{NodeRole::ACTIVE}) AND NOT r.running)))") }
 
   def sort_id
     [node_role.cohort, node_role_id, id]
   end
 
-  def self.cleanup
-    # Clear out any stale runs.
-    # The only thing allowed on the run qudefaulteue are:
-    # Runs that are in state TRANSITION
-    # Runs that are not running with a noderole in TODO or ACTIVE
-    Run.transaction do
-      ActiveRecord::Base.connection.execute("LOCK TABLE runs")
-      deletable.destroy_all
+  def self.locked_transaction(&block)
+    begin
+      Run.transaction(isolation: :serializable) do
+        ActiveRecord::Base.connection.execute("LOCK TABLE runs")
+        yield if block_given?
+      end
+    rescue ActiveRecord::StatementInvalid => e
+      Rails.logger.error("Run: Deadlock detected, retrying: #{e.message}")
+      retry
     end
   end
 
   def self.empty?
-    cleanup
-    Run.transaction do
-      ActiveRecord::Base.connection.execute("LOCK TABLE runs")
+    Run.locked_transaction do
       Run.all.count == 0
     end
   end
-
 
   # Queue up a job to run.
   # Run.enqueue should only be called when you want to enqueue a noderole
@@ -56,95 +52,80 @@ class Run < ActiveRecord::Base
   # The main callers of this should mostly be events called from role triggers.
   def self.enqueue(nr)
     raise "cannot enqueue a nil node_role!" if nr.nil?
-    cleanup
-    Run.transaction do
-      unless nr.runnable? &&
-          ([NodeRole::ACTIVE, NodeRole::TODO, NodeRole::TRANSITION].member?(nr.state))
-        Rails.logger.debug("Run: #{nr.name} is NOT enqueueable/runnable [nr.state #{nr.state} is Active/Todo/Trans && node.available #{nr.node.available} && node.alive #{nr.node.alive} && jig.active #{nr.role.jig.active}]")
-      else
-        ActiveRecord::Base.connection.execute("LOCK TABLE runs")
-        current_run = Run.where(:node_id => nr.node_id).first
-        if nr.todo? && !current_run.nil?
-          Rails.logger.debug("Run: #{nr.name} in TODO and #{current_run.node_role.name} is already enqueued on #{nr.node.name}")
-        else
-          if current_run
-            Rails.logger.info("Run: Enqueing #{nr.name} after #{current_run.node_role.name}")
-          else
-            Rails.logger.info("Run: Enqueing #{nr.name}")
-          end
-          Run.create!(:node_id => nr.node_id,
-                      :node_role_id => nr.id)
-        end
+    Run.locked_transaction do
+      queued_run = Run.find_by(node_role_id: nr.id, running: false)
+      if queued_run
+        Rails.logger.debug("Run: Updating enqueued #{queued_run.id} with new run data for #{nr.name}")
+        queued_run.update!(run_data: {"data" => nr.jig.stage_run(nr)})
+        return
       end
+      unless nr.runnable? && (nr.active? || nr.todo? || nr.transition?)
+        Rails.logger.debug("Run: Not enqueing #{nr.name}")
+        return
+      end
+      Rails.logger.info("Run: Enqueing Run for #{nr.name}")
+      Run.create!(node_id: nr.node_id,
+                  node_role_id: nr.id,
+                  run_data: {"data" =>  nr.jig.stage_run(nr)})
     end
     run!
   end
 
   # Run up to maxjobs jobs, enqueuing runnable noderoles in TODO as it goes.
   def self.run!(maxjobs=10)
-    queued = 0
-    cleanup
-    Run.transaction do
-      # We need an exclusive lock to the table to run anything.
-      ActiveRecord::Base.connection.execute("LOCK TABLE runs")
+    jobs = {}
+    Run.locked_transaction do
+      Rails.logger.debug("Run: Queue: (start) #{Run.all.map{|j|"Job: #{j.id}: running:#{j.running}: #{j.node_role.name}: state #{j.node_role.state}"}}")
+      running = Run.running.count
+      # Look for enqueued runs and schedule at most one per node to go.
+      Run.runnable.each do |j|
+        break if jobs.length + running >= maxjobs
+        next if jobs[j.node_id]
+        Rails.logger.info("Run: Setting enqueued run #{j.id} for #{j.node_role.name} to running")
+        j.running = true
+        j.save!
+        jobs[j.node_id] = j
+      end
+
       # Find any runnable noderoles and see if they can be enqueued.
       # The logic here will only enqueue a noderole of the node does not
       # already have a noderole enqueued.
       NodeRole.runnable.order("cohort ASC, id ASC").each do |nr|
-        if Run.where(:node_id => nr.node_id).count > 0
-          Rails.logger.debug("Run: Skipping #{nr.name}")
-        else
-          Rails.logger.info("Run: Enqueing #{nr.name}")
-          Run.create!(:node_id => nr.node_id,
-                      :node_role_id => nr.id)
-        end
+        break if jobs.length + running >= maxjobs
+        next if jobs[nr.node_id] || Run.exists?(node_id: nr.node_id)
+        Rails.logger.info("Run: Creating new Run for #{nr.name}")
+        jobs[nr.node_id] = Run.create!(node_id: nr.node_id,
+                                       node_role_id: nr.id,
+                                       running: true,
+                                       run_data: {"data" => nr.jig.stage_run(nr)})
       end
-      runnable = Run.runnable.count
-      return if runnable == 0
-      # Now that we have things that are runnable, loop through them to see
-      # what we can actually run.
-      Run.runnable.each do |j|
-        # If one of our candidates refers to a node that already has something
-        # running on it, then skip it for now.
-        next unless Run.running_on(j.node_id).count == 0
-        raise "you cannot run job #{j.id} on node #{j.node_id} without a node_role." if j.node_role.nil?
-        j.node_role.state = NodeRole::TRANSITION
-        j.running = true
-        j.save!
-        # Destructive noderoles only run once.  Enforce that here.
-        if j.node_role.role.destructive && j.node_role.run_count > 0
-          Rails.logger.info("Run: #{j.node_role.name} is destructive and has already run.")
-          j.node_role.state = NodeRole::ACTIVE
-          j.node_role.save!
-          next
-        end
-        # Take a snapshot of the data we want to hand to the jig's run method.
-        # We do this so that the jig gets fed data that is consistent for this point
-        # in time, as opposed to picking up whatever is lying around when delayed_jobs
-        # gets around to actually doing its thing, which may not be what we expect.
-        begin
-          j.node_role.runlog = ""
-          j.node_role.save!
-          run_data = j.node_role.jig.stage_run(j.node_role)
-          j.node_role.jig.delay(:queue => "NodeRoleRunner").run(j.node_role,run_data)
-          queued += 1
-        rescue Exception => e
-          j.node_role.runlog = j.node_role.runlog << "EXCEPTION:\n#{e.message}\n#{e.backtrace.join("\n")}"
-          Rails.logger.error(j.node_role.runlog)
-          j.node_role.state = NodeRole::ERROR
-          j.node_role.save!
-        end
-        break if queued >= maxjobs
-      end if runnable > 0
-      Rails.logger.info("Run: #{runnable} runnable, #{queued} handled this pass, #{Run.running.count} in delayed_jobs")
-      begin
-        # log queue state
-        Rails.logger.debug("Run: Queue: #{Run.all.map{|j|"#{j.node_role.name}: state #{j.node_role.state}"}}") 
-      rescue
-        # catch node_role is nil (exposed in simulator runs)
-        Run.all.each { |j| raise "you cannot run job #{j.id} with missing node #{j.node_id} and node_role #{j.node_role_id} information.  This is likely a garbage collection issue!" if j.node_role.nil? }
-      end
-      return queued
     end
+    return if jobs.length == 0
+    # Now that we have things that are runnable, loop through them to see
+    # what we can actually run.
+    jobs.values.each do |j|
+      if j.node_role.role.destructive && j.node_role.run_count > 0
+        Rails.logger.info("Run: #{j.node_role.name} is destructive and has already run.")
+        j.node_role.transition!
+        j.node_role.active!
+        j.destroy
+        next
+      end
+      # Take a snapshot of the data we want to hand to the jig's run method.
+      # We do this so that the jig gets fed data that is consistent for this point
+      # in time, as opposed to picking up whatever is lying around when delayed_jobs
+      # gets around to actually doing its thing, which may not be what we expect.
+      j.node_role.transition!
+      j.node_role.jig.delay(:queue => "NodeRoleRunner").run_job(j)
+    end
+    Rails.logger.info("Run: #{jobs.length} handled this pass, #{Run.running.count} in delayed_jobs")
+    begin
+      # log queue state
+            Rails.logger.debug("Run: Queue: (end) #{Run.all.map{|j|"Job: #{j.id}: running:#{j.running}: #{j.node_role.name}: state #{j.node_role.state}"}}")
+    rescue
+      # catch node_role is nil (exposed in simulator runs)
+      Run.all.each { |j| raise "you cannot run job #{j.id} with missing node #{j.node_id} and node_role #{j.node_role_id} information.  This is likely a garbage collection issue!" if j.node_role.nil? }
+    end
+    return jobs.length
   end
 end

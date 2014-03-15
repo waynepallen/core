@@ -59,9 +59,7 @@ class NodeRolesController < ApplicationController
     node = Node.find_key(params[:node] || params[:node_id])
     role = Role.find_key(params[:role] || params[:role_id])
     snap ||= node.deployment.head
-    
-    raise "Cannot add noderole to snapshot in #{Snapshot.state_name(snap.state)}" unless snap.proposed?
-    NodeRole.transaction do
+    NodeRole.locked_transaction do
       @node_role = role.add_to_node_in_snapshot(node,snap)
       if params[:data]
         @node_role.data = params[:data]
@@ -101,8 +99,7 @@ class NodeRolesController < ApplicationController
 
   def retry
     @node_role = NodeRole.find_key params[:node_role_id]
-    @node_role.state = NodeRole::TODO
-    @node_role.save!
+    @node_role.todo!
     respond_to do |format|
       format.html { render :action => :show }
       format.json { render api_show @node_role }

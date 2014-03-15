@@ -81,12 +81,17 @@ class ApplicationController < ActionController::Base
     "application/vnd.crowbar.#{type2name(type)}.#{form}+json; version=2.0"
   end
 
-  def api_not_found(k,t)
-    { :json => {
-        :message => I18n.t('api.not_found', :id=>k, :type=>type2name(t)),
-        :status => 404
-      },
-      :content_type=>cb_content_type(t, "error"),
+  def api_not_found(e)
+    json = {}
+    json[:status] = 404
+    if e.crowbar_key
+      json[:message]=I18n.t('api.not_found', :id=>e.crowbar_key, :type=>type2name(e.crowbar_model))
+    else
+      json[:message]=e.message
+      json[:backtrace]=e.backtrace
+    end
+    { :json => json,
+      :content_type=>cb_content_type(e.crowbar_key, "error"),
       :status => :not_found
     }
   end
@@ -198,6 +203,7 @@ class ApplicationController < ActionController::Base
         type.descends_from_active_record? then type.name.underscore
     when type.kind_of?(String) then type.underscore
     when type.kind_of?(Symbol) then type.to_s.underscore
+    when type.nil? then "unknown"
     else raise "type2name cannot handle #{type.inspect}"
     end
   end
@@ -208,7 +214,7 @@ class ApplicationController < ActionController::Base
     when @error.is_a?(ActiveRecord::RecordNotFound)
       respond_to do |format|
         format.html { render :status => 404 }
-        format.json { render api_not_found(@error.crowbar_key, @error.crowbar_model) }
+        format.json { render api_not_found(@error) }
       end
     when @error.is_a?(ActiveRecord::RecordInvalid)
       respond_to do |format|

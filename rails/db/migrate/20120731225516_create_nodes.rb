@@ -26,7 +26,7 @@ class CreateNodes < ActiveRecord::Migration
       t.json        :hint,          :null=>false, :default=> {}
       t.boolean     :allocated,     :default=>false
       t.boolean     :alive,         :null => false, :default => false
-      t.boolean     :available,     :null => false, :default => true
+      t.boolean     :available,     :null => false, :default => false
       t.string      :bootenv,       :null => false, :default => "sledgehammer"
       t.timestamps
     end
