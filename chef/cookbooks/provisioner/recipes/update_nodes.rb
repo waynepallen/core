@@ -98,6 +98,14 @@ new_clients = {}
       target mnode_name
       action :add
     end
+  when "redhat-6.5-install"
+    provisioner_redhat mnode_name do
+      distro "redhat"
+      version "6.5"
+      address v4addr
+      target mnode_name
+      action :add
+    end
   else
     Chef::Log.info("Not messing with boot files for bootenv #{bootenv}")
   end

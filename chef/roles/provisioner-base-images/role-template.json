@@ -15,7 +15,7 @@
                     "redhat-6.5": {
                         "initrd": "images/pxeboot/initrd.img",
                         "kernel": "images/pxeboot/vmlinuz",
-                        "iso_file": "RHEL6.4-20130130.0-Server-x86_64-DVD1.iso",
+                        "iso_file": "RHEL6.5-20131111.0-Server-x86_64-DVD1.iso",
                         "append": "method=%os_install_site%"
                     },
                     "centos-6.5": {
