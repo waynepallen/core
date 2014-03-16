@@ -11,6 +11,6 @@ end
 
 # We always need a system deployment
 Deployment.find_or_create_by!(name:        "system",
-                              description: "System Deployment",
+                              description: I18n.t('automatic', :default=>"Created Automatically by System"),
                               system:      true,
                               state:       Deployment::COMMITTED)
