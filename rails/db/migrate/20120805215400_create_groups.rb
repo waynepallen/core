@@ -15,13 +15,13 @@
 class CreateGroups < ActiveRecord::Migration
   def change
     create_table :groups do |t|
-      t.string      :name,  :unique=>true
-      t.string      :description, :null=>true
-      t.string      :category,  :default=>'ui'
-      t.integer     :order, :default=>10000
-      t.timestamps      
+      t.string      :name,        unique: true
+      t.string      :description, null: true
+      t.string      :category,    default: 'ui'
+      t.integer     :order,       default: 10000
+      t.timestamps
     end
     #natural key
-    add_index(:groups, [:category, :name], :unique => true)   
+    add_index(:groups, [:category, :name], unique: true)
   end
 end

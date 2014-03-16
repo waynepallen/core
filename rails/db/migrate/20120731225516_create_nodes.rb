@@ -15,19 +15,21 @@
 class CreateNodes < ActiveRecord::Migration
   def change
     create_table :nodes do |t|
-      t.string      :name,          :limit => 255, :null => false
-      t.string      :alias,         :limit => 100, :null => false
-      t.string      :description,   :null=>true
-      t.integer     :order,         :default=>10000
-      t.boolean     :admin,         :default=>false
-      t.integer     :target_role_id,:null=>true
-      t.belongs_to  :deployment     # should be system by default
-      t.json        :discovery,     :null=>false, :default=> {}
-      t.json        :hint,          :null=>false, :default=> {}
-      t.boolean     :allocated,     :default=>false
-      t.boolean     :alive,         :null => false, :default => false
-      t.boolean     :available,     :null => false, :default => false
-      t.string      :bootenv,       :null => false, :default => "sledgehammer"
+      t.string      :name,           limit: 255,     null: false
+      t.string      :alias,          limit: 100,     null: false
+      t.string      :description,    null: true
+      t.integer     :order,          default: 10000
+      t.boolean     :admin,          default: false
+      t.integer     :target_role_id, null: true
+      t.foreign_key :roles,          column: 'target_role_id'
+      t.belongs_to  :deployment,     null: false
+      t.foreign_key :deployments
+      t.json        :discovery,      null: false,   default: {}
+      t.json        :hint,           null: false,   default: {}
+      t.boolean     :allocated,      null: false,   default: false
+      t.boolean     :alive,          null: false,   default: false
+      t.boolean     :available,      null: false,   default: false
+      t.string      :bootenv,        null: false,   default: "sledgehammer"
       t.timestamps
     end
     #natural key

@@ -14,11 +14,13 @@
 #
 class CreateNodeGroups < ActiveRecord::Migration
   def change
-    create_table :node_groups, :id=>false do |t|
+    create_table :node_groups, id: false do |t|
       t.belongs_to  :node
+      t.foreign_key :nodes
       t.belongs_to  :group
+      t.foreign_key :groups
     end
     #natural key
-    add_index(:node_groups, [:node_id, :group_id], :unique => true)   
+    add_index(:node_groups, [:node_id, :group_id], unique: true)
   end
 end
