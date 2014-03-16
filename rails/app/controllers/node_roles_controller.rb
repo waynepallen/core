@@ -76,8 +76,8 @@ class NodeRolesController < ApplicationController
   def update
     @node_role = NodeRole.find_key params[:id]
     # if you've been passed data then save it
-    NodeRole.transaction do
-      unless params[:data].nil?
+    if params[:data]
+      NodeRole.transaction do
         @node_role.data = params[:data]
         @node_role.save!
         flash[:notice] = I18n.t 'saved', :scope=>'layouts.node_roles.show'
