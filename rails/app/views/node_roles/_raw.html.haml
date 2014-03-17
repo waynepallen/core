@@ -1,6 +1,7 @@
-- if node_role.attribs.count == 0
+- if obj.attribs.count == 0
   =t 'no_items'
 - else
+  - obj_type = obj.class.to_s.underscore + "_id"
   %table.data.box
     %thead
       %tr
@@ -8,14 +9,14 @@
         %th= t '.value'
         %th
     %tbdoy
-      - node_role.attribs.each do |a|
-        = form_for :node_role, :'data-remote' => true, :url => node_role_path(:id=>node_role), :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic" } do |f|
+      - obj.attribs.each do |a|
+        = form_for :attrib, :remote => true, :url => attribs_api_path(:id=>a.id, obj_type=>obj.id, :version=>'v2'), :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic", :onsubmit =>"location.reload();" } do |f|
           %tr
             %td= link_to a.name_i18n, attrib_path(a.id), :title=>a.description
-            - if node_role.proposed?
-              %td= text_field_tag node_role.id, Attrib.get(a.name, node_role), :size => 40
+            - if (obj.is_a? NodeRole and obj.proposed?) or obj.is_a? DeploymentRole
+              %td= text_field_tag :value, Attrib.get(a.name, obj), :size => 40
               %td{:align=>"right"}
                 %input.button{:type => "submit", :name => "save", :value => t('.save')}
             -else
-              %td= Attrib.get(a.name, node_role)
+              %td= Attrib.get(a.name, obj)
               %td= ''

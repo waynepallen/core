@@ -1,7 +1,7 @@
 %h1
   = link_to @node_role.snapshot.name, snapshot_path(@node_role.snapshot.id)
   = link_to @node_role.node.name, node_path(@node_role.node.id)
-  = link_to @node_role.role.name, role_path(@node_role.role.id)
+  = link_to @node_role.role.name_i18n, role_path(@node_role.role.id)
 
 %table.plane
   %tr
@@ -18,11 +18,11 @@
 - begin
   - p = "barclamp_#{@node_role.barclamp.name}/node_roles/#{@node_role.role.name.gsub("-","_")}"
   - if params.include? :raw
-    = render :partial => 'raw', :locals => { :node_role => @node_role }
+    = render :partial => 'raw', :locals => { :obj => @node_role }
   - else
     = render :partial => p, :locals  => { :data => @node_role.data, :hide => false, :template => @node_role.role.template }
 - rescue Exception => e
-  = render :partial => 'raw', :locals => { :node_role => @node_role }
+  = render :partial => 'raw', :locals => { :obj => @node_role }
   - if e.message.starts_with? "Missing partial #{p}"
     - if current_user and current_user.settings(:ui).debug
       %p
