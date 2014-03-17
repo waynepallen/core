@@ -38,12 +38,21 @@ class CreateRoleRequires < ActiveRecord::Migration
     # and children of a given role.  Holes in the graph will have NULL
     # in place of parent_id.
     execute "
-create or replace recursive view all_role_requires (role_id, required_role_id) as
-    select role_id, required_role_id from role_requires
+create or replace recursive view all_role_requires (role_id, required_role_id, required_role_name) as
+    select role_id, required_role_id, requires from role_requires
     union
-    select arr.role_id, rr.required_role_id
+    select arr.role_id, rr.required_role_id, rr.requires
     from all_role_requires arr, role_requires rr
-    where rr.role_id = arr.required_role_id;"
+    where rr.role_id  = arr.required_role_id;"
+
+    execute "
+create or replace recursive view all_role_require_paths (child_name, parent_name, path) as
+    select r.name, rr.requires, ARRAY[r.name::text,rr.requires::text]
+    from role_requires rr, roles r where r.id = rr.role_id
+    union
+    select arr.child_name, rr.requires, arr.path || rr.requires::text
+    from all_role_require_paths arr, roles r, role_requires rr
+    where r.id = rr.role_id AND r.name = arr.parent_name;"
   end
 
 end
