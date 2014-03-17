@@ -19,9 +19,9 @@ require 'open3'
 class Node < ActiveRecord::Base
 
   before_validation :default_population
-  before_destroy :tear_down_roles
-  after_create :add_default_roles
-  after_save :after_save_handler
+  after_commit :on_create_hooks, on: :create
+  after_commit :after_commit_handler, on: :update
+  after_commit :on_destroy_hooks, on: :destroy
 
   # Make sure we have names that are legal
   # requires at least three domain elements "foo.bar.com", cause the admin node shouldn't
@@ -75,13 +75,15 @@ class Node < ActiveRecord::Base
 
   # look at Node state by scanning all node roles.
   def state
-    node_roles.each do |nr|
-      if nr.proposed?
-        return NodeRole::PROPOSED
-      elsif nr.error?
-        return NodeRole::ERROR
-      elsif [NodeRole::BLOCKED, NodeRole::TODO, NodeRole::TRANSITION].include? nr.state
-        return NodeRole::TODO
+    Node.transaction do
+      node_roles.each do |nr|
+        if nr.proposed?
+          return NodeRole::PROPOSED
+        elsif nr.error?
+          return NodeRole::ERROR
+        elsif [NodeRole::BLOCKED, NodeRole::TODO, NodeRole::TRANSITION].include? nr.state
+          return NodeRole::TODO
+        end
       end
     end
     return NodeRole::ACTIVE
@@ -90,7 +92,9 @@ class Node < ActiveRecord::Base
   # returns a hash with all the node error status information
   def status
     s = []
-    node_roles.each { |nr| s[nr.id] = nr.status if nr.error?  }
+    Node.transaction do
+      node_roles.each { |nr| s[nr.id] = nr.status if nr.error?  }
+    end
   end
 
   def shortname
@@ -157,22 +161,19 @@ class Node < ActiveRecord::Base
   end
 
   def active_node_roles
-    res = NodeRole.on_node(self).in_state(NodeRole::ACTIVE).committed.order("cohort ASC")
-    res.each do |nr|
-      Rails.logger.info("Node: Found active noderole #{nr.name} in cohort #{nr.cohort}")
-    end
-    res
+    NodeRole.on_node(self).in_state(NodeRole::ACTIVE).committed.order("cohort ASC")
   end
 
   def all_active_data
     dres = {}
     res = {}
-    active_node_roles.each do |nr|
-      dres.deep_merge!(nr.deployment_data)
-      res.deep_merge!(nr.all_parent_data)
+    Node.transaction(read_only: true) do
+      active_node_roles.each do |nr|
+        dres.deep_merge!(nr.deployment_data)
+        res.deep_merge!(nr.all_parent_data)
+      end
     end
-    dres.deep_merge!(res)
-    dres
+    dres.deep_merge(res)
   end
 
   def method_missing(m,*args,&block)
@@ -193,12 +194,14 @@ class Node < ActiveRecord::Base
     groups.first
   end
 
-  def group= group
-    db_group = group.is_a?(Group) ? group : Group.find_or_create_by_name({'name' => group, 'description' => group, 'category' => 'ui'})
-    if db_group
-      category = db_group.category
-      groups.each { |g| g.nodes.delete(self) if g.category.eql?(category) }
-      groups << db_group unless db_group.nodes.include? self
+  def group=(group)
+    Group.transaction do
+      db_group = group.is_a?(Group) ? group : Group.find_or_create_by_name({'name' => group, 'description' => group, 'category' => 'ui'})
+      if db_group
+        category = db_group.category
+        groups.each { |g| g.nodes.delete(self) if g.category.eql?(category) }
+        groups << db_group unless db_group.nodes.include? self
+      end
     end
   end
 
@@ -228,31 +231,42 @@ class Node < ActiveRecord::Base
   end
   
   def debug
-    self.alive = false
-    self.bootenv = "sledgehammer"
-    self.target = Role.where(:name => "crowbar-managed-node").first
-    self.save!
-    self.reboot
+    Node.transaction do
+      reload
+      update!(alive: true,
+              bootenv: "sledgehammer",
+              target: Role.find_by!(:name => "crowbar-managed-node"))
+    end
+    reboot
   end
 
   def undebug
-    self.alive = false
-    self.bootenv = "local"
-    self.target = nil
-    self.save
-    self.reboot
+    Node.transaction do
+      reload
+      update!(alive: false,
+              bootenv: "local",
+              target: nil)
+    end
+    reboot
+  end
+
+  def commit!
+    Node.transaction do
+      reload
+      update!(available: true)
+      node_roles.in_state(NodeRole::PROPOSED).order("cohort ASC").each do |nr|
+        nr.commit!
+      end
+    end
   end
 
   def redeploy!
     Node.transaction do
-      self.bootenv = "sledgehammer"
-      node_roles.each do |nr|
-        nr.run_count = 0
-        nr.save!
-      end
-      self.save!
-      self.reboot
+      reload
+      update!(bootenv: "sledgehammer")
+      node_roles.update_all(run_count: 0)
     end
+    reboot
   end
 
   def target
@@ -262,8 +276,9 @@ class Node < ActiveRecord::Base
   # to considering the noderole for this role bound to this node and its parents
   # for converging.  If nil is passed, then all the noderoles are marked as available.
   def target=(r)
-    if r.nil?
-      NodeRole.transaction do
+    Node.transaction do
+      reload
+      if r.nil?
         old_alive = self.alive
         self.save!
         node_roles.each do |nr|
@@ -272,13 +287,11 @@ class Node < ActiveRecord::Base
         self.target_role_id = nil
         self.alive = old_alive
         self.save!
-      end
-      return self
-    elsif r.kind_of?(Role) &&
-        roles.member?(r) &&
-        r.barclamp.name == "crowbar" &&
-        r.jig.name == "noop"
-      NodeRole.transaction do
+        return self
+      elsif r.kind_of?(Role) &&
+          roles.member?(r) &&
+          r.barclamp.name == "crowbar" &&
+          r.jig.name == "noop"
         old_alive = self.alive
         self.alive = false
         self.save!
@@ -293,10 +306,10 @@ class Node < ActiveRecord::Base
         end
         target_nr.available = true
         self.save!
+        return self
+      else
+        raise("Cannot set target role #{r.name} for #{self.name}")
       end
-      return self
-    else
-      raise("Cannot set target role #{r.name} for #{self.name}")
     end
   end
 
@@ -305,28 +318,39 @@ class Node < ActiveRecord::Base
     return true unless Rails.env == "production"
     a = address
     return true if a && self.ssh("echo alive")[2].success?
-    self[:alive] = false
-    save!
+    Node.transaction do
+      self[:alive] = false
+      save!
+    end
     false
   end
 
   private
 
-  def after_save_handler
-    return unless changed?
+  def after_commit_handler
+    Rails.logger.debug("Node: after_commit hook called")
     Rails.logger.info("Node: calling all role on_node_change hooks for #{name}")
-    Role.all_cohorts.each do |r|
-      Rails.logger.info("Node: Calling #{r.name} on_node_change for #{self.name}")
-      r.on_node_change(self)
-    end
-    if changes["available"] || changes["alive"]
-      if alive && available
-        Rails.logger.info("Node: #{name} is alive and available, enqueing noderoles to run.")
-        Run.run!
+    # the line belowrequires a crowbar deployment to which the status attribute is tied
+    Group.transaction do
+      if groups.count == 0
+        groups << Group.find_or_create_by(name: 'not_set',
+                                          description: I18n.t('not_set', :default=>'Not Set'))
       end
-      if changes["alive"] && !alive
-        Rails.logger.info("Node: #{name} is not alive, deactivating noderoles on this node.")
-        node_roles.deactivatable.each do |nr|
+    end
+    # We only call on_node_change when the node is available to prevent Crowbar
+    # from noticing changes it should not notice yet.
+    Role.all_cohorts.each do |r|
+      Rails.logger.debug("Node: Calling #{r.name} on_node_change for #{self.name}")
+      r.on_node_change(self)
+    end if available?
+    if alive && available && node_roles.runnable.count > 0
+      Rails.logger.info("Node: #{name} is alive and available, kicking the annealer.")
+      Run.run!
+    end
+    unless alive?
+      Rails.logger.info("Node: #{name} is not alive, deactivating noderoles on this node.")
+      NodeRole.transaction do
+        node_roles.order("cohort ASC").each do |nr|
           nr.deactivate
         end
       end
@@ -339,15 +363,10 @@ class Node < ActiveRecord::Base
     self.name = self.name.downcase
     self.alias ||= self.name.split(".")[0]
     self.deployment ||= Deployment.system_root.first
-    # the line belowrequires a crowbar deployment to which the status attribute is tied
-    if self.groups.count == 0
-      g = Group.find_or_create_by_name :name=>'not_set', :description=>I18n.t('not_set', :default=>'Not Set')
-      self.groups << g rescue nil
-    end
   end
 
   # Call the on_node_delete hooks.
-  def tear_down_roles
+  def on_destroy_hooks
     # do the low cohorts last
     Rails.logger.info("Node: calling all role on_node_delete hooks for #{name}")
     Role.all_cohorts_desc.each do |r|
@@ -360,14 +379,7 @@ class Node < ActiveRecord::Base
     end
   end
 
-  def add_default_roles
-    raise "you must have at least 1 deployment" unless Deployment.count > 0
-    Deployment.system_root.first.recommit do |snap|
-      (self.admin ? Role.bootstrap.active : Role.discovery.active).sort.each do |r|
-        r.add_to_node_in_snapshot(self,snap)
-      end
-    end
-
+  def on_create_hooks
     # Call all role on_node_create hooks with ourself.
     # These should happen synchronously.
     # do the low cohorts first
@@ -377,4 +389,5 @@ class Node < ActiveRecord::Base
       r.on_node_create(self)
     end
   end
+
 end

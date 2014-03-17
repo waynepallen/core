@@ -197,7 +197,7 @@ bash "Regenerate Host SSH keys" do
 end
 
 # We need Special Hackery to run sshd in docker.
-if ENV["container"] == "lxc"
+if File.file?("/.dockerenv")
   service "ssh" do
     service_name "sshd" if node["platform"] == "centos"
     start_command "/usr/sbin/sshd"

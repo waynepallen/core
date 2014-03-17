@@ -24,6 +24,18 @@ class NetworkAllocation < ActiveRecord::Base
   scope  :node,     ->(n)  { where(:node_id => n.id) }
   scope  :network,  ->(net){ joins(:network_range).where('network_ranges.network_id' => net.id) }
 
+  def self.locked_transaction(&block)
+    begin
+      Run.transaction(isolation: :serializable) do
+        ActiveRecord::Base.connection.execute("LOCK TABLE network_allocations")
+        yield if block_given?
+      end
+    rescue ActiveRecord::StatementInvalid => e
+      Rails.logger.error("Run: Deadlock detected, retrying: #{e.message}")
+      retry
+    end
+  end
+
   def address
     IP.coerce(read_attribute("address"))
   end

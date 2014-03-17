@@ -30,5 +30,16 @@ class CreateRoleRequires < ActiveRecord::Migration
       t.timestamps
     end
     add_index(:role_require_attribs, [:role_id, :attrib_name], :unique => true)
+    # Create a view that allows us to recursively get all the parents
+    # and children of a given role.  Holes in the graph will have NULL
+    # in place of parent_id.
+    execute "
+create or replace recursive view all_role_requires (role_id, required_role_id) as
+    select role_id, required_role_id from role_requires
+    union
+    select arr.role_id, rr.required_role_id
+    from all_role_requires arr, role_requires rr
+    where rr.role_id = arr.required_role_id;"
   end
+
 end

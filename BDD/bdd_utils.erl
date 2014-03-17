@@ -18,7 +18,7 @@
 -export([config/1, config/2, config/3, config_set/2, config_set/3, config_unset/1, config_unset/2]).
 -export([alias/1, alias/2]).
 -export([scenario_store/3, scenario_retrieve/3]).
--export([puts/0, puts/1, puts/2, debug/3, debug/2, debug/1, trace/5, untrace/2]).
+-export([puts/0, puts/1, puts/2, trace/5, untrace/2]).
 -export([log/5, log/4, log/3, log/2, log/1, log_level/1, depricate/4, depricate/6]).
 -export([features/1, features/2, feature_name/2, os_type/0]).
 -export([is_site_up/0, is_a/2, is_a/3, marker/1, parse_object/1]).
@@ -50,11 +50,6 @@ check(Bools) ->
 puts()              -> log(puts, "*** HERE! ***").  
 puts(Format)        -> log(puts, Format).  
 puts(Format, Data)  -> log(puts, Format, Data).
-
-% DEPRICATED! for debug statements that you want to leave in
-debug(Format)             -> log(debug, Format, []).
-debug(Format, Data)       -> log(debug, Format, Data).
-debug(Show, Format, Data) -> log(Show, Format, Data, "DEBUG").
 
 % FOR PERFORMANCE, always call with Config if available!
 log(Format)                       -> log(info, Format, []).

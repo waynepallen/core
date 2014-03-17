@@ -25,6 +25,10 @@ class CreateNodeRoles < ActiveRecord::Migration
       t.text        :runlog,            :null=>false, :default => ""
       t.boolean     :available,         :null=>false, :default => true
       t.integer     :order,             :default => 10000
+      t.json        :proposed_data,     :null => false, :default => {}
+      t.json        :committed_data,    :null => true
+      t.json        :sysdata,           :null => false, :default => {}
+      t.json        :wall,              :null => false, :default => {}
       t.timestamps
     end
     #natural key
@@ -36,19 +40,6 @@ class CreateNodeRoles < ActiveRecord::Migration
       t.integer :child_id
     end
     add_index(:node_role_pcms, [:parent_id, :child_id], :unique => true)
-
-    create_table :node_role_data do |t|
-      t.belongs_to :snapshot,         :null => false
-      t.belongs_to :node_role,        :null => false
-      t.json       :data,             :null => false, :default => {}
-      t.json       :sysdata,          :null => false, :default => {}
-      t.json       :wall,             :null => false, :default => {}
-      t.boolean    :current,          :null => false, :default => true
-      t.timestamps
-    end
-
-    add_index(:node_role_data, :current)
-    add_index(:node_role_data, :node_role_id)
 
     # Create a view that expands all node_role_pcms to include all the
     # recursive parents and children of a node.

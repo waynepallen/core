@@ -1,4 +1,5 @@
-# Copyright 2013, Dell
+#!/bin/bash
+# Copyright 2014, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +14,7 @@
 # limitations under the License.
 #
 
-require 'json'
+cd BDD
 
-class NodeRoleDatum < ActiveRecord::Base
-
-  belongs_to :node_role
-  belongs_to :snapshot
-
-  scope      :active,   -> { where :current => true }
-
-end
+# Clean-up
+rm -f *.beam ../erl_crash.dump /tmp/trace_*.txt

@@ -38,11 +38,16 @@ class DeploymentRolesController < ApplicationController
   end
 
   def create
-    params[:role_id] = Role.find_key(params[:role]).id
-    params[:snapshot_id] = Deployment.find_key(params[:deployment]).head.id
-    @deployment_role = DeploymentRole.create! params.permit!(:data, :role_id, :snapshot_id)
+    # handles UI submit form
+    params[:role_id] = params[:add_role][:role_id] if params.has_key? :add_role
+    # allows request by name
+    params[:role_id] ||= Role.find_key(params[:role]).id if params.has_key? :role
+    params[:snapshot_id] ||= Deployment.find_key(params[:deployment]).head.id
+    params.require(:role_id)
+    params.require(:snapshot_id)
+    @deployment_role = DeploymentRole.create! params.permit(:data, :role_id, :snapshot_id)
     respond_to do |format|
-      format.html { render :action=>:show }
+      format.html { redirect_to snapshot_path(params[:snapshot_id]) }
       format.json { render api_show @deployment_role }
     end
   end

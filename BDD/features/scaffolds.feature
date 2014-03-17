@@ -4,7 +4,6 @@ Feature: Scaffolds
   wants to be able to quickly check the models
   
   Scenario: Attribs
-    While interactive
     When I go to the "utils/scaffolds/attribs?limit=1" page
     Then I should see heading "Attribs"
       And I should see "Name"
@@ -13,7 +12,6 @@ Feature: Scaffolds
       And there should be no translation errors
 
   Scenario: Barclamp
-    While interactive
     When I go to the "utils/scaffolds/barclamps?limit=1" page
     Then I should see heading "Barclamps"
       And I should see "Name"
@@ -25,7 +23,6 @@ Feature: Scaffolds
       And there should be no translation errors
       
   Scenario: Nodes
-    While interactive
     When I go to the "utils/scaffolds/nodes?limit=1" page
     Then I should see heading "Nodes"
       And I should see "Name"
@@ -39,7 +36,6 @@ Feature: Scaffolds
       And there should be no translation errors
 
   Scenario: Roles
-    While interactive
     When I go to the "utils/scaffolds/roles?limit=1" page
     Then I should see heading "Roles"
       And I should see "Description"
@@ -50,9 +46,8 @@ Feature: Scaffolds
       And there should be no translation errors    
 
 Scenario: NodeRoles
-    While interactive
     When I go to the "utils/scaffolds/node_roles?limit=1" page
-    Then I should see heading "Nodes"
+    Then I should see heading "NodeRoles"
       And I should see "Node"
       And I should see "Role"
       And I should see "Snapshot"
@@ -63,7 +58,6 @@ Scenario: NodeRoles
       And there should be no translation errors
 
   Scenario: Runs
-    While interactive
     When I go to the "utils/scaffolds/runs?limit=1" page
     Then I should see heading "Runs"
       And I should see "Running"
@@ -72,7 +66,6 @@ Scenario: NodeRoles
       And there should be no translation errors   
 
   Scenario: Navs
-    While interactive
     When I go to the "utils/scaffolds/navs?limit=1" page
     Then I should see heading "Navs"
       And I should see "Name"
@@ -88,7 +81,6 @@ Scenario: NodeRoles
       And there should be no translation errors  
       
   Scenario: Docs
-    While interactive
     When I go to the "utils/scaffolds/docs?limit=1" page
     Then I should see heading "Docs"
       And I should see "Description"
@@ -102,7 +94,6 @@ Scenario: NodeRoles
       And there should be no translation errors  
       
   Scenario: Deployments
-    While interactive
     When I go to the "utils/scaffolds/deployments?limit=1" page
     Then I should see heading "Deployments"
       And I should see "Name"
@@ -114,7 +105,6 @@ Scenario: NodeRoles
       And there should be no translation errors 
                   
   Scenario: Jigs
-    While interactive
     When I go to the "utils/scaffolds/jigs?limit=1" page
     Then I should see heading "Jigs"
       And I should see "Name"
@@ -127,7 +117,6 @@ Scenario: NodeRoles
       And there should be no translation errors 
             
   Scenario: Groups
-    While interactive
     When I go to the "utils/scaffolds/groups?limit=1" page
     Then I should see heading "Groups"
       And I should see "Name"

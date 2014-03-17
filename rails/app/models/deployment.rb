@@ -23,8 +23,7 @@ class Deployment < ActiveRecord::Base
   validates_uniqueness_of   :name, :case_sensitive => false, :message => I18n.t("db.notunique", :default=>"Name item must be unique")
   validates_format_of       :name, :with=>/\A[a-zA-Z][_a-zA-Z0-9]*\z/, :message => I18n.t("db.lettersnumbers", :default=>"Name limited to [_a-zA-Z0-9]")
 
-  has_many          :snapshots,           :dependent => :destroy
-  has_one           :snapshot,            :class_name => "Snapshot", :primary_key => "snapshot_id", :foreign_key => 'id', :dependent => :destroy
+  has_one           :snapshot,           :dependent => :destroy
   alias_attribute   :head,                :snapshot
 
   belongs_to        :parent,              :class_name => "Deployment"
@@ -49,29 +48,11 @@ class Deployment < ActiveRecord::Base
     head.state
   end
 
-  # Helper to atomically recommit a currently active or committed snapshot.
-  def recommit(&block)
-    raise "Can only be called on a system deployment" unless system?
-    raise "Recommit must be passed a block that will take a snapshot!" unless block_given?
-    Deployment.transaction do
-      # if the head is committed (in transistion) then we can add it otherwise, we need to clone it
-      new_c = (head.committed? ? head : head.deep_clone)
-      block.call(new_c)
-      new_c.save!
-      # move the pointer (could be skipped if this was already head)
-      self.snapshot_id = new_c.id 
-      # reset all the node roles to ensure we re-evaluate
-      new_c.node_roles.each { |nr| nr.commit! }
-      self.save!
-      return snapshot(true)
-    end
-  end
-
   # commit the current proposal (cannot be done if there is a committed proposal)
   def commit
     head.commit
   end
-  
+
   # is this a system deployment?
   def system?
     read_attribute("system")

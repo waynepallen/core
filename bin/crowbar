@@ -500,6 +500,13 @@ class Node < ProxyWithAttribs
     self
   end
 
+  def do_commit(*rest)
+    obj, res = REST.put("#{self.class.path}/#{id}/commit")
+    maybe_json_die(obj,res)
+    @blob = obj
+    self
+  end
+
   def do_noderoles(*rest)
     objs,res = REST.get("#{self.class.path}/#{id}/node_roles")
     maybe_json_die(objs,res)

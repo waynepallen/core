@@ -1,4 +1,4 @@
-# Copyright 2013, Dell
+# Copyright 2013-4, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -175,6 +175,7 @@ Crowbar::Application.routes.draw do
             put :debug
             put :undebug
             put :redeploy
+            put :commit
           end
           resources :node_roles do
             resources :attribs

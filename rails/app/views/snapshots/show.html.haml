@@ -9,11 +9,13 @@
         = @snapshot.state_name(state)
     - if state == Snapshot::PROPOSED
       %td
-        = form_for :deployment, :'data-remote' => true, :url => deployment_roles_path(:deployment_id=>@snapshot.deployment.id, :version=>'v2'), :html => { :method=>:post, :'data-type' => 'html',  :class => "formtastic" } do |f|
+        = form_for :add_role, :'data-remote' => true, :url => deployment_roles_path(:deployment_id=>@snapshot.deployment.id, :version=>'v2'), :html => { :method=>:post, :'data-type' => 'html',  :class => "formtastic" } do |f|
           - aroles = @snapshot.deployment.available_roles
+          - if current_user and current_user.settings(:ui).noop_roles
+            - aroles.keep_if {| r | r.noop? } 
           - if aroles.length > 0 
             = hidden_field_tag :snapshot_id, @snapshot.id
-            = f.collection_select :role_id, aroles, :id, :name
+            = f.collection_select :role_id, aroles, :id, :name_i18n
             %input.button{:type => "submit", :name => "add", :value => t('.add_role')}
       %td= link_to t('.pick'), bulk_edit_path(), :title=>t('.pick_hint'), :class=>'button'
     - else
@@ -47,7 +49,8 @@
                   .led{:style=>"width:17px; margin:0px auto; text-align:center", :class => NodeRole::STATES[nr.state || NodeRole::ERROR], :title=>nr.role.name}
                     = link_to "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".html_safe, node_role_path(nr.id)
               - elsif state == Snapshot::PROPOSED
-                %span{:style=>"margin-left:30%; display:none"}
+                - display = (dr.role.noop? ? "inline" : "none" )
+                %span{:style=>"margin-left:30%; display:#{display}"}
                   = link_to image_tag('/images/icons/add.png'), node_roles_path(:snapshot_id=>@snapshot.id, :node_id=>node.id, :role_id=>dr.role.id), :method=>:post
               - else
                 %span{:style=>"width:17px; margin:0px auto; text-align:center"}= "-"

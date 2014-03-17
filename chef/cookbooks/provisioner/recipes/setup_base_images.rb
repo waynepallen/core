@@ -77,6 +77,16 @@ directory "#{pxecfg_dir}" do
   recursive true
 end
 
+directory "#{tftproot}/nodes" do
+  action :create
+  recursive true
+end
+
+cookbook_file "#{tftproot}/nodes/start-up.sh" do
+  source "start-up.sh"
+  action :create
+end
+
 template "#{pxecfg_dir}/default" do
   mode 0644
   owner "root"

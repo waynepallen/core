@@ -1,4 +1,4 @@
-# Copyright 2013, Dell 
+# Copyright 2013-4, Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -70,7 +70,10 @@ en:
     bootenv: &bootenv
       local: "Local Boot"
       sledgehammer: "Discovery / Sledgehammer"
-
+    roles:
+      crowbar-managed-node: 'Node Discovered'
+      crowbar-installed-node: 'OS Installed'
+      crowbar-admin-node: 'Crowbar Admin'
 
   # Layout
   nav:
@@ -239,6 +242,13 @@ en:
   deployment_roles:
     index:
       title: "Deployment Roles"
+    show:
+      attribs: "Attributes"
+      title: "Deployment Role"
+      rawdata: "Raw Data"
+      attrib: "Attribute"
+      value: "Value"
+      save: "Update"
   docs:
     missing: "%{topic} Topics"
     index:
@@ -330,6 +340,7 @@ en:
       step: "Single Step"
       <<: *node_role_states
     show:
+      rawdata: "Raw Data (json)"
       data: "User Configuration Data (outbound)"
       sysdata: "System Configuration Data (outbound)"
       no_overlay: "No Override using views/node_role/_raw template instead of %{overlay}"
@@ -342,8 +353,9 @@ en:
       save: "Save"
       saved: "Node Role Data Saved"
     raw:
-      merged: "Template"
-      override: "Data / Override"
+      attrib: "Available Attributes"
+      value: "Value"
+      save: "Update"
   roles:
     common: &roles_common
       flags: "Flags"
@@ -365,6 +377,9 @@ en:
       type: "Type"
       no_overlay: "No Override using views/node_role/_raw template instead of %{overlay}"
       model_error: "Overlay model generated error: %{error}"
+      attributes: "Defined Attributes"
+      attrib: "Name"
+      map: "Map"
     names:
       role: "Roles"
   snapshots:
@@ -425,6 +440,7 @@ en:
       fast_refresh: 'Fast Reload'
       millis: 'milliseconds'
       debug: 'Debug Hints'
+      noop_roles: 'System Roles Only'
       expand: 'Expand Error'
       doc_sources: 'Doc Source'
       edge: "Edge UI"

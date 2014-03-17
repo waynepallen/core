@@ -27,6 +27,8 @@ class Snapshot < ActiveRecord::Base
     ACTIVE => "active",
     ERROR => "error"
   }
+
+  after_commit :run_if_any_runnable, on: [:create, :update]
   
   belongs_to      :deployment
 
@@ -118,72 +120,51 @@ class Snapshot < ActiveRecord::Base
   def status
     node_roles.each { |nr| s[nr.id] = nr.status if nr.error?  }
   end
-  
-    # commit the current proposal (cannot be done if there is a committed proposal)
+
   def commit
-    raise I18n.t('deployment.commit.raise', :default=>'blocked: already 1 committed') unless proposed?
-    NodeRole.transaction do
+    Snapshot.transaction do
       node_roles.in_state(NodeRole::PROPOSED).each { |nr| nr.commit! }
+      if proposed?
+        write_attribute("state",COMMITTED)
+        save!
+      end
     end
-    parent.archive unless parent.nil?
-    write_attribute("state",COMMITTED)
-    save!
     Run.run!
     self
   end
-  
+
   # create a new proposal from the this one
   def propose(name=nil)
-    raise "Snapshot #{name} not ACTIVE, cannot create a new snapshot from it!" unless active?
-    raise "Cannot propose a new snapshot for the system deployment!" if deployment.system?
-    proposal = nil
-    Deployment.transaction do
-      # create the new proposal
-      proposal = deep_clone(name)
-      # move the pointer 
-      deployment.snapshot_id = proposal.id
-      archive
-      deployment.save!
+    Snapshot.transaction do
+      node_roles.each do |nr| nr.propose! end
+      write_attribute("state",PROPOSED)
+      save!
     end
-    proposal
+    self
   end
 
   def recallable?
     !deployment.system?
   end
-  
+
   # attempt to stop a proposal that's in transistion.
   # Do this by changing its state from COMMITTED to PROPOSED.
   def recall
-    raise "Cannot recall a system deployment" unless recallable?
-    write_attribute("state",PROPOSED)
-    save!
-  end
-
-  ##
-  # Clone this snapshot.  It will also clone any node roles specific to this snapshot,
-  # and take care of making sure that the node role dependency graph stays sane.
-  def deep_clone(name=nil)
     Snapshot.transaction do
-      newsnap = self.dup
-      # build the linked list
-      newsnap.snapshot_id = self.id
-      newsnap.order += 1
-      newsnap.name = name unless name.nil?
-      newsnap.send(:write_attribute,"state",PROPOSED)
-      newsnap.save!
-      # collect the deployment roles
-      self.deployment_roles.each do |dr|
-        new_dr = dr.dup
-        new_dr.snapshot = newsnap
-        new_dr.save!
-        newsnap.deployment_roles << new_dr
-      end
-      node_roles.each do |nr|
-        nr.snapshot_id = newsnap.id
-        nr.save!
-      end
-      newsnap
+      raise "Cannot recall a system deployment" unless recallable?
+      write_attribute("state",PROPOSED)
+      save!
     end
   end
+
+  private
+
+  def run_if_any_runnable
+    Rails.logger.debug("Snapshot: after_commit hook called")
+    if node_roles.runnable.count > 0
+      Rails.logger.info("Snapshot: #{name} is committed, kicking the annealer.")
+      Run.run!
+    end
+  end
+  
 end

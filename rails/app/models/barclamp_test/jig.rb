@@ -24,30 +24,23 @@ class BarclampTest::Jig < Jig
     raise "Cannot call TestJig::Run on #{nr.name}" unless nr.state == NodeRole::TRANSITION
 
     Node.transaction do
-      begin
-        # create tests data
-        disco = { :test=> { :random => Random.rand(1000000), :marker => data["marker"] }, data["marker"] => nr.id }
-        nr.node.discovery_merge(disco)
-        # running the actions from the node role
-        Rails.logger.info("TestJig Running node-role: #{nr.to_s}")    
-        name = data["marker"] || nr.name
-        delay = data["delay"].to_i || 0
-        file = File.join "/tmp", "test-jig-noderole-#{name}.txt"
-        o = "TEST JIG >> Working #{nr.node.name} #{name} & pausing for #{delay}"
-        puts o
-        # %x[touch #{file}]
-        puts "touch #{file}"  # use until we figure out which the touch is putting files in the wrong place!
-        Rails.logger.info o
-        nr.runlog = o
-        # we want an easy way to turn off the delay setting
-        sleep delay if (data["test"] || true) or data["test"].eql? "true"
-        raise "test-fails role always fails" if nr.role.name.eql? 'test-fails'
-        nr.state = NodeRole::ACTIVE
-      rescue Exception => e
-        nr.status = e.to_s
-        nr.state = NodeRole::ERROR
-      end
-      nr.save!
+      # create tests data
+      disco = { :test=> { :random => Random.rand(1000000), :marker => data["marker"] }, data["marker"] => nr.id }
+      nr.node.discovery_merge(disco)
+      # running the actions from the node role
+      Rails.logger.info("TestJig Running node-role: #{nr.to_s}")    
+      name = data["marker"] || nr.name
+      delay = data["delay"].to_i || 0
+      file = File.join "/tmp", "test-jig-noderole-#{name}.txt"
+      o = "TEST JIG >> Working #{nr.node.name} #{name} & pausing for #{delay}"
+      puts o
+      # %x[touch #{file}]
+      puts "touch #{file}"  # use until we figure out which the touch is putting files in the wrong place!
+      Rails.logger.info o
+      nr.runlog = o
+      # we want an easy way to turn off the delay setting
+      sleep delay if (data["test"] || true) or data["test"].eql? "true"
+      raise "test-fails role always fails" if nr.role.name.eql? 'test-fails'
     end
   end
 

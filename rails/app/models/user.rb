@@ -1,5 +1,5 @@
 #
-# Copyright 2013, Dell
+# Copyright 2013-4, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ class User < ActiveRecord::Base
   # user control for UI, split test and site configuration
   # see https://github.com/ledermann/rails-settings for help
   has_settings do |s|
-    s.key :ui,        :defaults => { :refresh => 15000, :fast_refresh => 5000, :debug => true, :edge => true, :test => true }
+    s.key :ui,        :defaults => { :refresh => 15000, :fast_refresh => 5000, :debug => true, :edge => true, :test => true, :noop_roles => true }
     s.key :errors,    :defaults => { :expand => true }
     s.key :docs,      :defaults => { :sources => true, :rebuild => true }
     s.key :network,   :defaults => { :v6prefix => {'admin'=>'auto' } }

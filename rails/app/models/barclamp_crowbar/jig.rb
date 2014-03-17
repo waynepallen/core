@@ -25,71 +25,62 @@ class BarclampCrowbar::Jig < Jig
   end
 
   def run(nr,data)
-    begin
-      local_scripts = File.join nr.barclamp.source_path, 'script', 'roles', nr.role.name
-      raise "No local scripts @ #{local_scripts}" unless File.exists?(local_scripts)
-      remote_tmpdir,err,ok = nr.node.ssh("mktemp -d /tmp/scriptjig-XXXXXX")
-      remote_tmpdir.strip!
-      if remote_tmpdir.empty? || !ok.success?
-        raise "Did not create remote_tmpdir on #{nr.node.name} for some reason! (#{err})"
-      end
-      local_tmpdir = %x{mktemp -d /tmp/local-scriptjig-XXXXXX}.strip
-      Rails.logger.info("Using local temp dir: #{local_tmpdir}")
-      attr_to_shellish(data).each do |k,v|
-        target = File.join(local_tmpdir,"attrs",k)
-        FileUtils.mkdir_p(target)
-        File.open(File.join(target,"attr"),"w") do |f|
-          f.printf("%s",v.to_s)
-        end
-      end
-      FileUtils.cp_r(local_scripts,local_tmpdir)
-      FileUtils.cp('/opt/opencrowbar/core/script/runner',local_tmpdir)
-      out,err,ok = nr.node.scp_to("#{local_tmpdir}/.","#{remote_tmpdir}","-r")
-      raise("Copy failed! (status = #{$?.exitstatus})\nOut: #{out}\nErr: #{err}") unless ok.success?
-      out,err,ok = nr.node.ssh("/bin/bash '#{remote_tmpdir}/runner' '#{remote_tmpdir}' '#{nr.role.name}'")
-        raise("Script jig run for #{nr.role.name} on #{nr.node.name} failed! (status = #{$?.exitstatus})\nOut: #{out}\nErr: #{err}") unless ok.success?
-      nr.runlog = out
-      # Now, we need to suck any written attributes back out.
-      new_wall = {}
-      out,err,ok = nr.node.scp_from("#{remote_tmpdir}/attrs","#{local_tmpdir}","-r")
-      raise("Copy of attrs back from #{nr.node.name} failed:\nOut: #{out}\nErr: #{err}") unless ok.success?
-      FileUtils.cd(File.join(local_tmpdir,"attrs")) do
-        # All new attributes should be saved in wall files.
-        Dir.glob("**/wall") do |attrib|
-          k = attrib.split('/')[0..-2]
-          v = IO.read(attrib).strip
-          next if v.empty?
-          # Convert well-known strings and strings that look like numbers to JSON values
-          v = case
-              when v.downcase == "true" then true
-              when v.downcase == "false" then false
-              when v =~ /^[-+]?[0-9]+$/ then v.to_i
-              when v =~ /^[-+]?[0'9a-fA-f]+$/ then v.to_i(16)
-              when v =~ /^[-+]?0[bodx]?[0-9a-fA-F]+$/ then v.to_i(0)
-              else v
-              end
-          w = new_wall
-          # Build the appropriate hashing structure based on what were directory names.
-          k[0..-2].each do |key|
-            w[key] ||= Hash.new
-            w = w[key]
-          end
-          w[k[-1]] = v
-        end
-      end
-      nr.wall = new_wall
-      system("sudo -H chown -R crowbar.crowbar #{local_tmpdir}")
-      system("sudo rm -rf '#{local_tmpdir}")
-      # Clean up after ourselves.
-      nr.node.ssh("rm -rf '#{remote_tmpdir}'")
-      nr.state = NodeRole::ACTIVE
-      finish_run(nr)
-    rescue Exception => e
-      nr.runlog = "#{e.message}\nBacktrace:\n#{e.backtrace.join("\n")}"
-      nr.state = NodeRole::ERROR
-      finish_run(nr)
+    local_scripts = File.join nr.barclamp.source_path, 'script', 'roles', nr.role.name
+    die "No local scripts @ #{local_scripts}" unless File.exists?(local_scripts)
+    remote_tmpdir,err,ok = nr.node.ssh("mktemp -d /tmp/scriptjig-XXXXXX")
+    remote_tmpdir.strip!
+    if remote_tmpdir.empty? || !ok.success?
+      die "Did not create remote_tmpdir on #{nr.node.name} for some reason! (#{err})"
     end
-
+    local_tmpdir = %x{mktemp -d /tmp/local-scriptjig-XXXXXX}.strip
+    Rails.logger.info("Using local temp dir: #{local_tmpdir}")
+    attr_to_shellish(data).each do |k,v|
+      target = File.join(local_tmpdir,"attrs",k)
+      FileUtils.mkdir_p(target)
+      File.open(File.join(target,"attr"),"w") do |f|
+        f.printf("%s",v.to_s)
+      end
+    end
+    FileUtils.cp_r(local_scripts,local_tmpdir)
+    FileUtils.cp('/opt/opencrowbar/core/script/runner',local_tmpdir)
+    out,err,ok = nr.node.scp_to("#{local_tmpdir}/.","#{remote_tmpdir}","-r")
+    die("Copy failed! (status = #{$?.exitstatus})\nOut: #{out}\nErr: #{err}") unless ok.success?
+    out,err,ok = nr.node.ssh("/bin/bash '#{remote_tmpdir}/runner' '#{remote_tmpdir}' '#{nr.role.name}'")
+    die("Script jig run for #{nr.role.name} on #{nr.node.name} failed! (status = #{$?.exitstatus})\nOut: #{out}\nErr: #{err}") unless ok.success?
+    nr.update!(runlog: out)
+    # Now, we need to suck any written attributes back out.
+    new_wall = {}
+    out,err,ok = nr.node.scp_from("#{remote_tmpdir}/attrs","#{local_tmpdir}","-r")
+    die("Copy of attrs back from #{nr.node.name} failed:\nOut: #{out}\nErr: #{err}") unless ok.success?
+    FileUtils.cd(File.join(local_tmpdir,"attrs")) do
+      # All new attributes should be saved in wall files.
+      Dir.glob("**/wall") do |attrib|
+        k = attrib.split('/')[0..-2]
+        v = IO.read(attrib).strip
+        next if v.empty?
+        # Convert well-known strings and strings that look like numbers to JSON values
+        v = case
+            when v.downcase == "true" then true
+            when v.downcase == "false" then false
+            when v =~ /^[-+]?[0-9]+$/ then v.to_i
+            when v =~ /^[-+]?[0'9a-fA-f]+$/ then v.to_i(16)
+            when v =~ /^[-+]?0[bodx]?[0-9a-fA-F]+$/ then v.to_i(0)
+            else v
+            end
+        w = new_wall
+        # Build the appropriate hashing structure based on what were directory names.
+        k[0..-2].each do |key|
+          w[key] ||= Hash.new
+          w = w[key]
+        end
+        w[k[-1]] = v
+      end
+    end
+    nr.update!(wall: new_wall)
+    system("sudo -H chown -R crowbar.crowbar #{local_tmpdir}")
+    system("sudo rm -rf '#{local_tmpdir}")
+    # Clean up after ourselves.
+    nr.node.ssh("rm -rf '#{remote_tmpdir}'")
   end
 
   def create_node(node)

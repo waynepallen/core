@@ -4,6 +4,8 @@ It is possible (and convienent) to run a OpenCrowbar admin node in a
 CentOS 6.5 based Docker container.  To do so, you need to be running
 in a development environment that can run Docker.  
 
+> Once the admin node is running in a container, it will keep running until you kill the container using `docker kill [cid]` or `exit` from the container prompt.  We recommend looking at the Docker commands for additional options.
+
 ### Install Docker
 
 Instructions for installing Docker on the most common Linux distributions are at
@@ -13,7 +15,16 @@ Instructions for installing Docker on the most common Linux distributions are at
 
 ### Configure Docker in your development environment
 
-Once Docker is installed, you need to configure it to use the
+We assume you have given yourself permission to run docker without sudo.  
+To do this, add your user to the docker group.
+
+  *  `sudo usermod -a -G docker <your-user>` (to permanently run Docker
+  without sudo)
+  * you will need to reboot after this change (but you can wait until we tell you to reboot later)
+
+> if you don't want this to be permanent or active before the reboot use, `sudo chmod 666 /var/run/docker.sock`
+
+Configure docker to use the
 devicemapper storage backend and to talk through your HTTP proxy (if
 any)  We need to use the devicemapper storage backend because there
 are directory permissions bugs in the AUFS driver that our CentOS
@@ -152,17 +163,17 @@ deployment at http://localhost:3000.  Once the admin node is finished
 deploying (or if anything goes wrong), you will be left at a running
 shell inside the container.
 
-### Booting slave VMs from the OpenCrowbar admin node
+### Booting slave VMs from the admin node
 
 #### Bare Metal (the easy way)
 If your development environment is running on bare metal (as opposed
 to running inside a VM), you can use `tools/kvm-slave &` to spawn a
-KVM virtual machine that will boot from the freshly-deployed OpenCrowbar
+KVM virtual machine that will boot from the freshly-deployed
 admin node.
 
 #### Virtual Box (the corporate way)
 
-> this approach expects that you've added an ethernet device (not up'd) to your VM that will be the admin network for slave VMs.
+> This approach expects that you've added an ethernet device (not up'd) to your VM that will be the admin network for slave VMs. Also, if using vmware, you'll need to use E1000 Nics and make sure your network settings are set to "Allow" promiscuous mode. 
 
 If your development environment is running in VMs then:
 
