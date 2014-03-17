@@ -53,3 +53,5 @@ If you want to **commit code or docs fixes**, please review [the Contributor gui
 ###Setup Docker Admin Node 
   1. follow steps in [docker/docker-admin.md](docker/docker-admin.md)
 
+###Change to Crowbar user
+  1. `su - crowbar` to gain ruby-2.0 and control Crowbar!

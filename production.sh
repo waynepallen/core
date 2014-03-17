@@ -146,7 +146,7 @@ if ! [[ $* = *--zombie* ]]; then
   #curl -s -f --digest -u $(cat /etc/crowbar.install.key) \
   #    -X PUT "http://localhost:3000/api/v2/nodes/$FQDN" \
   #    -d 'alive=true'
-  echo "Configuration Complete, you can watch annealing from the UI"
+  echo "Configuration Complete, you can watch annealing from the UI.  \`su - crowbar\` to begin managing the system."
   # Converge the admin node.
   crowbar converge && exit 0
   echo "Could not converge all noderoles!"
