@@ -131,7 +131,7 @@ Crowbar::Application.routes.draw do
         scope ':version' do
           # These are not restful.  They poke the annealer and wait if you pass "sync=true".
           get "anneal", :to => "node_roles#anneal", :as => :anneal
-          resources :attribs
+          resources :attribs, :as=>:attribs_api
           resources :barclamps
           resources :deployment_roles do
             resources :attribs
