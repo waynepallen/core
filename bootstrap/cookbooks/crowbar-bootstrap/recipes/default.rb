@@ -336,3 +336,8 @@ end
 bash "install required gems" do
   code "su -l -c 'cd /opt/opencrowbar/core/rails; bundle install --path /var/cache/crowbar/gems --standalone --binstubs /var/cache/crowbar/bin' crowbar"
 end
+
+bash "install berkshelf in crowbar users context" do
+  code "su -l -c 'gem install --conservative --minimal-deps --no-ri --no-rdoc --clear-sources --source \"http://rubygems.org/\" --bindir \"${GEM_HOME}/bin\" berkshelf' crowbar"
+end
+
