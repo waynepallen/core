@@ -15,18 +15,22 @@
 class CreateRoleRequires < ActiveRecord::Migration
   def change
     create_table :role_requires do |t|
-      t.belongs_to  :role,              :null=>false
-      t.string      :requires,          :null=>false
+      t.belongs_to  :role,            null: false
+      t.foreign_key :roles
+      t.string      :requires,        null: false
       t.integer     :required_role_id
+      t.foreign_key :roles, name: "role_requires_fk", column: 'required_role_id'
+      
       t.timestamps
     end
-    add_index(:role_requires, [:role_id, :requires], :unique => true)
-    add_index(:role_requires, [:requires], :unique => false)
+    add_index(:role_requires, [:role_id, :requires], unique: true)
+    add_index(:role_requires, [:requires],           unique: false)
 
     create_table :role_require_attribs do |t|
-      t.belongs_to :role
-      t.string     :attrib_name
-      t.string     :attrib_at
+      t.belongs_to  :role
+      t.foreign_key :roles
+      t.string      :attrib_name
+      t.string      :attrib_at
       t.timestamps
     end
     add_index(:role_require_attribs, [:role_id, :attrib_name], :unique => true)
