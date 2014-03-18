@@ -22,8 +22,7 @@ of a Role can operate on the following sources of data:
 * DeploymentRole user data and wall data.
 * Role template data
 * Node data (via its related NodeRoles)
-* Snapshot data (via its DeploymentRoles)
-* Deployment data (via the current snapshot's DeploymentRoles)
+* Deployment data (via the deployment's DeploymentRoles)
 
 Attribs defined at the top level of a crowbar yml file operate
 strictly on Nodes, either on their discrovery data, or their hint

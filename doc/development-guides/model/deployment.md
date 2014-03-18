@@ -1,6 +1,6 @@
 ## Deployment Model
 
-Deployments are the primary scope boundry for work done by OpenCrowbar.  The time line of a deployment is contained by a series of [[snapshot]] objects.
+Deployments are the primary scope boundary for work done by OpenCrowbar.
 
 ### System Deployment
 
@@ -27,7 +27,7 @@ provisioner-os-install role to that node, and in the future you would
 be able to change what OS would be installed on that node by editing
 that noderole before committing the deployment.
 
-  3. Commit the snapshot.  This will cause several things to happen:
+  3. Commit the deployment.  This will cause several things to happen:
 
   * The freshly-bound noderoles will transition to TODO, which will
     trigger an annealer pass on the noderoles.

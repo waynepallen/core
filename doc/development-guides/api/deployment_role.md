@@ -1,6 +1,7 @@
 ### Deployment-Role API
 
-DeploymentRoles provide the default values for node-roles in a snapshot.  They are populated from the role's template during import.
+DeploymentRoles provide the default values for node-roles in a
+deployment. They are populated from the role's template during import.
 
 Unlike node-roles, they do not store any inbound or system data.
 
