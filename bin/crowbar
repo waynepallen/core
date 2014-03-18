@@ -523,11 +523,7 @@ class Deployment < ProxyWithAttribs
     @blob["name"]
   end
 
-  def snapshot
-    Snapshot.new(@blob["snapshot_id"])
-  end
-
-    def do_propose(*rest)
+  def do_propose(*rest)
     obj,res = REST.put("#{self.class.path}/#{id}/propose")
     maybe_json_die(obj,res)
     @blob = obj
@@ -583,33 +579,6 @@ class NodeRole < ProxyWithAttribs
 
 end
 
-class Snapshot < ProxyWithAttribs
-
-  def name
-    @blob["name"]
-  end
-
-  def do_propose(*rest)
-    obj,res = REST.put("#{self.class.path}/#{id}/propose")
-    maybe_json_die(obj,res)
-    @blob = obj
-    self
-  end
-
-  def do_commit(*rest)
-    obj,res = REST.put("#{self.class.path}/#{id}/commit")
-    maybe_json_die(obj,res)
-    @blob = obj
-    self
-  end
-
-  def do_recall(*rest)
-    obj,res = REST.put("#{self.class.path}/#{id}/recall")
-    maybe_json_die(obj,res)
-    @blob = obj
-    self
-  end
-end
 class Barclamp < CrowbarProxy; end
 class User < CrowbarProxy; end
 class Attrib < CrowbarProxy; end
