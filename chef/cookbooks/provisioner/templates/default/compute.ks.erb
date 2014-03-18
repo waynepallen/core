@@ -110,6 +110,8 @@ cat >/etc/gemrc <<EOF
 gem: --no-ri --no-rdoc --bindir /usr/local/bin --http-proxy <%=@proxy%>
 EOF
 
+cp /etc/gemrc /root/.gemrc
+
 rsyslog_dir="/etc/rsyslog.d"
 mkdir -p "$rsyslog_dir"
 echo '$IncludeConfig /etc/rsyslog.d/*.conf' >>/etc/rsyslog.conf
