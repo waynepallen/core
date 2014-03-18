@@ -36,15 +36,6 @@ class cb2_Api():
             ls.append(snap)
         return ls
     
-    def get_snapshots(self):
-        endpoint = SnapshotEP(self)
-        ls = []
-        alls = endpoint.list()
-        for each in alls :
-            snap = Snapshot(each)
-            ls.append(snap)
-        return ls
-    
     def get_deployments(self):
         endpoint = DeploymentEP(self)
         ls = []
@@ -220,8 +211,6 @@ class cb2_Api():
             endpoint = GroupEP(self)
         elif str(cl) == 'Node_Role':
             endpoint = Node_RoleEP(self)
-        elif str(cl) == 'Snapshot':
-            endpoint = SnapshotEP(self)
         elif str(cl) == 'User':
             endpoint = UserEP(self)
         else:
@@ -236,8 +225,6 @@ class cb2_Api():
         cl = obj.__class__.__name__
         if str(cl) == "Node":
             id_ref = obj.name 
-        elif str(cl) == 'Snapshot':
-            id_ref = obj.name
         elif str(cl) == 'Attribute':
             id_ref = obj.name
         elif str(cl) == 'Barclamp':
@@ -256,8 +243,6 @@ class cb2_Api():
             id_ref = obj.name
         elif str(cl) == 'Node_Role':
             id_ref = obj.id  
-        elif str(cl) == 'Snapshot':
-            id_ref = obj.name      
         elif str(cl) == 'User':
             id_ref = obj.username
         else:
@@ -265,7 +250,7 @@ class cb2_Api():
         return str(id_ref)
     
 
-    def commit_snapshot(self, snapshotID):
-        endpoint = SnapshotEP(self)
-        endpoint.commit(snapshotID)
+    def commit_deployment(self, deploymentID):
+        endpoint = DeploymentEP(self)
+        endpoint.commit(deploymentID)
         

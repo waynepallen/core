@@ -51,7 +51,7 @@ class main():
         nodeRole = session.update(nodeRole)
         nodeRole.pretty_print()
     
-        #commit the snapshot/proposal
-        session.commit_snapshot(deploy.snapshot_id)
+        #commit the deployment
+        session.commit_deployment(deploy.id)
     
     
