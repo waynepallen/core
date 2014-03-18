@@ -333,6 +333,11 @@ end
   end
 end
 
+# warning for common error
+if FIle.exists?("/opt/opencrowbar/core/rails/Gemfile.log")
+  log info "Using existing Gemfile.lock.  This will cause errors if Gemfile has been updated.  Delete lock and retry"
+end 
+
 bash "install required gems" do
   code "su -l -c 'cd /opt/opencrowbar/core/rails; bundle install --path /var/cache/crowbar/gems --standalone --binstubs /var/cache/crowbar/bin' crowbar"
 end
