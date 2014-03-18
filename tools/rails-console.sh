@@ -16,9 +16,5 @@
 
 # Run Rails Console 
 
-if [[ $container == lxc ]]; then
-  su -l -c 'cd /opt/opencrowbar/core/rails; bundle exec rails c' crowbar
-else
-  'cd /opt/opencrowbar/core/rails; bundle exec rails c'
-fi
+su -l -c 'cd /opt/opencrowbar/core/rails; bundle exec rails c' crowbar
 
