@@ -361,7 +361,7 @@ class Node < ActiveRecord::Base
     self.admin = true if Node.admin.count == 0    # first node, needs to be admin
     self.name = self.name.downcase
     self.alias ||= self.name.split(".")[0]
-    self.deployment ||= Deployment.find_by!(system: true)
+    self.deployment ||= Deployment.system
   end
 
   # Call the on_node_delete hooks.

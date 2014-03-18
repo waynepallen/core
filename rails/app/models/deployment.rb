@@ -46,6 +46,10 @@ class Deployment < ActiveRecord::Base
     self.class.state_name(s)
   end
 
+  def self.system
+    Deployment.find_by!(system: true)
+  end
+
   # is this a system deployment?
   def system?
     read_attribute("system")
@@ -138,7 +142,7 @@ class Deployment < ActiveRecord::Base
     else
       # else release all the nodes in the deployment (assign to the system deployment)
       Node.transaction do
-        sysid = Deployment.find_by!(system: true).id
+        sysid = Deployment.system.id
         nodes.update_all(deployment_id: sysid)
         nodes.each do |n|
           n.deployment_id = system.id

@@ -42,7 +42,7 @@ class DeploymentsController < ApplicationController
     if params[:parent] || params[:parent_id]
       @parent = Deployment.find_key(params[:parent] || params[:parent_id])
     else
-      @parent = Deployment.find_by!(system: true)
+      @parent = Deployment.system
     end
     params[:parent_id] = @parent.id
     params.require(:name)

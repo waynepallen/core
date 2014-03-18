@@ -103,7 +103,7 @@ class SupportController < ApplicationController
   def bootstrap_post
     # only create if no other netwroks
     if Network.where(:name=>Network::ADMIN_NET).count == 0
-      deployment = Deployment.find_by!(system: true)
+      deployment = Deployment.system
       Network.transaction do
         net = Network.create :name=>Network::ADMIN_NET, :description=>I18n.t('support.bootstrap.admin_net'),  :deployment_id=>deployment.id, :conduit=>'1g0', :v6prefix => "auto"
         NetworkRange.create :name=>'admin', :network_id=>net.id, :first=>"192.168.124.10/24", :last=>"192.168.124.11/24"

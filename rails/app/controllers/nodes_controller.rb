@@ -73,7 +73,7 @@ class NodesController < ApplicationController
   # RESTfule POST of the node resource
   def create
     params[:deployment_id] = Deployment.find_key(params[:deployment]).id if params.has_key? :deployment
-    params[:deployment_id] ||= Deployment.find_by!(system: true)
+    params[:deployment_id] ||= Deployment.system
     params.require(:name)
     params.require(:deployment_id)
     Node.transaction do

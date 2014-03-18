@@ -83,7 +83,7 @@ class Network < ActiveRecord::Base
       # if not, we have to create one
       if nr.nil?
         # we need to find a reasonable deployemnt - use the current system head
-        snap = Deployment.find_by!(system: true)
+        snap = Deployment.system
         nr = role.add_to_node_in_deployment(node,snap)
       end
     end
