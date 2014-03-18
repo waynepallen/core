@@ -1,0 +1,3 @@
+{
+    "crowbar": { "puppet-master": { "name": "192.168.124.10" }}
+}

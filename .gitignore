@@ -42,3 +42,4 @@ erl_crash.dump
 /rails/vendor/
 /rails/public/assets/
 
+.idea

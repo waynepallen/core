@@ -1,0 +1,41 @@
+roles:
+  - name: puppet-master
+    jig: script
+    attribs:
+      - name: puppet-master-address
+        description: 'The puppet-master server address'
+        map: 'crowbar/puppet-master/name'
+    flags:
+      - server
+
+  - name: puppet-agent
+    jig: script
+    description: 'Configures puppet agent for a node'
+    requires:
+      - puppet-master
+    wants-attribs:
+      - puppet-master-address
+    flags:
+      - implicit
+
+  - name: puppet-agent_sa
+    jig: script
+    type: 'BarclampPuppet::AgentSa'
+    description: 'Configures puppet stand-alone agent for a node'
+    flags:
+      - implicit
+    attribs:
+      - name: puppet-agent-sa-name
+        description: "Name of stand-alone agent node"
+        map: 'crowbar/puppet-agent-sa/name'
+
+#  - name: puppet
+#    jig: noop
+#    requires:
+#      - puppet-agent
+
+  - name: puppet-sa
+    jig: noop
+    requires:
+      - puppet-agent_sa
+      - provisioner-os-install

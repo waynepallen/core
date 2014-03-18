@@ -42,6 +42,8 @@ barclamps:
     description: "Network Time Protocol (NTP)"
   - name: logging
     description: "Log Centralization and Management"
+  - name: puppet
+    description: "Puppet Deployment Services"
 
 jigs:
   - name: script
