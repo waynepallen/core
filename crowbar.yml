@@ -448,6 +448,7 @@ gems:
     - active_scaffold
     - amqp
     - bluecloth
+    - berkshelf-(=2.0.14)
     - builder
     - bundler-(~>1.3.0)
     - bunny-(<0.8.0)
