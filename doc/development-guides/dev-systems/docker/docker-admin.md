@@ -171,6 +171,10 @@ to running inside a VM), you can use `tools/kvm-slave &` to spawn a
 KVM virtual machine that will boot from the freshly-deployed
 admin node.
 
+#### Real Hardware slaves
+
+To boot Real Hardware, bind a physical interface to docker0 with brctl, make sure that interface is up and does not have an address, and plug it in to a switch that has the physical boxes you want to boot.
+
 #### Virtual Box (the corporate way)
 
 > This approach expects that you've added an ethernet device (not up'd) to your VM that will be the admin network for slave VMs. Also, if using vmware, you'll need to use E1000 Nics and make sure your network settings are set to "Allow" promiscuous mode. 
