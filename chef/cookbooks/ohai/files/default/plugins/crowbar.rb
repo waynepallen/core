@@ -13,9 +13,6 @@
 # limitations under the License.
 #
 
-# This is pure steaming evil
-# Force the omniinstalled version of Chef to know about gems
-# from outside its little sandbox.
 # This hackjob is needed for loading the cstruct gem.
 Gem.clear_paths
 outer_paths=%x{gem env gempath}.split(':')
@@ -23,7 +20,7 @@ outer_paths.each do |p|
   next if Gem.path.member?(p.strip)
   Gem.paths.path << p.strip
 end
-#Chef::Log.debug("Gem path set to #{Gem.paths.path}")
+Chef::Log.debug("Gem path set to #{Gem.paths.path}")
 
 
 require 'etc'
