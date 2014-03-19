@@ -16,16 +16,10 @@
 class CreateRuns < ActiveRecord::Migration
   def change
     create_table :runs do |t|
-      t.belongs_to  :node_role,        null: false
-      t.foreign_key :node_roles
-      t.belongs_to  :node,             null: false
-      t.foreign_key :nodes
+      t.belongs_to  :node_role,        null: false, index: true
+      t.belongs_to  :node,             null: false, index: true
       t.text        :run_data,         null: false
-      t.boolean     :running,          null: false,default: false
+      t.boolean     :running,          null: false, default: false, index: true
     end
-
-    add_index(:runs, :node_role_id)
-    add_index(:runs, :node_id)
-    add_index(:runs, :running)
   end
 end

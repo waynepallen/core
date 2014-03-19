@@ -16,12 +16,10 @@ class CreateAttribs < ActiveRecord::Migration
 
   def change
     create_table :attribs do |t|
-      t.belongs_to  :barclamp,      null: true
-      t.foreign_key :barclamps
-      t.belongs_to  :role,          null: true
-      t.foreign_key :roles
+      t.belongs_to  :barclamp,      null: true, index: true
+      t.belongs_to  :role,          null: true, index: true
       t.string      :type,          null: true
-      t.string      :name,          null: false
+      t.string      :name,          null: false, index: { unique: true }
       t.string      :description,   null: true
       t.boolean     :writable,      null: false, default: false
       t.text        :schema
@@ -29,10 +27,5 @@ class CreateAttribs < ActiveRecord::Migration
       t.string      :map,           null: true
       t.timestamps
     end
-
-    # natural key
-    add_index :attribs,    [:name], unique: true
-    add_index :attribs,    [:barclamp_id]
-    add_index :attribs,    [:role_id]
   end
 end

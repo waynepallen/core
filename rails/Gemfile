@@ -23,8 +23,10 @@ gem 'sass', '~> 3.2.0'
 gem 'sass-rails', '~> 4.0.2'
 gem 'simple-navigation'
 gem 'syslogger'
-# Give us real foriegn keys in idiomatic Rails
-gem 'foreigner'
+# Give us real foriegn keys in idiomatic Rails,
+# adds support for database-level constraints, support for views,
+# etc.
+gem 'schema_plus'
 gem 'kwalify'
 gem 'bluecloth', '>= 2.0.0'
 gem 'puma'

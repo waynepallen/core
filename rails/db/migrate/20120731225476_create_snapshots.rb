@@ -20,11 +20,10 @@ class CreateSnapshots < ActiveRecord::Migration
       t.string      :description, null: true
       t.integer     :order,       null: false, default: 1000
       t.belongs_to  :deployment,  null: false
-      t.foreign_key :deployments
       t.belongs_to  :snapshot,    null: true
-      t.foreign_key :snapshots
       t.timestamps
     end
-    add_foreign_key(:deployments, :snapshots)
+    # Handle forward dependency of deployments on snapshots.
+    add_foreign_key('deployments','snapshot_id','snapshots','id')
   end
 end
