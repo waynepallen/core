@@ -35,6 +35,7 @@ erl_crash.dump
 /rails/log/
 /rails/coverage
 /rails/db/schema.rb
+/rails/db/structure.sql
 /rails/Gemfile.lock
 /rails/.bundle/
 /rails/bin/

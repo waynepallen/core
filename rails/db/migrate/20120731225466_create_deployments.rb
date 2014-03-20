@@ -15,16 +15,13 @@
 class CreateDeployments < ActiveRecord::Migration
   def change
     create_table :deployments do |t|
-      t.string      :name,        null: false
+      t.string      :name,        null: false, index: { unique: true }
       t.string      :description, null: true
       t.boolean     :system,      null: false, default: false
-      t.references  :snapshot,    null: true
+      t.references  :snapshot,    null: true, foreign_key: false
       t.references  :parent
-      t.foreign_key :deployments, column: 'parent_id'
       t.timestamps
     end
-    #natural key
-    add_index(:deployments, :name, unique: true)
   end
 
 end

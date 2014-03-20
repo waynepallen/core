@@ -20,12 +20,10 @@ class CreateNodes < ActiveRecord::Migration
       t.string      :description,    null: true
       t.integer     :order,          default: 10000
       t.boolean     :admin,          default: false
-      t.integer     :target_role_id, null: true
-      t.foreign_key :roles,          column: 'target_role_id'
+      t.integer     :target_role_id, null: true, foreign_key: { references: :roles }
       t.belongs_to  :deployment,     null: false
-      t.foreign_key :deployments
-      t.json        :discovery,      null: false,   default: {}
-      t.json        :hint,           null: false,   default: {}
+      t.json        :discovery,      null: false,   default: { expr: "'{}'::json" }
+      t.json        :hint,           null: false,   default: { expr: "'{}'::json" }
       t.boolean     :allocated,      null: false,   default: false
       t.boolean     :alive,          null: false,   default: false
       t.boolean     :available,      null: false,   default: false

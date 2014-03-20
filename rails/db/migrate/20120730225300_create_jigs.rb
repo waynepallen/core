@@ -15,19 +15,17 @@
 class CreateJigs < ActiveRecord::Migration
   def self.up
     create_table :jigs do |t|
-      t.string      :name
-      t.string      :description,         :null=>true
-      t.integer     :order,               :default=>10000
-      t.string      :type,                :null=>false
-      t.boolean     :active,              :default => false
-      t.string      :client_role_name,    :null => true
-      t.string      :server,              :null=>true
-      t.string      :client_name,         :null=>true
-      t.text        :key,                 :null=>true
+      t.string      :name,             index:   { unique: true }
+      t.string      :description,      null:    true
+      t.integer     :order,            default: 10000
+      t.string      :type,             null:    false
+      t.boolean     :active,           default: false
+      t.string      :client_role_name, null:    true
+      t.string      :server,           null:    true
+      t.string      :client_name,      null:    true
+      t.text        :key,              null:    true
       t.timestamps
     end
-    #natural key
-    add_index(:jigs, :name, :unique => true)
   end
 
   def self.down

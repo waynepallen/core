@@ -16,15 +16,13 @@ class CreateDocs < ActiveRecord::Migration
   def self.up
 
     create_table :docs do |t|
-      t.text        :name
-      t.belongs_to  :barclamp, :null=>true
-      t.text        :description, :null=>true
-      t.belongs_to  :parent, :null=>true
-      t.string      :order, :length=>5, :default => '009999'
+      t.text        :name,        index: { unique: true }
+      t.belongs_to  :barclamp,    null: true, foreign_key: false
+      t.text        :description, null: true
+      t.belongs_to  :parent,      null: true
+      t.string      :order,       length: 5, default: '009999'
       t.timestamps
     end
-    
-    add_index(:docs, :name, :unique => true)   
   end
 
   def self.down

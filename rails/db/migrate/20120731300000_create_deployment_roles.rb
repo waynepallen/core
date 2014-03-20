@@ -16,11 +16,9 @@ class CreateDeploymentRoles < ActiveRecord::Migration
   def change
     create_table :deployment_roles do |t|
       t.belongs_to  :snapshot,          null: false
-      t.foreign_key :snapshots
       t.belongs_to  :role,              null: false
-      t.foreign_key :roles
-      t.json        :data,              null: false, default: {}
-      t.json        :wall,              null: false, default: {}
+      t.json        :data,              null: false, default: { expr: "'{}'::json" }
+      t.json        :wall,              null: false, default: { expr: "'{}'::json" }
       t.timestamps
     end
     #natural key

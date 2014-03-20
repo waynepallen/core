@@ -15,10 +15,9 @@
 class CreateBarclamps < ActiveRecord::Migration
   def change
     create_table :barclamps do |t|
-      t.string      :name
+      t.string      :name,        index: { unique: true }
       t.string      :description, null: true
       t.belongs_to  :barclamp,    null: true
-      t.foreign_key :barclamps
       t.integer     :version
       t.string      :source_url,  null: true
       t.string      :source_path, null: true
@@ -26,7 +25,7 @@ class CreateBarclamps < ActiveRecord::Migration
       t.datetime    :build_on,    null: true, default: Time.now
       t.timestamps
     end
-    #natural key
-    add_index(:barclamps, :name, unique: true)
+    # Satisfy docs dependency on barclamps fk.
+    add_foreign_key('docs', 'barclamp_id', 'barclamps','id')
   end
 end

@@ -15,10 +15,10 @@
 class CreateRoles < ActiveRecord::Migration
   def change
     create_table :roles do |t|
-      t.string      :name,              null: false
+      t.string      :name,              null: false, index: { unique: true }
       t.string      :description,       null: true
       t.string      :type,              null: true
-      t.json        :template,          null: false, default: {}
+      t.json        :template,          null: false, default: { expr: "'{}'::json" }
       t.string      :jig_name,          null: false
       # brings in library code thats used to access another role (sql client)
       t.boolean     :library,           null: false, default:false
@@ -40,11 +40,8 @@ class CreateRoles < ActiveRecord::Migration
       # it has transitioned to active, it will not be run again.
       t.boolean     :destructive,       null: false, default:false
       t.belongs_to  :barclamp,          null: false
-      t.foreign_key :barclamps
       t.integer     :cohort,            null: false, default:0
       t.timestamps
     end
-    #natural key
-    add_index(:roles, [:barclamp_id, :name], :unique => true)
   end
 end
