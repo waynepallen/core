@@ -5,9 +5,7 @@ There are a number of documents that may be helpful. The following is a guide to
 ## OpenCrowbar Deployment Information
 ### [Deployment Guide](./deployment-guide)
   1. Install [CentOS/RHEL 6.5](./deployment-guide/Install-CentOS-RHEL-6.5-AdminNode.md) Admin Node
-  1. [Docker Containers](./development-guides/dev-systems/docker)
-    1. [Docker Admin Node](./development-guides/dev-systems/docker/docker-admin.md)
-    1. [Docker Info](./development-guides/dev-systems/docker/README.md)
+  1. [Docker Admin Node](./development-guides/dev-systems/docker-admin.md)
 
 ### [Deployment of an OpenCrowbar Software Development Workstation](./dev-systems/.)
 
