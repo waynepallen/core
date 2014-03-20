@@ -15,7 +15,7 @@ rebuilt the very basics of the model we discussed.  See
 In the next weeks, we are taking the first steps to define the Jig model API and test it using the Script jig.  Here are some initial thoughts:
 
 The script jig is described here:
-![Script Jig Design (image)](crowbar_jig_classes.png "The Script Jig Model")
+![Script Jig Design (image)](../jigs/crowbar_jig_classes.png "The Script Jig Model")
 
 * The Script jig is built into the Crowbar barclamp.
 * New nodes will be added to the system via the API (POST v2/nodes) not from the jigs
