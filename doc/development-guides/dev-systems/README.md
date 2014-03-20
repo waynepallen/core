@@ -10,14 +10,13 @@ Engineers value documentation that explains how to get a development workstation
   1. VirtualBox, THREE network interfaces
     1. (assumed to be eth0) bridge external 
     1. (assumed to be eth1) on a host-only network 192.168.124.0/24.  Give it a reasonable unused IP. 192.168.124.7 is good.
-    1. (assumed to be eth2) on a host-only network 192.168.124.0/24.  *NO IP assignment* or OS interface configuration (`/etc/network/interfaces` or `/etc/sysconfig`). If using Docker, setup bridging as in [docker/docker-admin.md](docker/docker-admin.md)
+    1. (assumed to be eth2) on a host-only network 192.168.124.0/24.  *NO IP assignment* or OS interface configuration (`/etc/network/interfaces` or `/etc/sysconfig`). If using Docker, setup bridging as in [docker-admin.md](docker-admin.md)
   1. Setup an .ssh keypair using `rssh-keygen`
   1. Optional Items that we find handy if you are developing on Windows using VMs behind corporate firewalls
-    1. Squid Proxy (to cache packages)
-      1. ubuntu: `sudo apt-get install squid squid-common`
     1. CNTLM proxy: 
       1. ubuntu: `sudo apt-get install cntlm`
       1. make sure that you allow NON local hosts to use the proxy (in `/etc/cntlm.conf` set `gateway yes`)!  Containers are not "local" and require your CNTLM proxy to act as a gateway.
+    1. Setup a [Squid Proxy](proxy-cache.md)
     1. SAMBA share
       1. ubuntu: `sudo apt-get install samba`
     1. Passwordless sudo: `sudo sed -ie "s/%sudo\tALL=(ALL:ALL) ALL/%sudo ALL=(ALL) NOPASSWD: ALL/g" /etc/sudoers`
@@ -51,7 +50,7 @@ If you want to **commit code or docs fixes**, please review [the Contributor gui
     2. warning: might need a better literal mirror in sledgehammer/sledgehammer.ks - see [Details]((../../workflow/dev-build-sledgehammer.md))
 
 ###Setup Docker Admin Node 
-  1. follow steps in [docker/docker-admin.md](docker/docker-admin.md)
+  1. follow steps in [docker-admin.md](docker-admin.md)
 
 ###Change to Crowbar user
   1. `su - crowbar` to gain ruby-2.0 and control Crowbar!
