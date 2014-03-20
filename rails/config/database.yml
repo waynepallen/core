@@ -24,7 +24,7 @@ production:
   database: opencrowbar
   port: 5432
   username: crowbar
-  pool: 10
+  pool: 32
   timeout: 5000
   reaping_frequency: 3
 
