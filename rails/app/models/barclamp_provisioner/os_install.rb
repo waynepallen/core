@@ -15,7 +15,7 @@
 
 class BarclampProvisioner::OsInstall < Role
 
-  def on_transition(nr)
+  def on_active(nr)
     NodeRole.transaction do
       node = nr.node
       return if ["local"].member? node.bootenv

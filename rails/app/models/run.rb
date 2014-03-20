@@ -97,6 +97,11 @@ class Run < ActiveRecord::Base
         jobs[nr.node_id] = Run.create!(node_id: nr.node_id,
                                        node_role_id: nr.id,
                                        running: true,
+                                       # Take a snapshot of the data we want to hand to the jig's run method.
+                                       # We do this so that the jig gets fed data that is consistent for this point
+                                       # in time, as opposed to picking up whatever is lying around when delayed_jobs
+                                       # gets around to actually doing its thing, which may not be what we expect.
+
                                        run_data: {"data" => nr.jig.stage_run(nr)})
       end
     end
@@ -104,24 +109,13 @@ class Run < ActiveRecord::Base
     # Now that we have things that are runnable, loop through them to see
     # what we can actually run.
     jobs.values.each do |j|
-      if j.node_role.role.destructive && j.node_role.run_count > 0
-        Rails.logger.info("Run: #{j.node_role.name} is destructive and has already run.")
-        j.node_role.transition!
-        j.node_role.active!
-        j.destroy
-        next
-      end
-      # Take a snapshot of the data we want to hand to the jig's run method.
-      # We do this so that the jig gets fed data that is consistent for this point
-      # in time, as opposed to picking up whatever is lying around when delayed_jobs
-      # gets around to actually doing its thing, which may not be what we expect.
-      j.node_role.transition!
+      Rails.logger.info("Run: Sending job #{j.id}: #{j.node_role.name} to delayed_jobs")
       j.node_role.jig.delay(:queue => "NodeRoleRunner").run_job(j)
     end
     Rails.logger.info("Run: #{jobs.length} handled this pass, #{Run.running.count} in delayed_jobs")
     begin
       # log queue state
-            Rails.logger.debug("Run: Queue: (end) #{Run.all.map{|j|"Job: #{j.id}: running:#{j.running}: #{j.node_role.name}: state #{j.node_role.state}"}}")
+      Rails.logger.debug("Run: Queue: (end) #{Run.all.map{|j|"Job: #{j.id}: running:#{j.running}: #{j.node_role.name}: state #{j.node_role.state}"}}")
     rescue
       # catch node_role is nil (exposed in simulator runs)
       Run.all.each { |j| raise "you cannot run job #{j.id} with missing node #{j.node_id} and node_role #{j.node_role_id} information.  This is likely a garbage collection issue!" if j.node_role.nil? }

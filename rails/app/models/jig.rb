@@ -167,7 +167,8 @@ class Jig < ActiveRecord::Base
     nr = job.node_role
     Rails.logger.info("Run: Running job #{job.id} for #{nr.name}")
     begin
-      run(nr,job.run_data["data"])
+      nr.transition!
+      run(nr,job.run_data["data"]) unless nr.role.destructive && (nr.run_count > 0)
       Rails.logger.debug("Run: Finished job #{job.id} for #{nr.name}, no exceptions raised.")
       nr.active!
     rescue Exception => e
