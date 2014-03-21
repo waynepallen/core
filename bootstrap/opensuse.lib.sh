@@ -1,5 +1,5 @@
 #!/bin/bash
-install_ruby() {
+install_prereqs() {
     zypper -n update
-    zypper -n install ruby ruby-devel curl
+    zypper -n install curl
 }
