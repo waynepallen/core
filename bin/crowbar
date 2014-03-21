@@ -66,7 +66,7 @@ $options = [
     [ [ '--debug', '-d', GetoptLong::NO_ARGUMENT ], "--debug or -d - turns on debugging information" ],
     [ [ '--data', GetoptLong::REQUIRED_ARGUMENT ], "--data <data> - used by create or edit as data (must be in json format)" ],
     [ [ '--file', GetoptLong::REQUIRED_ARGUMENT ], "--file <file> - used by create or edit as data when read from a file (must be in json format)" ],
-    [ [ '--attributes', GetoptLong::REQUIRED_ARGUMENT ], "--attributes <attribute,attribute,...> - Return just the selected attributes from the server objects." ], 
+    [ [ '--attributes', GetoptLong::REQUIRED_ARGUMENT ], "--attributes <attribute,attribute,...> - Return just the selected attributes from the server objects." ],
     [ [ '--timeout', GetoptLong::REQUIRED_ARGUMENT ], "--timeout <seconds> - timeout in seconds for read http reads" ]
 ]
 
@@ -207,7 +207,7 @@ class Command
         # Json indicates that this parameter should be valid json.
         next if ["Val", "Json"].member?(p)
         # Anything else must be something that is a subclass of CrowbarProxy.
-        klass = Module.const_get(p)
+        klass = OpenCrowbar.const_get(p)
         next if klass &&
           klass.respond_to?(:superclass) &&
           klass.ancestors.member?(CrowbarProxy)
@@ -230,7 +230,7 @@ class Command
         # of the class they need to operate on.  The commandline processing
         # code will make sure the instance gets created.
         c = cmdline.shift
-        @cmd << "#{c}_#{target.name}"
+        @cmd << "#{c}_#{target.argname}"
       end
     end
     # Iterate over the stuff in our cmdline, joining them wherever the next one is
@@ -328,7 +328,11 @@ end
 class CrowbarProxy
 
   def self.apiname
-    "#{name.downcase}s"
+    "#{name.downcase.split("::").last}s"
+  end
+
+  def self.argname
+    name.split("::").last
   end
 
   def self.path
@@ -446,13 +450,13 @@ class ProxyWithAttribs < CrowbarProxy
   def do_attribs(*rest)
     objs,res = REST.get("#{self.class.path}/#{id}/attribs")
     maybe_json_die(objs,res)
-    objs.map{|o|Attrib.new(o)}
+    objs.map{|o|OpenCrowbar::Attrib.new(o)}
   end
 
   def do_get_attrib_Attrib(attrib,*rest)
     obj,res = REST.get("#{self.class.path}/#{id}/attribs/#{attrib.id}")
     maybe_json_die(obj,res)
-    Attrib.new(obj)
+    OpenCrowbar::Attrib.new(obj)
   end
 
   def do_set_attrib_Attrib_to_Json(attrib,value,*rest)
@@ -461,164 +465,166 @@ class ProxyWithAttribs < CrowbarProxy
     end
     obj,res = REST.put("#{self.class.path}/#{id}/attribs/#{attrib.id}",value)
     maybe_json_die(obj,res)
-    Attrib.new(obj)
+    OpenCrowbar::Attrib.new(obj)
   end
 
 end
 
-class Node < ProxyWithAttribs
+module OpenCrowbar
+  class Node < ProxyWithAttribs
 
-  def name
+    def name
+      @blob["name"]
+    end
+
+    def do_reboot(*rest)
+      obj, res = REST.put("#{self.class.path}/#{id}/reboot")
+      maybe_json_die(obj,res)
+      @blob = obj
+      self
+    end
+
+    def do_debug(*rest)
+      obj, res = REST.put("#{self.class.path}/#{id}/debug")
+      maybe_json_die(obj,res)
+      @blob = obj
+      self
+    end
+
+    def do_undebug(*rest)
+      obj, res = REST.put("#{self.class.path}/#{id}/undebug")
+      maybe_json_die(obj,res)
+      @blob = obj
+      self
+    end
+
+    def do_redeploy(*rest)
+      obj, res = REST.put("#{self.class.path}/#{id}/redeploy")
+      maybe_json_die(obj,res)
+      @blob = obj
+      self
+    end
+
+    def do_commit(*rest)
+      obj, res = REST.put("#{self.class.path}/#{id}/commit")
+      maybe_json_die(obj,res)
+      @blob = obj
+      self
+    end
+
+    def do_noderoles(*rest)
+      objs,res = REST.get("#{self.class.path}/#{id}/node_roles")
+      maybe_json_die(objs,res)
+      objs.map{|o|NodeRole.new(o)}
+    end
+
+    def do_move_to_Deployment(deploy,*rest)
+      do_update_Json({"deployment_id" => deploy.id})
+    end
+  end
+
+  class Deployment < ProxyWithAttribs
+    def name
     @blob["name"]
-  end
+    end
 
-  def do_reboot(*rest)
-    obj, res = REST.put("#{self.class.path}/#{id}/reboot")
-    maybe_json_die(obj,res)
-    @blob = obj
-    self
-  end
-
-  def do_debug(*rest)
-    obj, res = REST.put("#{self.class.path}/#{id}/debug")
-    maybe_json_die(obj,res)
-    @blob = obj
-    self
-  end
-
-  def do_undebug(*rest)
-    obj, res = REST.put("#{self.class.path}/#{id}/undebug")
-    maybe_json_die(obj,res)
-    @blob = obj
-    self
-  end
-
-  def do_redeploy(*rest)
-    obj, res = REST.put("#{self.class.path}/#{id}/redeploy")
-    maybe_json_die(obj,res)
-    @blob = obj
-    self
-  end
-
-  def do_commit(*rest)
-    obj, res = REST.put("#{self.class.path}/#{id}/commit")
-    maybe_json_die(obj,res)
-    @blob = obj
-    self
-  end
-
-  def do_noderoles(*rest)
-    objs,res = REST.get("#{self.class.path}/#{id}/node_roles")
-    maybe_json_die(objs,res)
-    objs.map{|o|NodeRole.new(o)}
-  end
-
-  def do_move_to_Deployment(deploy,*rest)
-    do_update_Json({"deployment_id" => deploy.id})
-  end
-end
-
-class Deployment < ProxyWithAttribs
-  def name
-    @blob["name"]
-  end
-
-  def snapshot
-    Snapshot.new(@blob["snapshot_id"])
-  end
+    def snapshot
+      Snapshot.new(@blob["snapshot_id"])
+    end
 
     def do_propose(*rest)
-    obj,res = REST.put("#{self.class.path}/#{id}/propose")
-    maybe_json_die(obj,res)
-    @blob = obj
-    self
+      obj,res = REST.put("#{self.class.path}/#{id}/propose")
+      maybe_json_die(obj,res)
+      @blob = obj
+      self
+    end
+
+    def do_commit(*rest)
+      obj,res = REST.put("#{self.class.path}/#{id}/commit")
+      maybe_json_die(obj,res)
+      @blob = obj
+      self
+    end
+
+    def do_recall(*rest)
+      obj,res = REST.put("#{self.class.path}/#{id}/recall")
+      maybe_json_die(obj,res)
+      @blob = obj
+      self
+    end
+
+    def do_nodes(*rest)
+      objs,res = REST.get("#{self.class.path}/#{id}/nodes")
+      maybe_json_die(objs,res)
+      objs.map{|o|Node.new(o)}
+    end
+
   end
 
-  def do_commit(*rest)
-    obj,res = REST.put("#{self.class.path}/#{id}/commit")
-    maybe_json_die(obj,res)
-    @blob = obj
-    self
+  class Role < ProxyWithAttribs
+
+    def name
+      @blob["name"]
+    end
+
+    def do_bind_to_Node(node, *rest)
+      obj,res = REST.post("#{NodeRole.path}",JSON.generate({:node_id => node.id, :role_id => id}))
+      maybe_json_die(obj,res)
+      NodeRole.new(obj)
+    end
+
   end
 
-  def do_recall(*rest)
-    obj,res = REST.put("#{self.class.path}/#{id}/recall")
-    maybe_json_die(obj,res)
-    @blob = obj
-    self
+  class DeploymentRole < ProxyWithAttribs
+    def self.path
+      "api/v2/deployment_roles"
+    end
   end
 
-  def do_nodes(*rest)
-    objs,res = REST.get("#{self.class.path}/#{id}/nodes")
-    maybe_json_die(objs,res)
-    objs.map{|o|Node.new(o)}
+  class NodeRole < ProxyWithAttribs
+    def self.path
+      "api/v2/node_roles"
+    end
+
   end
 
-end
+  class Snapshot < ProxyWithAttribs
 
-class Role < ProxyWithAttribs
+    def name
+      @blob["name"]
+    end
 
-  def name
-    @blob["name"]
+    def do_propose(*rest)
+      obj,res = REST.put("#{self.class.path}/#{id}/propose")
+      maybe_json_die(obj,res)
+      @blob = obj
+      self
+    end
+
+    def do_commit(*rest)
+      obj,res = REST.put("#{self.class.path}/#{id}/commit")
+      maybe_json_die(obj,res)
+      @blob = obj
+      self
+    end
+
+    def do_recall(*rest)
+      obj,res = REST.put("#{self.class.path}/#{id}/recall")
+      maybe_json_die(obj,res)
+      @blob = obj
+      self
+    end
   end
+  class Barclamp < CrowbarProxy; end
+  class User < CrowbarProxy; end
+  class Attrib < CrowbarProxy; end
 
-  def do_bind_to_Node(node, *rest)
-    obj,res = REST.post("#{NodeRole.path}",JSON.generate({:node_id => node.id, :role_id => id}))
-    maybe_json_die(obj,res)
-    NodeRole.new(obj)
-  end
+  class Jig < CrowbarProxy; end
 
-end
-
-class DeploymentRole < ProxyWithAttribs
-  def self.path
-    "api/v2/deployment_roles"
-  end
-end
-
-class NodeRole < ProxyWithAttribs
-  def self.path
-    "api/v2/node_roles"
-  end
-
-end
-
-class Snapshot < ProxyWithAttribs
-
-  def name
-    @blob["name"]
-  end
-
-  def do_propose(*rest)
-    obj,res = REST.put("#{self.class.path}/#{id}/propose")
-    maybe_json_die(obj,res)
-    @blob = obj
-    self
-  end
-
-  def do_commit(*rest)
-    obj,res = REST.put("#{self.class.path}/#{id}/commit")
-    maybe_json_die(obj,res)
-    @blob = obj
-    self
-  end
-
-  def do_recall(*rest)
-    obj,res = REST.put("#{self.class.path}/#{id}/recall")
-    maybe_json_die(obj,res)
-    @blob = obj
-    self
-  end
-end
-class Barclamp < CrowbarProxy; end
-class User < CrowbarProxy; end
-class Attrib < CrowbarProxy; end
-
-class Jig < CrowbarProxy; end
-
-class Network < CrowbarProxy
-  def self.path
-    "api/v2/networks"
+  class Network < CrowbarProxy
+    def self.path
+      "api/v2/networks"
+    end
   end
 end
 
@@ -677,8 +683,8 @@ end
 $commands["help"] = Command.new(method(:help))
 
 # Figure out all of things we need to generate commands for.
-Module.constants.each do |mod|
-  mod = Module.const_get(mod)
+OpenCrowbar.constants.each do |mod|
+  mod = OpenCrowbar.const_get(mod)
   # We want all classes that inherit from CrowbarProxy.
   next unless mod.respond_to?(:superclass) &&
     !mod.superclass.nil? &&
@@ -766,7 +772,7 @@ def run_command
           # Go ahead and instantiate it here, and capture the result to pass to the
           # Command object that will be eventually invoked.
           begin
-            klass = Module.const_get(template)
+            klass = OpenCrowbar.const_get(template)
             params << klass.new(arg)
           rescue
             STDERR.puts("#{arg} is not a #{template}")
