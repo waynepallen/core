@@ -337,19 +337,16 @@ bash "install required gems" do
   code "su -l -c 'cd /opt/opencrowbar/core/rails; bundle install --path /var/cache/crowbar/gems --standalone --binstubs /var/cache/crowbar/bin' crowbar"
 end
 
+# install Berkshelf, but outside the crowbar bundle
+# Berkshelf 2.x conflicts with Rails 4
 bash "install berkshelf in crowbar users context" do
   code "su -l -c 'gem install --conservative --minimal-deps --no-ri --no-rdoc --clear-sources --source \"http://rubygems.org/\" --bindir \"${GEM_HOME}/bin\" berkshelf' crowbar"
 end
 
-# to be activated perhaps soon
 # Create a Berksfile to require all cookbooks
-# bash "create a Berksfile for all core cookbooks" od
-#   cwd "/opt/opencrowbar/core/chef/cookbooks"
-#   code <<-EOH
-#   su -l -c 'rm Berksfile;\ 
-#     for COOKBOOK in $(ls -d */);\
-#     do echo "cookbook \"${COOKBOOK%/}\", path: \"${COOKBOOK}\"\" >> Berksfile;\
-#     done'
-#   EOH
-# end
-#
+bash "create a Berksfile for all core cookbooks" do
+  code <<-EOH
+    su -l -c 'cd /opt/opencrowbar/core/chef/cookbooks/; rm Berksfile; for COOKBOOK in $(ls -d */); do echo "cookbook \"${COOKBOOK%/}\", path: \"${COOKBOOK}\"\" >> Berksfile; done; chown crowbar:crowbar Berksfile'
+  EOH
+end
+ 
