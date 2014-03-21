@@ -67,6 +67,8 @@ cat >/target/etc/gemrc <<EOF
 gem: --no-ri --no-rdoc --bindir /usr/local/bin --http-proxy <%=@proxy%>
 EOF
 
+cp /etc/gemrc /root/.gemrc
+
 wget -q <%=@web_path%>/crowbar_join.sh -O- > /target/etc/init.d/crowbar_join.sh
 
 cat > /target/update_system2.sh <<"EOF"

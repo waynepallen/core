@@ -42,17 +42,18 @@ cat > /etc/gemrc <<EOF
 :sources:
 <% if @online -%>
 - http://rubygems.org/
-<% else -%>
-- ${provisioner}/gemsite/
 <% end -%>
+- ${provisioner}/gemsite/
 gem: --no-ri --no-rdoc --bindir /usr/local/bin --http-proxy $http_proxy
 EOF
-gem install rest-client
-gem install xml-simple
-gem install libxml-ruby
-gem install net-http-digest_auth
-gem install wsman
-gem install cstruct
+
+cp /etc/gemrc /root/.gemrc
+# gem install rest-client
+# gem install xml-simple
+# gem install libxml-ruby
+# gem install net-http-digest_auth
+# gem install wsman
+# gem install cstruct
 
 # Get the "right" version of Chef.  Eventually we should not hardcode this.
 [[ -f /tmp/$chef_rpm ]] || (

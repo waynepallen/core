@@ -32,10 +32,13 @@ proxies = {
   "no_proxy" => (["127.0.0.1","::1"] + node.all_addresses.map{|a|a.network.to_s}.sort).join(",")
 }
 
-template "/etc/gemrc" do
-  variables(:online => online,
-            :webserver => webserver,
-            :proxy => proxy)
+["/etc/gemrc","/root/.gemrc"].each do |rcfile|
+  template rcfile do
+    source "gemrc.erb"
+    variables(:online => online,
+              :webserver => webserver,
+              :proxy => proxy)
+  end
 end
 
 # Set up proper environments and stuff

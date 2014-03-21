@@ -1,28 +1,11 @@
 %h1
   = t '.title'
   = link_to @deployment_role.snapshot.name, snapshot_path(@deployment_role.snapshot.id)
-  = link_to @deployment_role.role.name, role_path(@deployment_role.role.id)
+  = link_to @deployment_role.role.name_i18n, role_path(@deployment_role.role.id)
 
 %h2= t '.attribs'
 
-
-- if @deployment_role.role.attribs.count == 0
-  =t 'no_items'
-- else
-  %table.data.box
-    %thead
-      %tr
-        %th= t '.attrib'
-        %th= t '.value'
-        %th
-    %tbdoy
-      - @deployment_role.role.attribs.each do |a|
-        = form_for :deployment_role, :'data-remote' => true, :url => deployment_role_path(:id=>@deployment_role), :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic" } do |f|
-          %tr
-            %td= link_to a.name_i18n, attrib_path(a.id), :title=>a.description
-            %td= text_field_tag @deployment_role.role.id, Attrib.get(a.name, @deployment_role.role), :size => 40
-            %td{:align=>"right"}
-              %input.button{:type => "submit", :name => "save", :value => t('.save')}
+= render :partial => 'node_roles/raw', :locals => { :obj => @deployment_role }
 
 %h3
   %a.toggle.with_label{:href => "#", :id => "#data_toggle", :rel => "rawdata"}= t '.rawdata'

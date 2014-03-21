@@ -53,20 +53,23 @@ class BarclampChef::Jig < Jig
       end
       role_path = "#{chef_path}/roles"
       data_bag_path = "#{chef_path}/data_bags"
+      user_data_bag_path = "/var/tmp/barclamps/#{nr.role.barclamp.name}/chef"
       cookbook_path = "#{chef_path}/cookbooks"
       FileUtils.cd(cookbook_path) do
         unless BarclampChef.knife("cookbook upload -o . -a")
           raise "Could not upload all Chef cookbook components from #{cookbook_path}"
         end
       end if File.directory?(cookbook_path)
-      Dir.glob(File.join(data_bag_path,"*.json")).each do |d|
-        data_bag_name = d.split('/')[-1]
-        next unless File.directory?(d)
-        next if (data_bag_name == "..") || (data_bag_name == ".")
-        unless BarclampChef.knife("data bag from file '#{data_bag_name}' '#{d}'")
-          raise "Could not upload Chef data bags from #{data_bag_path}/#{data_bag_name}"
-        end
-      end if File.directory?(data_bag_path)
+      [data_bag_path,user_data_bag_path].each do |db_path|
+        Dir.glob(File.join(db_path,"*.json")).each do |d|
+          data_bag_name = d.split('/')[-1]
+          next unless File.directory?(d)
+          next if (data_bag_name == "..") || (data_bag_name == ".")
+          unless BarclampChef.knife("data bag from file '#{data_bag_name}' '#{d}'")
+            raise "Could not upload Chef data bags from #{data_bag_path}/#{data_bag_name}"
+          end
+        end if File.directory?(db_path)
+      end
       if nr.role.respond_to?(:jig_role)
         Chef::Role.json_create(nr.role.jig_role(nr)).save
       elsif File.exist?("#{role_path}/#{nr.role.name}.rb")

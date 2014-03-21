@@ -15,13 +15,13 @@
 class CreateDeploymentRoles < ActiveRecord::Migration
   def change
     create_table :deployment_roles do |t|
-      t.belongs_to  :snapshot,          :null=>false
-      t.belongs_to  :role,              :null=>false
-      t.json        :data,              :null=>false, :default => {}
-      t.json        :wall,              :null=>false, :default => {}
+      t.belongs_to  :snapshot,          null: false
+      t.belongs_to  :role,              null: false
+      t.json        :data,              null: false, default: { expr: "'{}'::json" }
+      t.json        :wall,              null: false, default: { expr: "'{}'::json" }
       t.timestamps
     end
     #natural key
-    add_index(:deployment_roles, [:snapshot_id, :role_id], :unique => true)
+    add_index(:deployment_roles, [:snapshot_id, :role_id], unique: true)
   end
 end

@@ -106,7 +106,7 @@ class Node < ActiveRecord::Base
   end
 
   def ssh(cmd)
-    out,err,stat = Open3.capture3("ssh -l root #{address.addr} -- #{cmd}")
+    out,err,stat = Open3.capture3(". /etc/profile; ssh -l root #{address.addr} -- #{cmd}")
     [out, err, stat]
   end
 

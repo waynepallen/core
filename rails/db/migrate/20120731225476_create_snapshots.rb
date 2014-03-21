@@ -15,13 +15,15 @@
 class CreateSnapshots < ActiveRecord::Migration
   def change
     create_table :snapshots do |t|
-      t.integer     :state,                       :null=>false, :default=>Snapshot::PROPOSED
-      t.string      :name,                        :null=>false
-      t.string      :description,                 :null=>true
-      t.integer     :order,                       :null=>false, :default=>1000
-      t.belongs_to  :deployment,                  :null=>false
-      t.belongs_to  :snapshot,                    :null=>true
+      t.integer     :state,       null: false, default: Snapshot::PROPOSED
+      t.string      :name,        null: false
+      t.string      :description, null: true
+      t.integer     :order,       null: false, default: 1000
+      t.belongs_to  :deployment,  null: false
+      t.belongs_to  :snapshot,    null: true
       t.timestamps
     end
+    # Handle forward dependency of deployments on snapshots.
+    add_foreign_key('deployments','snapshot_id','snapshots','id')
   end
 end
