@@ -39,7 +39,7 @@ class Deployment(ApiObject):
         self.system = None
         self.updated_at = None
         self.parent_id = None
-        self.snapshot_id = None
+        self.state = None
         self.id = None
         self.name = None
         self.__dict__ = json

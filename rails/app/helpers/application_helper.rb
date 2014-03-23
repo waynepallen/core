@@ -68,53 +68,6 @@ module ApplicationHelper
       result << "</ul>"
   end
 
-  def render_attributes(raw, proposal)
-    # POSSIBLE OBSOLETE IN 2.X
-    if raw
-      render :partial => 'barclamp/edit_attributes_raw'
-    else
-      begin
-        render :partial => "barclamp/#{proposal.barclamp}/edit_attributes"
-      rescue ActionView::MissingTemplate
-        render :partial => 'barclamp/edit_attributes_raw'
-      rescue Exception => e
-        puts "Attribute Exception #{e.class}: #{e.message}"
-        puts e.backtrace
-        render :partial => 'barclamp/edit_attributes_raw'
-      end
-    end
-  end
-
-  def render_deployment(raw, proposal)
-    # POSSIBLE OBSOLETE IN 2.X
-    if raw
-      render :partial => 'barclamp/edit_deployment_raw'
-    else
-      unless Rails.env == 'development'
-        begin
-          render :partial => "barclamp/#{proposal.barclamp}/edit_deployment"
-        rescue ActionView::MissingTemplate
-          render :partial => 'barclamp/edit_deployment_raw'
-        rescue Exception => e
-          puts "Deployment Exception #{e.message}"
-          puts e.backtrace
-          render :partial => 'barclamp/edit_deployment_raw'
-        end
-      else
-        render :partial => "barclamp/#{proposal.barclamp}/edit_deployment"
-      end
-    end
-  end
-
-  def nodes_hash(group=nil)
-    # POSSIBLE OBSOLETE IN 2.X
-    nodes = {}
-    NodeObject.all.each do |node|      
-      nodes[node.name] = {:handle=>node.handle, :alias=>node.alias, :title=>node.description(false, true), :admin=>node.admin?, :group=>node.group} if node.group==group or group.nil? 
-    end
-    nodes
-  end
-  
  def build_scaffold_nav(subnav,item,level=0,sub_num=0)
     ul_class="nav_#{level}-#{sub_num}"
     subnav.dom_class = ul_class

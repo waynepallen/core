@@ -1,6 +1,6 @@
 %h1
   = t '.title'
-  = link_to @deployment_role.snapshot.name, snapshot_path(@deployment_role.snapshot.id)
+  = link_to @deployment_role.deployment.name, deployment_path(@deployment_role.deployment.id)
   = link_to @deployment_role.role.name_i18n, role_path(@deployment_role.role.id)
 
 %h2= t '.attribs'

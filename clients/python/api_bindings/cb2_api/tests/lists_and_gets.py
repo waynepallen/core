@@ -27,7 +27,6 @@ class main():
     session = cb2_Api("192.168.124.10", "3000", "crowbar", "crowbar")
     
     list_methods ={'get_nodes',
-                   'get_snapshots',
                    'get_deployments',
                    'get_deployment_roles',
                    #'get_interfaces',    #NOT CURRENTLY AVAILABLE

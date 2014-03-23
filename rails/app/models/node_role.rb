@@ -21,34 +21,31 @@ class NodeRole < ActiveRecord::Base
 
   belongs_to      :node
   belongs_to      :role
-  belongs_to      :snapshot
-  has_one         :deployment,        :through => :snapshot
+  belongs_to      :deployment
   has_one         :barclamp,          :through => :role
   has_many        :attribs,           :through => :role
   has_many        :runs,              :dependent => :destroy
 
-  # find other node-roles in this snapshot using their role or node
+  # find other node-roles in this deployment using their role or node
   scope           :all_by_state,      ->(state) { where(['node_roles.state=?', state]) }
   # A node is runnable if:
   # It is in TODO.
-  # It is in a committed snapshot.
-  scope           :archived,          -> { joins(:snapshot).where('snapshots.state' => Snapshot::ARCHIVED) }
-  scope           :current,           -> { joins(:snapshot).where(['snapshots.state != ?',Snapshot::ARCHIVED]).readonly(false) }
-  scope           :committed,         -> { joins(:snapshot).where('snapshots.state' => Snapshot::COMMITTED).readonly(false) }
+  # It is in a committed deployment.
+  scope           :committed,         -> { joins(:deployment).where('deployments.state' => Deployment::COMMITTED).readonly(false) }
   scope           :deactivatable,     -> { where(:state => [ACTIVE, TRANSITION, ERROR]) }
   scope           :in_state,          ->(state) { where('node_roles.state' => state) }
   scope           :not_in_state,      ->(state) { where(['node_roles.state != ?',state]) }
   scope           :available,         -> { where(:available => true) }
   scope           :runnable,          -> { available.committed.in_state(NodeRole::TODO).joins(:node).where('nodes.alive' => true, 'nodes.available' => true).joins(:role).joins('inner join jigs on jigs.name = roles.jig_name').readonly(false).where(['node_roles.node_id not in (select node_roles.node_id from node_roles where node_roles.state in (?, ?))',TRANSITION,ERROR]) }
   scope           :committed_by_node, ->(node) { where(['state<>? AND state<>? AND node_id=?', NodeRole::PROPOSED, NodeRole::ACTIVE, node.id])}
-  scope           :in_snapshot,       ->(snap) { where(:snapshot_id => snap.id) }
+  scope           :in_deployment,       ->(deployment) { where(:deployment_id => deployment.id) }
   scope           :with_role,         ->(r) { where(:role_id => r.id) }
   scope           :on_node,           ->(n) { where(:node_id => n.id) }
-  scope           :peers_by_state,    ->(ss,state) { in_snapshot(ss).in_state(state) }
-  scope           :peers_by_role,     ->(ss,role)  { in_snapshot(ss).with_role(role) }
-  scope           :peers_by_node,     ->(ss,node)  { in_snapshot(ss).on_node(node) }
+  scope           :peers_by_state,    ->(ss,state) { in_deployment(ss).in_state(state) }
+  scope           :peers_by_role,     ->(ss,role)  { in_deployment(ss).with_role(role) }
+  scope           :peers_by_node,     ->(ss,node)  { in_deployment(ss).on_node(node) }
   scope           :peers_by_node_and_role,     ->(s,n,r) { peers_by_node(s,n).with_role(r) }
-  scope           :snap_node_role,    ->(s,n,r) { where(['snapshot_id=? AND node_id=? AND role_id=?', s.id, n.id, r.id]) }
+  scope           :deployment_node_role,    ->(s,n,r) { where(['deployment_id=? AND node_id=? AND role_id=?', s.id, n.id, r.id]) }
 
   # make sure that new node-roles have require upstreams
   # validate        :deployable,        :if => :deployable?
@@ -85,7 +82,7 @@ class NodeRole < ActiveRecord::Base
 
   # State transitions:
   # All node roles start life in the PROPOSED state.
-  # At snapshot commit time, all node roles in PROPOSED that:
+  # At deployment commit time, all node roles in PROPOSED that:
   #  1. Have no parent node role, or
   #  2. Have a parent in ACTIVE state
   # will be placed in TODO state, and all others will be placed in BLOCKED.
@@ -184,7 +181,7 @@ class NodeRole < ActiveRecord::Base
   end
 
   def runnable?
-    node.available && node.alive && jig.active && committed_data
+    node.available && node.alive && jig.active && committed_data && deployment.committed?
   end
 
   # convenience methods
@@ -193,7 +190,7 @@ class NodeRole < ActiveRecord::Base
   end
 
   def deployment_role
-    DeploymentRole.find_by(snapshot_id: snapshot_id,
+    DeploymentRole.find_by(deployment_id: deployment_id,
                            role_id: role_id)
   end
 
@@ -404,7 +401,6 @@ class NodeRole < ActiveRecord::Base
     end
   end
 
-  # convenience methods
   def name
    "#{deployment.name}: #{node.name}: #{role.name}" rescue I18n.t('unknown')
   end
@@ -448,7 +444,7 @@ class NodeRole < ActiveRecord::Base
       return
     end
     return unless previous_changes["state"]
-    if snapshot.committed? && available &&
+    if deployment.committed? && available &&
         ((!role.destructive) || (run_count == self.active? ? 1 : 0))
       Rails.logger.debug("NodeRole #{name}: Calling #{meth} hook.")
       role.send(meth,self)

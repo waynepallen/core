@@ -15,9 +15,9 @@
 class CreateNodeRoles < ActiveRecord::Migration
   def change
     create_table :node_roles do |t|
-      t.belongs_to  :snapshot,          null: false, index: true
-      t.belongs_to  :role,              null: false
-      t.belongs_to  :node,              null: false
+      t.belongs_to  :deployment,        null: false, index: true
+      t.belongs_to  :role,              null: false, index: true
+      t.belongs_to  :node,              null: false, index: true
       t.integer     :state,             null: false, default: NodeRole::PROPOSED
       t.integer     :cohort,            null: false, default: 0
       t.integer     :run_count,         null: false, default: 0

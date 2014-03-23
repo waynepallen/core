@@ -1,6 +1,6 @@
 = javascript_include_tag 'infovis/jit'
 
-%h1= t '.title', :snapshot=>@snapshot.name
+%h1= t '.title', :deployment=>@deployment.name
 
 %div#infovis
   %div#infovis-canvaswidget
@@ -122,7 +122,7 @@ $(document).ready(function() {
     { 
         async: false, 
         global: false, 
-        url: "/api/v2/snapshots/#{@snapshot.id}/graph",
+        url: "/api/v2/deployments/#{@deployment.id}/graph",
         dataType: 'json', 
         success: function(data) 
         { 

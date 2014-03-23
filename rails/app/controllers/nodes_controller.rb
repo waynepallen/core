@@ -22,8 +22,6 @@ class NodesController < ApplicationController
               Group.find_key(params[:group_id]).nodes
             elsif params.has_key? :deployment_id
               Deployment.find_key(params[:deployment_id]).nodes
-            elsif params.has_key? :snapshot_id
-              Snapshot.find_key(params[:snapshot_id]).nodes
             else
               Node.all
             end
@@ -75,7 +73,7 @@ class NodesController < ApplicationController
   # RESTfule POST of the node resource
   def create
     params[:deployment_id] = Deployment.find_key(params[:deployment]).id if params.has_key? :deployment
-    params[:deployment_id] ||= 1
+    params[:deployment_id] ||= Deployment.system
     params.require(:name)
     params.require(:deployment_id)
     Node.transaction do

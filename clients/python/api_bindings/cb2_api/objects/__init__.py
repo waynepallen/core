@@ -22,6 +22,5 @@ from interfaces import *
 from jig import *
 from node_role import *
 from node import *
-from snapshot import *
 from user import *
 from apiobject import ApiObject

@@ -17,9 +17,6 @@ Roles, Nodes, NodeRoles, and DeploymentRoles all work with Attribs.
 | GET  | /api/v2/roles/[:role_id]/attribs  | none   | List Attribs for a specific role| - | 
 | GET  | /api/v2/roles/[:role_id]/attribs/[:id]  | none   | Show Attrib (including value) for a specific Role| - | 
 | PUT  | /api/v2/roles/[:role_id]/attribs/[:id]  | none   | Update Attrib |
-| GET  | /api/v2/snapshots/[:snapshot_id]/attribs  | none   | List Attribs for a specific snapshot| - | 
-| GET  | /api/v2/snapshots/[:snapshot_id]/attribs/[:id]  | none   | Show Attrib (including value) for a specific Snapshot| - | 
-| PUT  | /api/v2/snapshots/[:snapshot_id]/attribs/[:id]  | none   | Update Attrib |
 | GET  | /api/v2/deployments/[:deployment_id]/attribs  | none   | List Attribs for a specific deployment| - | 
 | GET  | /api/v2/deployments/[:deployment_id]/attribs/[:id]  | none   | Show Attrib (including value) for a specific Deployment| - | 
 | PUT  | /api/v2/deployments/[:deployment_id]/attribs/[:id]  | none   | Update Attrib |

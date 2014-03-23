@@ -38,7 +38,7 @@ class Deployment_Role(ApiObject):
         self.created_at = None
         self.updated_at = None
         self.role_id = None
-        self.snapshot_id = None
+        self.deployment_id = None
         self.data = None
         self.id = None
         self.__dict__ = json

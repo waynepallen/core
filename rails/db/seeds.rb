@@ -8,3 +8,9 @@ ActiveRecord::Base.transaction do
     "#{seedfile.split('/')[-3].camelize}::Engine".constantize.load_seed
   end
 end
+
+# We always need a system deployment
+Deployment.find_or_create_by!(name:        "system",
+                              description: I18n.t('automatic', :default=>"Created Automatically by System"),
+                              system:      true,
+                              state:       Deployment::COMMITTED)
