@@ -235,6 +235,15 @@ en:
       parent: "Parent"
       <<: *deployment_common
     show:
+      graph: "Graph"
+      assign: "Assign Nodes to Roles"
+      assigned: "Assigned Nodes to Roles"
+      roles: "Assigned Roles"
+      available_nodes: "Available Nodes"
+      add_role: "Add Role"
+      must_be_proposed: "WARNING: Deployment must be in Proposed state to make changes."
+      pick: "Add Nodes"
+      pick_hint: "Select additional nodes for this deployment"
       parent: "Child of "
       <<: *deployment_common
     buttons:
@@ -243,6 +252,8 @@ en:
       propose: "Propose"
       correct: "Correct"
       anneal: "Annealer"
+    graph:
+      title: "%{deployment} Graph"
   deployment_roles:
     index:
       title: "Deployment Roles"
@@ -386,26 +397,12 @@ en:
       map: "Map"
     names:
       role: "Roles"
-    show:
-      nodes: "Nodes"
-      graph: "Graph"
-      assign: "Assign Nodes to Roles"
-      assigned: "Assigned Nodes to Roles"
-      roles: "Assigned Roles"
-      nodes: "Available Nodes"
-      add_role: "Add Role"
-      must_be_proposed: "WARNING: Deployment must be in Proposed state to make changes."
-      pick: "Add Nodes"
-      pick_hint: "Select additional nodes for this deployment"
-      <<: *deployment_common      
     anneal:
       title: "annealing activity"
       anneal: "Anneal"
       annealling: "Annealer Started by User Action"
       <<: *deployment_common      
       <<: *node_role_states
-    graph:
-      title: "%{deployment} Graph"
     cohorts:
       title: "NodeRole Relationships"
       node: "Node"
