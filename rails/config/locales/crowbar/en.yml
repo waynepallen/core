@@ -232,6 +232,7 @@ en:
       actions: "Actions"
       default: "default"
       create: "Add"
+      update: "Update"
       parent: "Parent"
       <<: *deployment_common
     show:
