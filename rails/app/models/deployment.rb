@@ -118,7 +118,7 @@ class Deployment < ActiveRecord::Base
   # Do this by changing its state from COMMITTED to PROPOSED.
   def propose
     Deployment.transaction do
-      raise "Cannot recall a system deployment" unless recallable?
+      raise "Cannot recall a system deployment" if system?
       write_attribute("state",PROPOSED)
       save!
     end
