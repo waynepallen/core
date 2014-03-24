@@ -42,15 +42,26 @@ deployment tree to being 2 layers deep.
 
 ####Provisioner Installing Ubuntu 12.04:
 
-Now, we get to the first of two big things that were added -- the provisioner being able to install Ubuntu 12.04 and bring the resulting node under management by the rest of the OpenCrowbar framework.  This bulds on top of the deployment tree and DHCP/DNS database role work.  
+Now, we get to the first of two big things that were added -- the
+provisioner being able to install Ubuntu 12.04 and bring the resulting
+node under management by the rest of the OpenCrowbar framework.  This
+bulds on top of the deployment tree and DHCP/DNS database role work.
+
 
 To install Ubuntu 12.04 on a node from the web UI:
 
-  1. Create a new deployment, and add the provisioner-os-install role to that deployment.  In the future you will be able to edit the deployment role information to change what the default OS for a deployment should be.
+  1. Create a new deployment, and add the provisioner-os-install role
+     to that deployment.  In the future you will be able to edit the
+     deployment role information to change what the default OS for a
+     deployment should be.
 
-  2. Drag one of the non-admin nodes onto the provisioner-os-install role.  This will create a proposed noderole binding the provisioner-os-install role to that node, and in the future you would be able to change what OS would be installed on that node by editing that noderole before committing the deployment.
+  2. Drag one of the non-admin nodes onto the provisioner-os-install
+     role.  This will create a proposed noderole binding the
+     provisioner-os-install role to that node, and in the future you
+     would be able to change what OS would be installed on that node
+     by editing that noderole before committing the deployment.
 
-  3. Commit the snapshot.  This will cause several things to happen:
+  3. Commit the deployment.  This will cause several things to happen:
 
   * The _freshly-bound_ noderoles will transition to TODO, which will
     trigger an annealer pass on the noderoles.

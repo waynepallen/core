@@ -54,6 +54,10 @@ class BarclampChef::SoloJig < Jig
     unless File.directory?(chef_path)
       raise("No Chef data at #{chef_path}")
     end
+    cookbook_path = "#{chef_path}/cookbooks"
+    unless File.directory?(cookbook_path)
+      raise("No cookbooks at #{cookbook_path}")
+    end
     paths = ["#{chef_path}/roles",
              "#{chef_path}/data_bags",
              "/var/tmp/barclamps/#{nr.role.barclamp.name}/chef",

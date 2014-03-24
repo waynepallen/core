@@ -298,8 +298,11 @@ bash "create crowbar user for postgres" do
   not_if "sudo -H -u postgres -- psql postgres -tAc \"SELECT 1 FROM pg_roles WHERE rolname='crowbar'\" |grep -q 1"
 end
 
-["bundler","net-http-digest_auth","json","cstruct","builder"].each do |g|
-  gem_package g
+(prereqs["gems"]["required_pkgs"] rescue []).each do |g|
+  gem_package g do
+    action :install
+    options "--http-proxy #{proxies["http_proxy"]} --no-ri --no-rdoc --bindir /usr/local/bin"
+  end
 end
 
 directory "#{tftproot}/gemsite/gems" do
@@ -338,20 +341,6 @@ if File.exists?("/opt/opencrowbar/core/rails/Gemfile.lock")
   Chef::Log.info("Using existing Gemfile.lock.  This will cause errors if Gemfile has been updated.  Delete lock and retry")
 end 
 
-bash "install required gems" do
+bash "install required gems for Crowbar using Bundler" do
   code "su -l -c 'cd /opt/opencrowbar/core/rails; bundle install --path /var/cache/crowbar/gems --standalone --binstubs /var/cache/crowbar/bin' crowbar"
 end
-
-# install Berkshelf, but outside the crowbar bundle
-# Berkshelf 2.x conflicts with Rails 4
-bash "install berkshelf in crowbar users context" do
-  code "su -l -c 'gem install --conservative --minimal-deps --no-ri --no-rdoc --clear-sources --source \"http://rubygems.org/\" --bindir \"${GEM_HOME}/bin\" berkshelf' crowbar"
-end
-
-# Create a Berksfile to require all cookbooks
-bash "create a Berksfile for all core cookbooks" do
-  code <<-EOH
-    su -l -c 'cd /opt/opencrowbar/core/chef/cookbooks/; rm Berksfile; for COOKBOOK in $(ls -d */); do echo "cookbook \"${COOKBOOK%/}\", path: \"${COOKBOOK}\"\" >> Berksfile; done; chown crowbar:crowbar Berksfile'
-  EOH
-end
- 

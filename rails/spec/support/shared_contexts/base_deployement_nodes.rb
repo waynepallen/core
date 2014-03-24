@@ -32,17 +32,8 @@ shared_context "crowbar test deployment" do
       expect(deployment.system).to be_true
     end
 
-    it "has an active snapshot" do
-      expect(deployment.head).to be_kind_of(Snapshot)
-      expect(active).to be_kind_of(Snapshot)
-    end
-
     it "is committed" do
       expect(deployment.committed?).to be_true
-    end
-
-    it "has no children" do
-      expect(deployment.head.next).to be_nil
     end
 
   end

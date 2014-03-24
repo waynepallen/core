@@ -44,7 +44,7 @@ class Node_Role(ApiObject):
         self.node_id = None
         self.status = None
         self.run_count = None
-        self.snapshot_id = None
+        self.deployment_id = None
         self.role_id = None
         self.id = None
         self.__dict__ = json

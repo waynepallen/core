@@ -10,7 +10,6 @@
 | PUT  | /api/v2/deployments/[:id]  | none   | Update Deployment Detail | - | 
 | GET  | /api/v2/deployments/[:id]  | none   | Existing Deployment Detail | - | q
 | PUT  | /api/v2/deployments/[:id]/commit  | none   | Commit Proposed | - | 
-| PUT  | /api/v2/deployments/[:id]/recall | none   | Re-propose Current Snapshot | - | 
 | PUT  | /api/v2/deployments/[:id]/propose | none   | Create an new Proposal based on Active| - | 
 | PUT  | /api/v2/deployments/[:id]/transition | none   | Send Transistion Data into the system| - | 
 | GET  | /api/v2/deployments/[:deployment_id]/attribs  | none   | List Attribs for a specific deployment| - | 
@@ -23,7 +22,6 @@
 |Attribute|Type|Settable|Note|
 |---------|----|--------|----|
 |System|Boolean|No||
-|Snapshot_id|Internal Ref|??|Actually an Int
 |Parent_id|Internal Ref|??|Actually an Int|
 |Description|String|Yes||
 |Name|String|Yes|Limited to Alpha + Numbers - no spaces or special chars|

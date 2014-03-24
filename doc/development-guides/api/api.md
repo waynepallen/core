@@ -22,16 +22,13 @@ _This is a reference index - API is documented in subpages_
       * /jigs
       * /barclamps
       * /deployments
-        * /head (first snapshot)
-        * /next (second snapshot)
         * /[:id]/roles
-      * /deployment_roles
-      * /snapshots
         * /[:id]/node_roles
         * /graph (GET only)
         * /propose (PUT only)
         * /commit (PUT only)
         * /recall (PUT only)
+      * /deployment_roles
       * /jigs
       * /roles
       * /attribs
@@ -89,8 +86,8 @@ names are pluralized in the API.  For example, the API will use
      * PUT / Update - returns the updated object serialized
      * DELETE/ Delete - no return data except 200
   * Special Cases
-     * PUT - used to start an action on existing data (commit a snapshot)
-     * POST - used to create new state (propose a snapshot)
+     * PUT - used to start an action on existing data (commit a node
+       or deployment)
      * DELETE - Unlink/Deactivate/Dequeue
 
 In general, OpenCrowbar REST pattern uses the 4 HTTP verbs as follows:
@@ -292,7 +289,7 @@ Returns:
     {
       "system": false,
       "created_at": "2014-03-03T04:40:07.351Z",
-      "snapshot_id": 2,
+      "state": 0
       "parent_id": 1,
       "description": null,
       "updated_at": "2014-03-03T04:40:07.351Z",
@@ -351,7 +348,7 @@ Returns:
       "state": 4,
       "run_count": 0,
       "node_id": 2,
-      "snapshot_id": 2,
+      "deployment_id": 2,
       "available": true,
       "runlog": "",
       "order": 10000,
@@ -411,39 +408,6 @@ Returns:
       "parent_id": 1,
       "id": 2,
       "created_at": "2014-03-03T04:40:07.351Z",
-      "snapshot_id": 2,
       "updated_at": "2014-03-03T04:40:07.351Z",
       "description": null
     }
-
-### Using the API python bindings this looks like
-
-```
-from api import cb2_Api
-  
-class main():
-  
-    #create an api session
-    session = cb2_Api("192.168.124.10", "3000", "crowbar", "crowbar")
-    
-    #create a new deployment    
-    deploy = Deployment()
-    deploy.name = 'ApiDeployment'
-    deploy = session.create(deploy)
-        
-    #get/set the target node    
-    targetNode = session.get(session.create(Node({"name":"nodename.domain.org"})))   
-    targetNode.deployment_id = deploy.id
-    node = session.update(targetNode)
-    
-    #create a node role & assign it to the node created above    
-    nodeRole = Node_Role()
-    nodeRole.node_id = targetNode.id
-    nodeRole.role_id = '6'
-    nodeRole = session.update(nodeRole)
-    
-    #commit the snapshot/proposal
-    snap = session.commit_snapshot(deploy.snapshot_id)
-    
-    #that's all folks
-```

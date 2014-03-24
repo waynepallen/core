@@ -10,8 +10,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.
-#
+# limitations under the License.  
 
 class Role < ActiveRecord::Base
 
@@ -152,34 +151,34 @@ class Role < ActiveRecord::Base
     all_parents.exists?(other.id)
   end
 
-  # Make sure there is a deployment role for ourself in the snapshot.
-  def add_to_snapshot(snap)
-    DeploymentRole.find_or_create_by!(role_id: self.id, snapshot_id: snap.id)
+  # Make sure there is a deployment role for ourself in the deployment.
+  def add_to_deployment(dep)
+    DeploymentRole.find_or_create_by!(role_id: self.id, deployment_id: dep.id)
   end
 
-  def find_noderoles_for_role(role,snap)
-    csnap = snap
+  def find_noderoles_for_role(role,dep)
+    cdep = dep
     Deployment.transaction(read_only: true) do
       loop do
-        Rails.logger.info("Role: Looking for role '#{role.name}' binding in '#{snap.deployment.name}' deployment")
-        pnrs = NodeRole.peers_by_role(csnap,role)
+        Rails.logger.info("Role: Looking for role '#{role.name}' binding in '#{dep.name}' deployment")
+        pnrs = NodeRole.peers_by_role(cdep,role)
         return pnrs unless pnrs.empty?
-        csnap = (csnap.deployment.parent.snapshot rescue nil)
-        break if csnap.nil?
+        cdep = (cdep.parent rescue nil)
+        break if cdep.nil?
       end
     end
-    Rails.logger.info("Role: No bindings for #{role.name} in #{snap.deployment.name} or any parents.")
+    Rails.logger.info("Role: No bindings for #{role.name} in #{dep.name} or any parents.")
     []
   end
 
   def add_to_node(node)
-    add_to_node_in_snapshot(node,node.deployment.head)
+    add_to_node_in_deployment(node,node.deployment)
   end
 
-  # Bind a role to a node in a snapshot.
-  def add_to_node_in_snapshot(node,snap)
+  # Bind a role to a node in a deployment.
+  def add_to_node_in_deployment(node,dep)
     Role.transaction do
-      # If we are already bound to this node in a snapshot, do nothing.
+      # If we are already bound to this node in a deployment, do nothing.
       res = NodeRole.find_by(node_id: node.id, role_id: self.id)
       return res if res
 
@@ -205,26 +204,26 @@ class Role < ActiveRecord::Base
       # We will actually bind them after creating the noderole binding.
       all_parents.each do |parent|
         next if NodeRole.exists?(role_id: parent.id, node_id: node.id)
-        next unless parent.implicit? || find_noderoles_for_role(parent,snap).empty?
-        parent.add_to_node_in_snapshot(node,snap)
+        next unless parent.implicit? || find_noderoles_for_role(parent,dep).empty?
+        parent.add_to_node_in_deployment(node,dep)
       end
       # At this point, all the parent noderoles we need are bound.
       # make sure that we also have a deployment role, then
       # create ourselves and bind our parents.
-      add_to_snapshot(snap)
-      res = NodeRole.create!(node_id:     node.id,
-                             role_id:     id,
-                             snapshot_id: snap.id,
-                             cohort:      0)
+      add_to_deployment(dep)
+      res = NodeRole.create!(node_id:       node.id,
+                             role_id:       id,
+                             deployment_id: dep.id,
+                             cohort:        0)
       Rails.logger.info("Role: Creating new noderole #{res.name}")
       # Second pass through our parent array.  Since we created all our
       # parent noderoles earlier, we can just concern ourselves with creating the bindings we need.
       parents.each do |parent|
-        pnrs = find_noderoles_for_role(parent,snap)
+        pnrs = find_noderoles_for_role(parent,dep)
         if parent.cluster
           # If the parent role has a cluster flag, then all of the found
           # parent noderoles will be bound to this one.
-          Rails.logger.info("Role: Parent #{parent.name} of role #{name} has the cluster flag, binding all instances in deployment #{pnrs[0].deployment.name}")
+          Rails.logger.info("Role: Parent #{parent.name} of role #{name} has the cluster flag, binding all instances in deployment #{pnrs[0].name}")
           pnrs.each do |pnr|
             res.add_parent(pnr)
           end
@@ -239,7 +238,7 @@ class Role < ActiveRecord::Base
       # If I am a new noderole binding for a cluster node, find all the children of my peers
       # and bind them too.
       if self.cluster
-        NodeRole.peers_by_role(snap,self).each do |peer|
+        NodeRole.peers_by_role(dep,self).each do |peer|
           peer.children.each do |c|
             c.add_parent(res)
             c.deactivate

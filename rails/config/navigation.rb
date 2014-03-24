@@ -41,7 +41,7 @@ SimpleNavigation::Configuration.run do |navigation|
                     begin
                       if nav.name.eql? 'nav.deployments'
                         Deployment.all.each do |d|
-                          tertiary.item nav.item.to_sym, d.name, deployment_head_path(d.id), {:title=>d.description }
+                          tertiary.item nav.item.to_sym, d.name, deployment_path(d.id), {:title=>d.description }
                         end
                       end            
                     rescue

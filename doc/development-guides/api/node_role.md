@@ -8,7 +8,8 @@ There are four types of data that OpenCrowbar tracks, three of them are maintain
 3. wall data (node_role.wall) is set by the jig after transistion (also known as "in bound data")
 4. discovery data (node.wall) is stored on the node instead of node role because it reflects node information aggregated from all the jigs.  This information is available using the node.attrib_[name] and Attrib model.  Please see the node API docs for more about this type of data
 
-NodeRole does not have a natural key, so you must reference them them by ID or under the relevant Nodes, Roles, or Snapshots.
+NodeRole does not have a natural key, so you must reference them them
+by ID or under the relevant Nodes, Roles, or Deployment.
 
 #### API Actions
 
@@ -25,8 +26,7 @@ NodeRole does not have a natural key, so you must reference them them by ID or u
 
 Helpers have been added to NodeRole create so that you do not need to provide IDs when creating a new NodeRole.  You can pass:
 
-* Snapshot Name instead of Snapshot ID
-* Deployment Name instead of Snapshot ID (uses the Head snapshot)
+* Deployment Name instead of Deployment ID
 * Node Name instead of Node ID
 * Role Name instead of Role ID
 
@@ -44,7 +44,7 @@ Helpers have been added to NodeRole create so that you do not need to provide ID
 |Node_Id|Integer|Yes||
 |Status|??|??||
 |Run_count|Integer|No||
-|Snapshot_Id|Integer|??||
+|Deployment_Id|Integer|??||
 |Role_Id|Integer|Yes||
 |Id|Internal Ref|??|Actually an Int|
 

@@ -29,7 +29,7 @@ runs.
 On top of those 3 basic object types, we have 2 more that are used to
 help keep cluster administrators from dying of information overload
 when staring at a noderole graph with 10,000 edges.  These are
-deployments, deployment roles, and snapshots.
+deployments and deployment roles.
 
 * A **deployment** is an administratively convenient logical grouping of
 nodes along with a set of default role configurations (the deployment
@@ -37,15 +37,10 @@ roles) relevant to whatever workload is being run in the
 deployment. Deployments all have a parent deployment except for the
 system deployment, which OpenCrowbar manages and which is where all
 newly-discovered nodes wind up. Nodes belong to deployments, which
-helps control how the noderole graph is built.
-
-* A **snapshot** consists of a collection of node-role bindings created in a
-particular deployment.  A deployment has a linear history of
-snapshots, and each snapshot can be proposed (in which case the user
-can edit noderole attributes and state, and the annealer will ignore
-them), committed (where user edits to the noderole are not allowed,
-and the annealer can use the noderoles), and archived (where the
-noderoles are not editable and are ignored by the annealer).
+helps control how the noderole graph is built.  Deployments can be
+either proposed (when the user needs to make deployment-wide
+configuration changes), or committed (where the annealer is allowed to
+work, and user-level changes are Not Allowed)
 
 Additionally, we have barclamps to group together logically related
 roles, glue the roles into the OpenCrowbar API and Web UI, and contain any
@@ -155,8 +150,8 @@ cluster before the current role.
 ### How the noderole graph is built: ###
 
 Right now, all nodes are ultimately added to the noderole graph via
-the add\_to\_node\_in\_snapshot function on role objects.  You pass it a
-node and a snapshot, and it either creates a node role bound to an
+the add\_to\_node\_in\_deployment function on role objects.  You pass it a
+node and a deployment, and it either creates a node role bound to an
 appropriate place in the graph or dies with an exception.  In detail:
 
 1. Verify that the jig that implements the role is active.
@@ -166,7 +161,7 @@ it has, return that noderole.
    graph.  If they have not, bind them on the same node we are binding
    to.
 4. Create a new noderole binding this role to the requested node in
-the snapshot, and create parent/child relationships between the new
+the deployment, and create parent/child relationships between the new
 noderole and the parents we found.  The noderole will be created in
 the PROPOSED state.
 5. Call the on_proposed event hook for this role with the new
@@ -200,21 +195,35 @@ seeded by one of the noderole events.
 a flag that indicates whether it is an admin node.
 2. The requested name is checked to see it is a valid FQDN in the
 cluster's administrative DNS domain and that it is unique.  If neither
-of those are true, the request fails, otherwise we create the node object.
-3. We get all of the discovery roles, solve their dependencies to
-create a list of roles sorted in dependency order, and add them to the
-freshly-created node in the current committed snapshot of the system deployment.
-4. Once all the node roles are added, the system will automatically
-recommit the snapshot.  After that, the annealer takes over to
-discover tne node.
+of those are true, the request fails, otherwise we create the node
+object.  The new node object will not be alive or available, and it
+will not have any roles bound to it.
+3. (optional) API calls come in to hint to the system (via the
+   hint-admin-mac and hint-admin-v4addr attribs) what MAC address
+   should be used for DHCP purposes and what IP address should be
+   assigned to the node from the admin network.  Nodes booting via
+   Sledgehammer use hint-admin-mac to ensure that the
+   provisioner-dhcp-database role runs, which allows Sledgehammer to
+   get a proper in-range DHCP address.
+4. API calls come in that bind the crowbar-managed-node role to the
+   freshly-created node.  This will have the side effect of pullng in
+   all the roles we need to properly discover a node and bind them to
+   the node-role graph as well.
+5. (optional) API calls come in that modify the default values of the
+freshly-bound noderoles.
+6. The node is committed via the node API, which automatically
+commits all the noderoles bound to the node.
+7. The node is marked as alive by the node API. After that, the
+annealer takes over to discover the node.
 
 Creating the initial admin node follows the same process, except we
-all all of the bootstrap roles instead of the discovery roles.
+add the crowbar-admin-node role instead of the crowbar-managed-node role.
 
 ## The NodeRole state machine, the framework-driven parts: ##
 
-All noderoles start in PROPOSED state, and they stay there until the
-snapshot they are a part of is committed. From PROPOSED, a noderole
+All noderoles start in PROPOSED state, and they stay there are
+committed (either individually, as part of a node commit, or as part
+of a deployment commit). From PROPOSED, a noderole
 can go to TODO (if the noderole has no parents or all its parents are
 ACTIVE), or BLOCKED (if it has any non-ACTIVE parents).
 
@@ -225,7 +234,7 @@ The annealer looks for noderoles in TODO that meet the following
 conditions:
 
 1. The jig that is associated with the noderole via the role half of the binding is active,
-2. The snapshot that the noderole belongs to is COMMITTED,
+2. The deployment that the noderole belongs to is COMMITTED,
 3. The node that the noderole binds to is alive and available,
 4. There is no noderole for that node that is in TRANSITION
 
@@ -330,7 +339,7 @@ role.  This will create a proposed noderole binding the
 provisioner-os-install role to that node, and in the future you would
 be able to change what OS would be installed on that node by editing
 that noderole before committing the deployment.
-3. Commit the snapshot.  This will cause several things to happen:
+3. Commit the deployment.  This will cause several things to happen:
    * The freshly-bound noderoles will transition to TODO, which will
      trigger an annealer pass on the noderoles.
    * The annealer will grab all the provisioner-os-install roles that

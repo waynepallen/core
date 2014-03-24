@@ -18,10 +18,10 @@ class NodeRolesController < ApplicationController
   def index
     @list = (if params.key? :node_id
               Node.find_key(params[:node_id]).node_roles.current
-            elsif params.key? :snapshot_id
-              Snapshot.find_key(params[:snapshot_id]).node_roles
+            elsif params.key? :deployment_id
+              Deployment.find_key(params[:deployment_id]).node_roles
             else
-              NodeRole.current
+              NodeRole.all
             end).order("cohort asc, id asc")
     respond_to do |format|
       format.html { }
@@ -35,8 +35,7 @@ class NodeRolesController < ApplicationController
       raise "could not find node #{params[:node_id]}" unless node
       role = Role.find_key params[:id]
       raise "could not find role #{params[:id]}" unless role
-      snap = node.deployment.head
-      @node_role = NodeRole.snap_node_role(snap, node, role).first
+      @node_role = NodeRole.find_by!(node_id: node.id, role_id: role.id)
     else
       @node_role = NodeRole.find_key params[:id]
     end
@@ -48,26 +47,24 @@ class NodeRolesController < ApplicationController
 
   def create
     # helpers to allow create by names instead of IDs
-    snap = nil
-    if params.key? :snapshot_id
-      snap = Snapshot.find_key(params[:snapshot_id])
-    elsif params.key? :snapshot
-      snap = Snapshot.find_key(params[:snapshot])
+    depl = nil
+    if params.key? :deployment_id
+      depl = Deployment.find_key(params[:deployment_id])
     elsif params.key? :deployment
-      snap = Deployment.find_key(params[:deployment]).head
+      depl = Deployment.find_key(params[:deployment])
     end
     node = Node.find_key(params[:node] || params[:node_id])
     role = Role.find_key(params[:role] || params[:role_id])
-    snap ||= node.deployment.head
+    depl ||= node.deployment
     NodeRole.locked_transaction do
-      @node_role = role.add_to_node_in_snapshot(node,snap)
+      @node_role = role.add_to_node_in_deployment(node,depl)
       if params[:data]
         @node_role.data = params[:data]
         @node_role.save!
       end
     end
     respond_to do |format|
-      format.html { redirect_to snapshot_path(snap.id) }
+      format.html { redirect_to deployment_path(depl.id) }
       format.json { render api_show @node_role }
     end
     

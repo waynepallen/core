@@ -25,8 +25,8 @@ else
     exit 1
 fi
 
-which ruby >&/dev/null || \
-    install_ruby
+which curl &>/dev/null || \
+    install_prereqs
 which chef-solo &>/dev/null || \
     curl -L https://www.opscode.com/chef/install.sh | bash
 chef-solo -c /opt/opencrowbar/core/bootstrap/chef-solo.rb -o 'recipe[crowbar-bootstrap]' && exit 0

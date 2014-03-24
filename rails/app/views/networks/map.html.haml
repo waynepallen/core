@@ -15,7 +15,7 @@
       %tr
         %td= link_to node.alias, main_app.node_path(node.id), :title=>node.description
         - @networks.each do |net|
-          - nr = NodeRole.peers_by_node_and_role(node.deployment.head, node, net.role).first
+          - nr = NodeRole.peers_by_node_and_role(node.deployment, node, net.role).first
           %td
             - if nr
               - ip = allocations.detect { |a| a.network.id == net.id }

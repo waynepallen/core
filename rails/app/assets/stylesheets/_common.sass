@@ -83,24 +83,24 @@ pre.code
 // { ERROR => 'error', ACTIVE => 'active', TODO => 'todo', TRANSITION => 'transition', BLOCKED => 'blocked', PROPOSED => 'proposed'  } 
 .led
   display: block
-  width: 17px
-  height: 17px
+  width: 16px
+  height: 16px
   background: url('/images/icons/led/off.png')
   &.error
-    background: url('/images/icons/led/red.png')
+    background: url('/images/icons/led/error.png')
   &.active
-    background: url('/images/icons/led/green.png')
+    background: url('/images/icons/led/active.png')
   &.todo
-    background: url('/images/icons/led/yellow.png')
+    background: url('/images/icons/led/todo.png')
   // blinking classes
   &.blink
     +opacity(0.5)
   &.transition
-    background: url('/images/icons/led/yellow-green-spin.png')
+    background: url('/images/icons/led/transition-spin.png')
   &.blocked
-    background: url('/images/icons/led/off.png')
+    background: url('/images/icons/led/blocked.png')
   &.proposed
-    background: url('/images/icons/led/none.png')
+    background: url('/images/icons/led/proposed.png')
   &.reserved
     background: url('/images/icons/led/reserved.png')
   &.idle

@@ -1,5 +1,5 @@
 %h1
-  = link_to @node_role.snapshot.name, snapshot_path(@node_role.snapshot.id)
+  = link_to @node_role.deployment.name, deployment_path(@node_role.deployment.id)
   = link_to @node_role.node.name, node_path(@node_role.node.id)
   = link_to @node_role.role.name_i18n, role_path(@node_role.role.id)
 

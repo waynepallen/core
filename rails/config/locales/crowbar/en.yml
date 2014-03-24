@@ -37,7 +37,6 @@ en:
       description: "Description"
     deployment: &deployment_common
       deployment: "Deployment"
-      snapshot: "Snapshot"
       name: "Name"
       nodes: "Nodes"
       description: "Description"
@@ -145,7 +144,6 @@ en:
       groups: "Groups"
       roles: "Roles"
       deployments: "Deployments"
-      snapshots: "Snapshots"
       menus: "Menu Items"
       docs: "Doc Topics"
       jigs: "Jigs"
@@ -172,10 +170,9 @@ en:
     commit:
       raise: "cannot commit a proposal unless there is no other currently in process"
     propose: 
-      raise: "snapshot must be active or error to propose"
-  snapshot:
+      raise: "deployment must be active or error to propose"
     recall: "Interrupted_%{name}"
-    recall_status: "Snapshot recalled by user action"
+    recall_status: "Deployment recalled by user action"
 
   node_role:
     data_parse_error: "NodeRole data was not valid agaist schema"
@@ -187,7 +184,7 @@ en:
   layouts:
     application:
       provided_by: Provided by
-    snapshot:
+    deployment:
       anneal:
         annealling: "Annealing (initiated by user)"
   attribs:
@@ -235,10 +232,19 @@ en:
       actions: "Actions"
       default: "default"
       create: "Add"
+      update: "Update"
       parent: "Parent"
       <<: *deployment_common
     show:
-      snapshots: "History"
+      graph: "Graph"
+      assign: "Assign Nodes to Roles"
+      assigned: "Assigned Nodes to Roles"
+      roles: "Assigned Roles"
+      available_nodes: "Available Nodes"
+      add_role: "Add Role"
+      must_be_proposed: "WARNING: Deployment must be in Proposed state to make changes."
+      pick: "Add Nodes"
+      pick_hint: "Select additional nodes for this deployment"
       parent: "Child of "
       <<: *deployment_common
     buttons:
@@ -247,6 +253,8 @@ en:
       propose: "Propose"
       correct: "Correct"
       anneal: "Annealer"
+    graph:
+      title: "%{deployment} Graph"
   deployment_roles:
     index:
       title: "Deployment Roles"
@@ -390,30 +398,12 @@ en:
       map: "Map"
     names:
       role: "Roles"
-  snapshots:
-    index:
-      title: "Snapshots"
-      <<: *deployment_common
-    show:
-      nodes: "Nodes"
-      graph: "Graph"
-      assign: "Assign Nodes to Roles"
-      assigned: "Assigned Nodes to Roles"
-      roles: "Assigned Roles"
-      nodes: "Available Nodes"
-      add_role: "Add Role"
-      must_be_proposed: "WARNING: Deployment must be in Proposed state to make changes."
-      pick: "Add Nodes"
-      pick_hint: "Select additional nodes for this deployment"
-      <<: *deployment_common      
     anneal:
       title: "annealing activity"
       anneal: "Anneal"
       annealling: "Annealer Started by User Action"
       <<: *deployment_common      
       <<: *node_role_states
-    graph:
-      title: "%{snapshot} Graph"
     cohorts:
       title: "NodeRole Relationships"
       node: "Node"
