@@ -15,7 +15,7 @@
             = t('.add', :role=>rnew)
       - else
         %li
-          %a.role{:href => role_path(r.id, :form=>'true'), :title=>r.description, :id => r.id}= r.name
+          %a.role{:href => deployment_role_path(r.id, :form=>'true'), :title=>r.description, :id => r.id}= r.name
 
   %h2= t '.admin_server'
 
@@ -42,7 +42,7 @@
 
   $(document).ready(function() {  
     
-    $.loadDetails('role', 'role_edit');
+    $.loadDetails('role', 'deployment_role_edit');
 
     $("a#bootstrap_bootstrap").on("click", function() {
       $.post("#{bootstrap_post_path()}");
@@ -50,7 +50,7 @@
     });
 
     $("a#bootstrap_adminserver").on("click", function() {
-      $.post("#{make_admin_path(:version=>'v2')}");
+      $.post("#{nodes_path(:version=>'v2')}");
       location.reload();
     });
 

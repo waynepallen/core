@@ -99,9 +99,9 @@ class NodesController < ApplicationController
 
   def update
     @node = Node.find_key params[:id]
-    if params.has_key? :deployment
-      params[:deployment_id] = Deployment.find_key(params[:deployment]).id
-    end
+    # sometimes we pass in a nested set of parameters
+    params[:node_deployment].each { |k,v| params[k] = v } if params.has_key? :node_deployment
+    params[:deployment_id] = Deployment.find_key(params[:deployment]).id if params.has_key? :deployment
     @node.update_attributes!(params.permit(:alias,
                                              :description,
                                              :target_role_id,
