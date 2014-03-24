@@ -23,7 +23,7 @@
                 - nr.parents.each do |p|
                   %div
                     = link_to p.role.name_safe.html_safe.truncate(20) , node_role_path(p.id), :title=>nr.node.name
-                %div.led{:style=>"width:17px; margin:0px auto; text-align:left", :class => NodeRole::STATES[nr.state || NodeRole::ERROR]}
+                %div.led{:style=>"width:16px; margin:0px auto; text-align:left", :class => NodeRole::STATES[nr.state || NodeRole::ERROR]}
                   = link_to "___", node_role_path(nr.id), :title=>nr.role.description
                 - nr.children.each do |c|
                   %div
