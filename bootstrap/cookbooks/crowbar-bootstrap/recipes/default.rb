@@ -19,6 +19,8 @@
 #
 
 crowbar_yml = "/opt/opencrowbar/core/crowbar.yml"
+sledgehammer_signature = "0f61af2f6be9288d5529e15aa223e036730a8387"
+
 unless File.exists?(crowbar_yml)
   raise "No crowbar checkout to bootstrap!"
 end
@@ -39,6 +41,9 @@ unless prereqs["os_support"].member?(os_token)
 end
 
 tftproot = "/tftpboot"
+sledgehammer_url="http://opencrowbar.s3-website-us-east-1.amazonaws.com/sledgehammer/#{sledgehammer_signature}"
+sledgehammer_dir="#{tftproot}/sledgehammer/#{sledgehammer_signature}"
+
 
 repos = []
 pkgs = []
@@ -343,4 +348,37 @@ end
 
 bash "install required gems for Crowbar using Bundler" do
   code "su -l -c 'cd /opt/opencrowbar/core/rails; bundle install --path /var/cache/crowbar/gems --standalone --binstubs /var/cache/crowbar/bin' crowbar"
+end
+
+directory "#{tftproot}/discovery" do
+  action :create
+end
+
+directory sledgehammer_dir do
+  action :create
+  recursive true
+end
+
+ruby_block "Download Sledgehammer #{sledgehammer_signature}" do
+  block do
+    files = ["initrd0.img","vmlinuz0","sha1sums"]
+    Dir.chdir(sledgehammer_dir) do |path|
+      unless File.file?("sha1sums")
+        files.each do |f|
+          dload = "#{sledgehammer_url}/#{f}"
+          Chef::Log.info("Downloading #{dload}")
+          raise("Cannot download #{dload}") unless system("curl -L -f -O '#{dload}'")
+        end
+      end
+      raise("Sledgehammer image at #{sledgehammer_dir} corrupt or nonexistent") unless system("sha1sum -c sha1sums")
+    end
+  end
+end
+
+["initrd0.img", "vmlinuz0"].each do |f|
+  link "#{tftproot}/discovery/#{f}" do
+    action :create
+    link_type :symbolic
+    to "../sledgehammer/#{sledgehammer_signature}/#{f}"
+  end
 end
