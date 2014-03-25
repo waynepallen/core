@@ -57,7 +57,9 @@ class NodeRolesController < ApplicationController
     role = Role.find_key(params[:role] || params[:role_id])
     depl ||= node.deployment
     NodeRole.locked_transaction do
-      @node_role = role.add_to_node_in_deployment(node,depl)
+      @node_role = NodeRole.create!(role_id: role.id,
+                                    node_id: node.id,
+                                    deployment_id: depl.id)
       if params[:data]
         @node_role.data = params[:data]
         @node_role.save!

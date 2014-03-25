@@ -121,6 +121,8 @@ class Barclamp < ActiveRecord::Base
         wanted_attribs = role['wants-attribs'] || []
         flags = role['flags'] || []
         description = role['description'] || role_name.gsub("-"," ").titleize
+        role_provides = role['provides'] || []
+        role_conflicts = role['conflicts'] || []
         template = File.join source_path, role_jig.on_disk_name || "none", 'roles', role_name, 'role-template.json'
         template = if File.file?(template)
                      Rails.logger.info("Import: Loading role #{role_name} template from #{template}")
@@ -136,6 +138,8 @@ class Barclamp < ActiveRecord::Base
         r.update_attributes!(:description=>description,
                              :barclamp_id=>barclamp.id,
                              :template=>template,
+                             :provides=>role_provides,
+                             :conflicts=>role_conflicts,
                              :library=>flags.include?('library'),
                              :implicit=>flags.include?('implicit'),
                              :bootstrap=>flags.include?('bootstrap'),

@@ -20,6 +20,9 @@ class Role < ActiveRecord::Base
   class Role::MISSING_JIG < Exception
   end
 
+  class Role::CONFLICTS < Exception
+  end
+
   validates_uniqueness_of   :name,  :scope => :barclamp_id
   validates_format_of       :name,  :with=>/\A[a-zA-Z][-_a-zA-Z0-9]*\z/, :message => I18n.t("db.lettersnumbers", :default=>"Name limited to [_a-zA-Z0-9]")
 
@@ -36,6 +39,7 @@ class Role < ActiveRecord::Base
   has_many        :attribs,           :dependent => :destroy
   has_many        :wanted_attribs,    :through => :role_require_attribs, :class_name => "Attrib", :source => :attrib
   has_many        :node_roles,        :dependent => :destroy
+  has_many        :nodes,             :through => :node_roles
   has_many        :deployment_roles,  :dependent => :destroy
   alias_attribute :requires,          :role_requires
 
@@ -156,21 +160,6 @@ class Role < ActiveRecord::Base
     DeploymentRole.find_or_create_by!(role_id: self.id, deployment_id: dep.id)
   end
 
-  def find_noderoles_for_role(role,dep)
-    cdep = dep
-    Deployment.transaction(read_only: true) do
-      loop do
-        Rails.logger.info("Role: Looking for role '#{role.name}' binding in '#{dep.name}' deployment")
-        pnrs = NodeRole.peers_by_role(cdep,role)
-        return pnrs unless pnrs.empty?
-        cdep = (cdep.parent rescue nil)
-        break if cdep.nil?
-      end
-    end
-    Rails.logger.info("Role: No bindings for #{role.name} in #{dep.name} or any parents.")
-    []
-  end
-
   def add_to_node(node)
     add_to_node_in_deployment(node,node.deployment)
   end
@@ -182,72 +171,10 @@ class Role < ActiveRecord::Base
       res = NodeRole.find_by(node_id: node.id, role_id: self.id)
       return res if res
 
-      # Check to see if there are any unresolved role_requires.
-      # If there are, then this role cannot be bound.
-      unresolved = unresolved_requires
-      unless unresolved.empty?
-        raise Role::MISSING_DEP.new("#{name} is missing required roles: #{unresolved.map(&:require).inspect}")
-      end
-      # Roles can only be added to a node of their backing jig is active.
-      unless active?
-        # if we are testing, then we're going to just skip adding and keep going
-        if Jig.active('test')
-          Rails.logger.info("Role: Test mode allows us to coerce role #{name} to use the 'test' jig instead of #{jig_name} when it is not active")
-          self.jig = Jig.find_by(name: 'test')
-          self.save
-        else
-          raise MISSING_JIG.new("Role: role '#{name}' cannot be added to node '#{node.name}' without '#{jig_name}' being active!")
-        end
-      end
       Rails.logger.info("Role: Trying to add #{name} to #{node.name}")
-      # First pass throug the parents -- we just create any needed parent noderoles.
-      # We will actually bind them after creating the noderole binding.
-      all_parents.each do |parent|
-        next if NodeRole.exists?(role_id: parent.id, node_id: node.id)
-        next unless parent.implicit? || find_noderoles_for_role(parent,dep).empty?
-        parent.add_to_node_in_deployment(node,dep)
-      end
-      # At this point, all the parent noderoles we need are bound.
-      # make sure that we also have a deployment role, then
-      # create ourselves and bind our parents.
-      add_to_deployment(dep)
-      res = NodeRole.create!(node_id:       node.id,
-                             role_id:       id,
-                             deployment_id: dep.id,
-                             cohort:        0)
-      Rails.logger.info("Role: Creating new noderole #{res.name}")
-      # Second pass through our parent array.  Since we created all our
-      # parent noderoles earlier, we can just concern ourselves with creating the bindings we need.
-      parents.each do |parent|
-        pnrs = find_noderoles_for_role(parent,dep)
-        if parent.cluster
-          # If the parent role has a cluster flag, then all of the found
-          # parent noderoles will be bound to this one.
-          Rails.logger.info("Role: Parent #{parent.name} of role #{name} has the cluster flag, binding all instances in deployment #{pnrs[0].name}")
-          pnrs.each do |pnr|
-            res.add_parent(pnr)
-          end
-        else
-          # Prefer a parent noderole from the same node we are on, otherwise
-          # just pick one at random.
-          pnr = pnrs.detect{|nr|nr.node_id == node.id} ||
-            pnrs[Random.rand(pnrs.length)]
-          res.add_parent(pnr)
-        end
-      end
-      # If I am a new noderole binding for a cluster node, find all the children of my peers
-      # and bind them too.
-      if self.cluster
-        NodeRole.peers_by_role(dep,self).each do |peer|
-          peer.children.each do |c|
-            c.add_parent(res)
-            c.deactivate
-            c.save!
-          end
-        end
-      end
-      res.save!
-      res
+      NodeRole.create!(node_id:       node.id,
+                       role_id:       id,
+                       deployment_id: dep.id)
     end
   end
 

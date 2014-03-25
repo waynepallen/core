@@ -20,6 +20,8 @@ class CreateRoles < ActiveRecord::Migration
       t.string      :type,              null: true
       t.json        :template,          null: false, default: { expr: "'{}'::json" }
       t.string      :jig_name,          null: false
+      t.text        :provides,          array: true, null: false, default: { expr: "ARRAY[]::text[]" }
+      t.text        :conflicts,         array: true, null: false, default: { expr: "ARRAY[]::text[]" }
       # brings in library code thats used to access another role (sql client)
       t.boolean     :library,           null: false, default:false
       # role is applied automatically to nodes after allocation

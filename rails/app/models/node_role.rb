@@ -18,6 +18,9 @@ require 'json'
 class NodeRole < ActiveRecord::Base
 
   after_commit :run_hooks, on: [:update, :create]
+  validate :role_is_bindable, on: :create
+  validate :validate_conflicts, on: :create
+  after_create :bind_needed_parents
 
   belongs_to      :node
   belongs_to      :role
@@ -460,6 +463,115 @@ class NodeRole < ActiveRecord::Base
           Rails.logger.debug("NodeRole #{name}: testing to see if #{c.name} is runnable")
           next unless c.activatable?
           c.todo!
+        end
+      end
+    end
+  end
+
+  def role_is_bindable
+    # Check to see if there are any unresolved role_requires.
+    # If there are, then this role cannot be bound.
+    role = Role.find(role_id)
+    unresolved = role.unresolved_requires
+    unless unresolved.empty?
+      errors.add(:role_id, "role #{role.name} is missing prerequisites: #{unresolved.map{|rr|rr.require}}")
+    end
+    # Roles can only be added to a node of their backing jig is active.
+    unless role.active?
+      # if we are testing, then we're going to just skip adding and keep going
+      if Jig.active('test')
+        Rails.logger.info("Role: Test mode allows us to coerce role #{name} to use the 'test' jig instead of #{jig_name} when it is not active")
+        role.jig = Jig.find_by(name: 'test')
+        role.save
+      else
+        errors.add(:role_id, "role '#{role.name}' cannot be bound without '#{role.jig_name}' being active!")
+        end
+    end
+  end
+
+  def validate_conflicts
+    role = Role.find(role_id)
+    Node.find(node_id).node_roles.each do |nr|
+      # Test to see if this role conflicts with us, or if we conflict with it.
+      if role.conflicts.include?(nr.role.name) || nr.role.conflicts.include?(role.name)
+        errors.add(:role, "#{role.name} cannot be bound because it conflicts with previously-bound role #{nr.role.name} on #{node.name}")
+      end
+      # Test to see if a previously-bound noderole provides this one.
+      if nr.role.provides.include?(role.name)
+        errors.add(:role, "#{role.name} cannot be bound because it is provided by previously-bound role #{nr.role.name} on #{node.name}")
+      end
+      # Test to see if we want to provide something that a previously-bound noderole provides.
+      if role.provides.include?(nr.role.name)
+        errors.add(:role, "#{role.name} cannot be bound because it tries to provide #{nr.role.name}, which is already bound on #{nr.node.name}")
+      end
+      # Test to see if there are overlapping provides
+      overlapping = role.provides & nr.role.provides
+      next if overlapping.empty?
+      errors.add(:role, "#{role.name} cannot be bound because it and #{nr.role.name} both provide #{overlapping.inspect}")
+    end
+  end
+
+  def bind_needed_parents
+    # Bind to all the parents we need.
+    role = Role.find(role_id)
+    node = Node.find(node_id)
+    dep = Deployment.find(deployment_id)
+    role.add_to_deployment(dep)
+    parent_noderoles = []
+    role.parents.each do |parent|
+      # If the parent we need is bound directly to this node, use it.
+      tenative_parent = NodeRole.find_by(role_id: parent.id, node_id: node.id)
+      # If we have a noderole bound to us that provides the parent we are looking for, use it.
+      tenative_parent ||= NodeRole.find_by("node_id = ? AND role_id in
+                                            (select id from roles where ? = ANY(provides))",
+                                           node.id,
+                                           parent.name)
+      # If the parent is implicit, we must bind it now if it is not already bound
+      if parent.implicit?
+        tenative_parent ||= NodeRole.create!(role_id: parent.id,
+                                             node_id: node.id,
+                                             deployment_id: dep.id)
+        parent_noderoles << tenative_parent
+        next
+      end
+      # Otherwise, check to see if we can find an appropriate noderole in the current deployment hierarchy
+      cdep = dep
+      until tenative_parent || cdep.nil?
+        tenative_parent = NodeRole.find_by(deployment_id: cdep.id, role_id: parent.id)
+        tenative_parent ||= NodeRole.find_by("deployment_id = ? AND role_id in
+                                             (select id from roles where ? = ANY(provides))",
+                                             cdep.id,
+                                             parent.name)
+        cdep = (cdep.parent rescue nil)
+      end
+      # If we didn't find a tenative parent, bind it to ourselves
+      # in the current deployment
+      tenative_parent ||= NodeRole.create!(role_id: parent.id,
+                                           node_id: node.id,
+                                           deployment_id: dep.id)
+      parent_noderoles << tenative_parent
+    end
+
+    parent_noderoles.each do |parent_node_role|
+      parent = parent_node_role.role
+      if parent.cluster
+        # If the parent role has a cluster flag, then all of the found
+        # parent noderoles will be bound to this one.
+        NodeRole.where(deployment_id: parent_node_role.deployment_id,
+                       role_id: parent_node_role.role_id) do |pnr|
+          add_parent(pnr)
+        end
+      end
+      add_parent(parent_node_role)
+    end
+    # If I am a new noderole binding for a cluster node, find all the children of my peers
+    # and bind them too.
+    if role.cluster
+      NodeRole.peers_by_role(dep,role).each do |peer|
+        peer.children.each do |c|
+          c.add_parent(self)
+          c.deactivate
+          c.save!
         end
       end
     end
