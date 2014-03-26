@@ -41,14 +41,6 @@ if ! which docker &>/dev/null; then
     exit 1
 fi
 
-# Check to see if we have a Sledgehammer image handy.
-if [[ ! -f $HOME/.cache/opencrowbar/tftpboot/discovery/initrd0.img ]]; then
-    echo "You need to have a Sledgehammer image created before running a Docker admin node!"
-    echo "Create the Sledgehammer image by running:"
-    echo "$(readlink -f "${0%/*}/build_sledgehammer.sh")"
-    exit 1
-fi
-
 if [[ $0 = /* ]]; then
     mountdir="$0"
 elif [[ $0 = .*  || $0 = */* ]]; then
