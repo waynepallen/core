@@ -17,3 +17,7 @@ en:
     node_roles:
       chef-server:
         deploy: "Deploy"
+  common:
+    roles:
+      chef-solo: "Chef Agent"
+    attribs:

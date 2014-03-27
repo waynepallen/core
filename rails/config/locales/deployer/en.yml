@@ -14,3 +14,7 @@
 #
 
 en:
+  common:
+    roles:
+      deployer-client: "Discovery Record"
+    attribs:
