@@ -3,6 +3,10 @@
 [[ -x /etc/init.d/crowbar_join.sh || -x /etc/init.d/crowbar ]] && exit 0
 
 set -x
-nohup /bin/bash -c 'command sleep 60; exec reboot' >/tmp/nohup.out &
-exit 0
+webserver=$(read_attribute "crowbar/provisioner/server/webserver")
+while true; do
+    curl -s -f -L -o /tmp/bootstate "$webserver/nodes/$(hostname -f)/bootstate" && \
+        [[ -f /tmp/bootstate && $(cat /tmp/bootstate) = *-install ]] && break
+    sleep 1
+done
 
