@@ -47,6 +47,11 @@ new_clients = {}
     "pxefile" => pxefile,
     "uefifile" => uefifile
   }
+  # Generate an appropriate control.sh for the system.
+  directory "#{node_dir}/#{mnode_name}" do
+    action :create
+    recursive true
+  end
   Chef::Log.info("DHCP: #{mnode_name} Updating PXE and UEFI boot for bootenv #{bootenv}")
   # Default to creating appropriate boot config files for Sledgehammer.
   case bootenv
@@ -58,11 +63,6 @@ new_clients = {}
       address v4addr
       bootenv "sledgehammer"
       action :add
-    end
-    # Generate an appropriate control.sh for the system.
-    directory "#{node_dir}/#{mnode_name}" do
-      action :create
-      recursive true
     end
     template "#{node_dir}/#{mnode_name}/control.sh" do
       source "control.sh.erb"
@@ -133,6 +133,10 @@ new_clients = {}
       action :add
     end
   end
+  file "#{node_dir}/#{mnode_name}/bootstate" do
+    action :create
+    content bootenv
+  end
 end
 
 # Now that we have handled any updates we care about, delete any info about nodes we have deleted.
@@ -151,6 +155,11 @@ end
   a = provisioner_bootfile old_node["bootenv"] do
     action :nothing
     address IP.coerce(old_node["v4addr"])
+  end
+  a.run_action(:remove)
+  a = directory "#{node_dir}/#{old_node_name}" do
+    action :nothing
+    recursive true
   end
   a.run_action(:remove)
 end
