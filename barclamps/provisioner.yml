@@ -69,7 +69,6 @@ roles:
     jig: chef-solo
     requires:
       - network-admin
-      - dns-client
       - provisioner-server
       - provisioner-base-images
     flags:
@@ -88,6 +87,20 @@ roles:
     jig: chef-solo
     requires:
       - provisioner-dhcp-server
+  - name: provisioner-docker-setup
+    jig: chef-solo
+    conflicts:
+      - crowbar-docker-node
+    requires:
+      - provisioner-repos
+    wants-attribs:
+      - dns_servers
+      - provisioner-package-repos
+      - provisioner-proxy
+      - provisioner-webserver
+      - provisioner-machine_key
+      - provisioner-access_keys
+
   - name: provisioner-os-install
     jig: script
     requires:
