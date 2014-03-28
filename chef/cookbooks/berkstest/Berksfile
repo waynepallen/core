@@ -2,8 +2,8 @@ site :opscode
 
 metadata
 # Uncomment this line to grab the latest 'supervisor' cookbook from upstream (opscode)
-cookbook 'supervisor', '>= 0.4.10'
+#cookbook 'supervisor', '>= 0.4.10'
 
 # Uncomment this line to grab a particular version.  Note you'll see the two versions in the Berkshelf when you type `berks list`
 
-cookbook 'supervisor', '>= 0.4.6'
+#cookbook 'supervisor', '>= 0.4.6'
