@@ -91,10 +91,13 @@ roles:
   - name: provisioner-os-install
     jig: script
     requires:
+      - crowbar-managed-node
       - provisioner-dhcp-server
     flags:
       - implicit
       - destructive
+    wants-attribs:
+      - provisioner-webserver
     attribs:
       - name: provisioner-target_os
         description: "The operating system to install on a node"
