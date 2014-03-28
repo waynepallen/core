@@ -14,3 +14,8 @@
 #
 
 en:
+  common:
+    roles:
+      logging-server: "Logging Server"
+      logging-client: "Logging Client"
+    attribs:

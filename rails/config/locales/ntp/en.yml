@@ -18,3 +18,8 @@ en:
     node_roles:
       ntp-server:
         external_servers: "External Servers"
+  common:
+    roles:
+      ntp-server: "NTP Server"
+      ntp-client: "NTP Client"
+    attribs:

@@ -14,3 +14,11 @@
 #
 
 en:
+  common:
+    roles:
+      provisioner-server: "PXE Image Host"
+      provisioner-base-images: "Available O/S"
+      provisioner-dhcp-server: "DHCP Server"
+      provisioner-repos: "O/S Repo Cache"
+      provisioner-dhcp-database: "DHCP Boot Records"
+    attribs:
