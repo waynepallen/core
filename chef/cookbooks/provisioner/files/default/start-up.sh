@@ -72,26 +72,20 @@ mv -f /etc/resolv.conf.new /etc/resolv.conf
 echo '127.0.0.1 localhost' >/etc/hosts
 echo '::1 localhost6' >>/etc/hosts
 
-# Wait for up to 30 seconds for Crowbar to notice that we are alive.
-for (( count=0; count < 30; count=$count + 1)); do
-    ping6 -c 1 -w 1 "$HOSTNAME" && break
+# Wait until the provisioner has noticed our state change
+while true; do
+    curl -s -f -L -o /tmp/bootstate "$PROVISIONER_WEB/nodes/$HOSTNAME/bootstate" && \
+        [[ -f /tmp/bootstate && $(cat /tmp/bootstate) = sledgehammer ]] && break
     sleep 1
 done
 
-if [[ $? != 0 ]]; then
-    echo "Crowbar did not register that we exist!"
+curl -s -f -L -o /tmp/control.sh "$PROVISIONER_WEB/nodes/$HOSTNAME/control.sh" && \
+    grep -q '^exit 0$' /tmp/control.sh && \
+    head -1 /tmp/control.sh | grep -q '^#!/bin/bash' || {
+    echo "Could not load our control.sh!"
     exit 1
-fi
-
-while [[ ! -x /tmp/control.sh ]]; do
-    curl -s -f -L -o /tmp/control.sh "$PROVISIONER_WEB/nodes/$HOSTNAME/control.sh" || :
-    if grep -q '^exit 0$' /tmp/control.sh && \
-        head -1 /tmp/control.sh | grep -q '^#!/bin/bash'; then
-        chmod 755 /tmp/control.sh
-        break
-    fi
-    sleep 1
-done
+}
+chmod 755 /tmp/control.sh
 
 export CROWBAR_KEY PROVISIONER_WEB CROWBAR_WEB
 export MAC BOOTDEV DOMAIN HOSTNAME
