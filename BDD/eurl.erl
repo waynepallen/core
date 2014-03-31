@@ -18,8 +18,6 @@
 -export([find_button/2, find_link/2, find_block/4, find_block/5, find_form/2, find_div/2, html_body/1, html_head/1, find_heading/2]).
 -export([form_submit/2, form_fields_merge/2]).
 -export([encode/1]).
-% depricate!
--export([uri/2]).
 -include("bdd.hrl").
 
 search(Match, Result, Test) when is_record(Result, http) -> search(Match, [Result], Test);
@@ -216,7 +214,6 @@ find_block_helper(Test, RE) ->
 		_ -> false
 	end.
 
-uri(_Config, Path) -> bdd_utils:depricate({2013,10,1}, eurl, uri, eurl, uri, [Path]).
 uri(Path) ->
 	Base = bdd_utils:config(url),
   case string:left(Path, length(Base)) of
