@@ -42,7 +42,7 @@ Examples:
 
 If you want to **commit code or docs fixes**, please review [the Contributor guide](../contributing.md)
 
-###Build Sledgehammer (do 1 time, but takes a while)
+###Build Sledgehammer (Optional - setup will now download golden sledgehammers.)
   1. prep for sledgehammer requirements: 
     1. ubuntu: `sudo apt-get install rpm rpm2cpio`
   1. from core, `tools/build_sledgehammer.sh`

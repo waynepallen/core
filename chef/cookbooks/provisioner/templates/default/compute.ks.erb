@@ -147,7 +147,11 @@ sed -i -e '/initdefault/ s/5/3/' /etc/inittab
 curl -u "$CROWBAR_KEY" --digest -L -X PUT -d "bootenv=local" \
     "http://<%=@admin_ip%>:3000/api/v2/nodes/$HOSTNAME"
 
-# Wait for DHCP to update - this is mainly for virtual environments or really large deploys
-sleep 30
+# Wait for the provisioner to change the bootenv
+while true; do
+      curl -s -f -L -o /tmp/bootstate "<%=@provisioner_web%>/nodes/$HOSTNAME/bootstate" && \
+        [[ -f /tmp/bootstate && $(cat /tmp/bootstate) = local ]] && break
+    sleep 1
+done
 
 sync

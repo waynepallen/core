@@ -32,16 +32,20 @@ export PATH="$PATH:/sbin:/usr/sbin:/usr/local/sbin"
 # Location for caches that should not be erased between runs
 [[ $CACHE_DIR ]] || CACHE_DIR="$HOME/.cache/opencrowbar/sledgehammer"
 [[ $SLEDGEHAMMER_PXE_DIR ]] || SLEDGEHAMMER_PXE_DIR="$HOME/.cache/opencrowbar/tftpboot/discovery"
+[[ $SLEDGEHAMMER_ARCHIVE ]] || SLEDGEHAMMER_ARCHIVE="$HOME/.cache/opencrowbar/tftpboot/sledgehammer"
 [[ $CHROOT ]] || CHROOT="$CACHE_DIR/chroot"
 [[ $SLEDGEHAMMER_LIVECD_CACHE ]] || SLEDGEHAMMER_LIVECD_CACHE="$CACHE_DIR/livecd_cache"
 [[ $SYSTEM_TFTPBOOT_DIR ]] || SYSTEM_TFTPBOOT_DIR="/mnt/tftpboot"
 
-CROWBAR_DIR="${0%/*}"
+CROWBAR_DIR="${0%/*}/.."
+
+signature=$(sha1sum < <(cat "$0" "$CROWBAR_DIR/sledgehammer/"*) |awk '{print $1}')
+SLEDGEHAMMER_IMAGE_DIR="$SLEDGEHAMMER_ARCHIVE/$signature"
 
 sudo rm -rf "$CHROOT"
 
 mkdir -p "$CACHE_DIR" "$CHROOT" "$SLEDGEHAMMER_PXE_DIR" \
-    "$SLEDGEHAMMER_LIVECD_CACHE"
+    "$SLEDGEHAMMER_IMAGE_DIR" "$SLEDGEHAMMER_LIVECD_CACHE"
 
 if ! which cpio &>/dev/null; then
     die "Cannot find cpio, we cannot proceed."
@@ -132,7 +136,7 @@ cleanup() {
     while read line; do
         sudo losetup -d "${line%%:*}"
     done < <(sudo losetup -a |grep sledgehammer.iso)
-    
+
     while read dev fs type opts rest; do
         sudo umount -d -l "$fs"
     done < <(tac /proc/self/mounts |grep -e "$CHROOT")
@@ -273,7 +277,7 @@ setup_sledgehammer_chroot() {
 }
 
 setup_sledgehammer_chroot
-sudo cp "$CROWBAR_DIR/../sledgehammer/"* "$CHROOT/mnt"
+sudo cp "$CROWBAR_DIR/sledgehammer/"* "$CHROOT/mnt"
 in_chroot mkdir -p /mnt/cache
 sudo mount --bind "$SLEDGEHAMMER_LIVECD_CACHE" "$CHROOT/mnt/cache"
 in_chroot touch /mnt/make_sledgehammer
@@ -291,12 +295,19 @@ cd /mnt
 livecd-creator --config=sledgehammer.ks --cache=./cache -f sledgehammer
 rm -fr $SYSTEM_TFTPBOOT_DIR
 livecd-iso-to-pxeboot sledgehammer.iso
+(cd "$SYSTEM_TFTPBOOT_DIR"; sha1sum vmlinuz0 initrd0.img >sha1sums)
 rm /mnt/sledgehammer.iso
 EOF
 in_chroot ln -s /proc/self/mounts /etc/mtab
 in_chroot /mnt/make_sledgehammer
-mkdir -p "$SLEDGEHAMMER_PXE_DIR"
-cp -af "$CHROOT$SYSTEM_TFTPBOOT_DIR/"* "$SLEDGEHAMMER_PXE_DIR"
+cp -af "$CHROOT$SYSTEM_TFTPBOOT_DIR/"* "$SLEDGEHAMMER_IMAGE_DIR"
 in_chroot rm -rf $SYSTEM_TFTPBOOT_DIR
 
-[[ -f $SLEDGEHAMMER_PXE_DIR/initrd0.img ]]
+if [[ -f $SLEDGEHAMMER_IMAGE_DIR/initrd0.img ]]; then
+    echo "New sledgehammer image in $SLEDGEHAMMER_IMAGE_DIR"
+    echo "It has signature $signature"
+    echo "To use it locally, modify the bootstrap recipe to refer to the new signature."
+    exit 0
+else
+    exit 1
+fi

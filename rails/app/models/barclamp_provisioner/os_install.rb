@@ -15,15 +15,22 @@
 
 class BarclampProvisioner::OsInstall < Role
 
-  def on_active(nr)
+  def on_todo(nr)
     NodeRole.transaction do
       node = nr.node
-      return if ["local"].member? node.bootenv
+      return if (["local"].member? node.bootenv) || (nr.run_count > 0)
       target = Attrib.get("provisioner-target_os",nr)
       Rails.logger.info("provisioner-install: Trying to install #{target} on #{node.name} (bootenv: #{node.bootenv})")
       node.bootenv = "#{target}-install"
-      node.alive = false
       node.save!
+    end
+  end
+
+  def on_active(nr)
+    NodeRole.transaction do
+      node = nr.node
+      return if ["local"].member? node.bootenv || (nr.run_count > 1)
+      node.reboot
     end
   end
 

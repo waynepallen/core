@@ -226,6 +226,7 @@ class Node < ActiveRecord::Base
   end
 
   def reboot
+    update!(alive: false)
     ssh("reboot")
   end
   

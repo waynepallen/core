@@ -14,3 +14,9 @@
 #
 
 en:
+  common:
+    roles:
+      dns-server: "DNS Server"
+      dns-client: "DNS Client"
+      dns-database: "DNS A Records"
+    attribs:

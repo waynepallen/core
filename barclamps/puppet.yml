@@ -1,0 +1,24 @@
+roles:
+
+  - name: puppet-agent_sa
+    jig: script
+    type: 'BarclampPuppet::AgentSa'
+    description: 'Configures puppet stand-alone agent for a node'
+    flags:
+      - implicit
+    requires:
+      - provisioner-os-install
+    attribs:
+      - name: puppet-agent-sa-name
+        description: "Name of stand-alone agent node"
+        map: 'crowbar/puppet-agent-sa/name'
+
+#  - name: puppet
+#    jig: noop
+#    requires:
+#      - puppet-agent
+
+  - name: puppet-sa
+    jig: noop
+    requires:
+      - puppet-agent_sa

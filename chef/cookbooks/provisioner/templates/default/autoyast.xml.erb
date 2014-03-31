@@ -140,7 +140,12 @@ fi
 curl -s -o /mnt/usr/local/sbin/crowbar_join.sh <%= @crowbar_join %>
 chmod +x /mnt/usr/local/sbin/crowbar_join.sh
 
-sleep 30
+while true; do
+      curl -s -f -L -o /tmp/bootstate "<%=@provisioner_web%>/nodes/$HOSTNAME/bootstate" && \
+        [[ -f /tmp/bootstate && $(cat /tmp/bootstate) = local ]] && break
+    sleep 1
+done
+
 
 post_state $HOSTNAME "installed"
 
