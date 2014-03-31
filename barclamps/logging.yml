@@ -16,8 +16,6 @@
 roles:
   - name: logging-server
     jig: chef-solo
-    flags:
-      - server
     requires:
       - dns-client
       - network-admin

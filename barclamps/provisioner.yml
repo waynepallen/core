@@ -20,8 +20,6 @@ roles:
       - dns-client
       - logging-server
       - ntp-server
-    flags:
-      - server
     attribs:
       - name: provisioner-machine_key
         description: 'The username and password that managed nodes should use to talk to the Crowbar API'
@@ -100,7 +98,6 @@ roles:
       - provisioner-webserver
       - provisioner-machine_key
       - provisioner-access_keys
-
   - name: provisioner-os-install
     jig: script
     requires:
