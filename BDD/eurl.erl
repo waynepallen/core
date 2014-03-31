@@ -300,7 +300,7 @@ get_page(_Config, {error, Issue, URI}, _Codes) ->
   bdd_utils:log(warn, "eurl:get_page aborted request due to ~p from bad URL ~p", [Issue, URI]),
   {500, Issue};
 % page returns in the {CODE, BODY} format
-get_page(Config, URI, Codes) -> bdd_utils:depricate({2013, 10, 1}, eurl, get_page, eurl, get, [Config, uri(Config, URI), Codes]).
+get_page(Config, URI, Codes) -> bdd_utils:depricate({2013, 10, 1}, eurl, get_page, eurl, get, [Config, uri(URI), Codes]).
 
 post_params(ParamsIn) -> post_params(ParamsIn, []).
 post_params([], Params) -> Params;
@@ -349,7 +349,7 @@ form_submit(Config, Form) ->
   {target, Target} = lists:keyfind(target, 1, Form),
   {method, Method} = lists:keyfind(method, 1, Form),
   Fields = "?" ++ string:join([ K ++ "=" ++ encode(V) || {K, V, _, _} <- FormFields],"&"),
-  URL = uri(Config, path(Target, Fields)),
+  URL = uri(path(Target, Fields)),
   bdd_utils:log(Config, debug, "eurl:form_submit ~pting to ~p", [Method, URL]),
   Result = simple_auth:request(Config, Method, {URL, [], "application/html", []}, [{timeout, 10000}], []),  
   {ok, {{"HTTP/1.1",ReturnCode, _State}, _Head, Body}} = Result,

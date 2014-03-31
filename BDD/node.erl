@@ -1,4 +1,4 @@
-% Copyright 2013, Dell 
+% Copyright 2014, Dell 
 % 
 % Licensed under the Apache License, Version 2.0 (the "License"); 
 % you may not use this file except in compliance with the License. 
@@ -14,8 +14,9 @@
 % 
 % 
 -module(node).
--export([step/2, json/3, validate/1, inspector/0, g/1]).
+-export([step/2, json/3, add_node/4, add_node/3, create_node/3, validate/1, update/2, bind/2, bind/3, alive/1, commit/1, inspector/0, g/1]).
 -include("bdd.hrl").
+
 
 % Commont Routine
 % Provide Feature scoped strings to DRY the code
@@ -26,6 +27,8 @@ g(Item) ->
     name -> "bdd1.example.com";
     bootenv -> "local";
     atom -> node1;
+    role -> "crowbar-managed-node";
+    deployment -> "system";
     _ -> crowbar:g(Item)
   end.
   
@@ -57,7 +60,50 @@ inspector() ->
 % Common Routine
 % Creates JSON used for POST/PUT requests
 json(Name, Description, Order) -> crowbar:json([{name, Name}, {description, Description}, {order, Order}, {alive, "true"}, {bootenv, node:g(bootenv)}]).
+
+% only CREATES, you still have to bind, commit and turn on 
+create_node(Name, Params, Atom) ->
+  Path = bdd_restrat:alias(node, g, [path]),
+  Obj = bdd_crud:read_obj(Path,Name),
+  case Obj#obj.id of
+    "-1" -> 
+          P = lists:append([{name, Name}, {alive, true}, {bootenv, node:g(bootenv)}], Params),
+          JSON = crowbar:json(P),
+          [_R, O] = bdd_crud:create(Path, JSON, Atom),
+          bdd_utils:log(info, "Node ~p created (id ~p)", [Name, O#obj.id]),
+          O;
+    _  -> bdd_utils:config_set(Atom, Obj),
+          bdd_utils:log(info, "Node ~p already exists (id ~p)", [Name, Obj#obj.id]),
+          Obj
+  end.
+
+% does full cycle create
+add_node(Name, Params, Atom) -> add_node(Name, g(role), Params, Atom).
+add_node(Name, Role, Params, Atom) ->
+  O = create_node(Name, Params, Atom),
+  bind(O#obj.id, Role),
+  commit(O#obj.id),
+  alive(O#obj.id),
+  O.
+
+alive(Node) -> update(Node, [{"alive","true"}]).
+
+commit(Node) ->
+  Path = bdd_restrat:alias(node, g, [path]),
+  R = bdd_crud:update(eurl:path([Path, Node, "commit"]), ""),
+  bdd_utils:log(debug, node, update, "Node ~p Commit Returned ~p", [Node, R]),
+  R.
+
+update(Node, KVP) ->
+  Path = bdd_restrat:alias(node, g, [path]),
+  R = bdd_crud:update(eurl:path([Path, Node]), json:output(KVP)),
+  bdd_utils:log(debug, node, update, "Node ~p Update Set ~p Returned ~p", [Node, KVP, R]),
+  R.
      
+% local helpers
+bind(Node, Role) -> bind(Node, Role, "system").
+bind(Node, Role, Deployment) -> node_role:bind(Node, Role, Deployment).
+
 % Common Routines
 
 step(_Given, {step_given, {_Scenario, _N}, ["REST sets the",node,Node,Field,"state to be",Value]}) -> 
