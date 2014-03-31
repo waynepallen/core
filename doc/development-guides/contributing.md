@@ -33,33 +33,41 @@ Crowbar uses Berkshelf to help manage cookbooks.  Berkshelf resolves cookbook de
 
 ### Prerequisites
 
-  1. We encourage you to clone from the OpenCrowbar github organization and submit pull requests.
-  1. All cookbooks are to be "vendorized." That is, they're prefixed with an organization name, i.e. your identifier.
-    1. It does not preclude you from using application/library cookbook strategies, because it has no effect on resource scoping within a chef-client run.
-> core/chef/crowbar/cookbooks/dhcp/recipes/default.rb
-> core/chef/newgoliath/cookbooks/mydhcp/recipes/default.rb
-  1. It's expected that all cookbooks will be separate git repositories.
-> core/chef/newgoliath/cookbooks/mydhcp/.git/
+  * Currently, `berks` runs as `root`.  Files created by Berkshelf will be owned by `root`.  There is no forseen harm in this.
+  * We encourage you to clone from the OpenCrowbar github organization and submit pull requests.
+  * All cookbooks are to be "vendorized." That is, they're prefixed with an organization name, i.e. your identifier.
+    * It does not preclude you from using application/library cookbook strategies, because it has no effect on resource scoping within a chef-client run.
+```
+core/chef/crowbar/cookbooks/dhcp/recipes/default.rb
+core/chef/newgoliath/cookbooks/mydhcp/recipes/default.rb
+```
+  * It's expected that all cookbooks will be separate git repositories.
+```
+core/chef/newgoliath/cookbooks/mydhcp/.git/
+```
+  * These apply for the Barclamps as well:
+```
+<barclamp>/chef/<organization>/cookbooks/
+openstack/chef/newgoliath/cookbooks/
+```
 
 ### Developing
 
-  1. It will resolve your dependencies expressed in your Berksfile and in your metadata.rb and install those dependencies in the Berkshelf.
-  1. The Berkshelf is located at /root/.berkshelf/  Do not edit it.
-  1. You probably want the cookbooks you indicated as dependents to be available to you for reference while you're developing.  The following example will download them and put them in the right place for you.
+  * The Jig will resolve your dependencies expressed in your Berksfile and in your metadata.rb and install those dependencies in the Berkshelf.
+  * The Berkshelf is located at /root/.berkshelf/  Do not edit it.  If you want to prune it of old and unnecessary versions of cookbooks, feel free to use `sudo berks shelf uninstall <cookbook> -v <version>`  The Chef Jig should replace any missing versions of cookbooks in the Berkshelf next time it runs.
+  * You probably want the cookbooks you indicated as dependents to be available to you for reference while you're developing.  The following example will download them and put them in the right place for you.
 
-> berks install -b ./newgoliath/cookbooks/apache2/Berksfile -p ./newgoliath/cookbooks/
+```sudo berks install -b ./newgoliath/cookbooks/apache2/Berksfile -p ./newgoliath/cookbooks/```
 
 ### Deploying
 
-  1. Crowbar's chef-jig and chef-solo-jig will recognize cookbooks under `[ core | <barclamp> ]/chef/<vendor>/cookbooks/` as your Chef repository and upload them to the Chef Server or package them up for delivery to nodes for execution by chef-solo.
+  * Crowbar's chef-jig will use `sudo berks upload` to send the cookbooks and depenencies from ALL the vendor cookbook directories to the Chef Server.  Be careful what you put in your vendor cookbook directory.
+  * Similarly, the chef-solo-jig will recognize ALL vendor cookbooks and package them up for delivery to nodes for execution by chef-solo.
 
 
 ### Testing Cookbooks
 
-
-
-  1. It's expected that you'll be creating a Berksfile in each of your cookbooks, so Crowbar can package up and delivery your cookbooks when the chef-jig and chef-solo-jig run
-
+   1. Crowbar can help integrate your normal testing patterns.
 
 ##Edit Documentation
 
