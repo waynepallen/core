@@ -476,6 +476,8 @@ class NodeRole < ActiveRecord::Base
     unless unresolved.empty?
       errors.add(:role_id, "role #{role.name} is missing prerequisites: #{unresolved.map{|rr|rr.require}}")
     end
+    # Abstract roles cannot be bound.
+    errors.add(:role_id,"role #{role.name} is abstract and cannot be bound to a node") if role.abstract
     # Roles can only be added to a node of their backing jig is active.
     unless role.active?
       # if we are testing, then we're going to just skip adding and keep going

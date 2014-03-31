@@ -144,7 +144,7 @@ class Barclamp < ActiveRecord::Base
                              :implicit=>flags.include?('implicit'),
                              :bootstrap=>flags.include?('bootstrap'),
                              :discovery=>flags.include?('discovery'),
-                             :server=>flags.include?('server'),
+                             :abstract=>flags.include?('abstract'),
                              :destructive=>flags.include?('destructive'),
                              :cluster=>flags.include?('cluster'))
         RoleRequire.where(:role_id=>r.id).delete_all

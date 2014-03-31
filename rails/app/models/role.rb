@@ -47,7 +47,7 @@ class Role < ActiveRecord::Base
   scope           :implicit,           -> { where(:implicit=>true) }
   scope           :discovery,          -> { where(:discovery=>true) }
   scope           :bootstrap,          -> { where(:bootstrap=>true) }
-  scope           :server,             -> { where(:server => true) }
+  scope           :abstract,           -> { where(abstract: true)}
   scope           :active,             -> { joins(:jig).where(["jigs.active = ?", true]) }
   scope           :all_cohorts,        -> { active.order("cohort ASC, name ASC") }
   scope           :all_cohorts_desc,   -> { active.order("cohort DESC, name ASC") }
