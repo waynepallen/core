@@ -24,6 +24,14 @@ roles:
       - name: dns_servers
         description: 'DNS servers that all Crowbar clients should use'
         map: 'crowbar/dns/nameservers'
+      - name: dns-forwarders
+        description: 'DNS servers that Crowbar will use for recursive queries'
+        map: 'crowbar/dns/forwarders'
+        schema:
+          type: seq
+          sequence:
+            - type: str
+              pattern: /[0-9a-f:.]*/
   - name: dns-database
     jig: chef-solo
     flags:
