@@ -56,14 +56,12 @@ class NodeRolesController < ApplicationController
     node = Node.find_key(params[:node] || params[:node_id])
     role = Role.find_key(params[:role] || params[:role_id])
     depl ||= node.deployment
-    NodeRole.locked_transaction do
-      @node_role = NodeRole.create!(role_id: role.id,
-                                    node_id: node.id,
-                                    deployment_id: depl.id)
-      if params[:data]
-        @node_role.data = params[:data]
-        @node_role.save!
-      end
+    @node_role = NodeRole.create!(role_id: role.id,
+                                  node_id: node.id,
+                                  deployment_id: depl.id)
+    if params[:data]
+      @node_role.data = params[:data]
+      @node_role.save!
     end
     respond_to do |format|
       format.html { redirect_to deployment_path(depl.id) }

@@ -251,15 +251,13 @@ class NodeRole < ActiveRecord::Base
   def sysdata=(arg)
     raise("#{role.name} dynamically overwrites sysdata, cannot write to it!") if role.respond_to?(:sysdata)
     NodeRole.transaction do
-      write_attribute("sysdata", arg)
-      save!
+      update_column("sysdata", arg)
     end
   end
 
   def sysdata_update(val)
     NodeRole.transaction do
       self.sysdata = self.sysdata.deep_merge(val)
-      save!
     end
   end
 

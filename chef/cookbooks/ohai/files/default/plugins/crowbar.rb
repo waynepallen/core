@@ -14,6 +14,11 @@
 #
 
 # This hackjob is needed for loading the cstruct gem.
+
+provides "crowbar_ohai"
+crowbar_ohai Mash.new
+crowbar_ohai[:in_docker] = File.executable?("/.dockerinit")
+
 Gem.clear_paths
 outer_paths=%x{gem env gempath}.split(':')
 outer_paths.each do |p|
@@ -30,8 +35,6 @@ require 'timeout'
 require 'rubygems'
 require 'socket'
 require 'cstruct'
-
-provides "crowbar_ohai"
 
 class System
   def self.background_time_command(timeout, background, name, command)
@@ -158,7 +161,6 @@ def get_link_status(interface)
   end
 end
 
-crowbar_ohai Mash.new
 crowbar_ohai[:switch_config] ||= Mash.new
 
 
@@ -275,8 +277,6 @@ networks.each do |network|
   crowbar_ohai[:switch_config][network][:switch_port_name] = sw_port_name
   crowbar_ohai[:switch_config][network][:switch_unit] = sw_unit
 end
-
-crowbar_ohai[:in_docker] = File.executable?("/.dockerinit")
 
 crowbar_ohai[:disks] ||= Mash.new
 disk_ordering = Hash.new

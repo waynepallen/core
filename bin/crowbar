@@ -33,7 +33,11 @@ $port = 3000
 $url = nil
 $data = ""
 $timeout = 500
-$key = ENV["CROWBAR_KEY"]
+if File.file?("/etc/crowbar.install.key")
+  $key = IO.read("/etc/crowbar.install.key").strip
+else
+  $key = ENV["CROWBAR_KEY"]
+end
 $username, $password = $key.split(':',2) if $key
 $attributes = nil
 

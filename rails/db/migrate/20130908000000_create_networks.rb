@@ -50,6 +50,7 @@ class CreateNetworks < ActiveRecord::Migration
 
     create_table "network_allocations" do |t|
       t.references   :node
+      t.references   :network
       t.references   :network_range
       t.string       :address,    null: false, index: { unique: true }
       t.timestamps

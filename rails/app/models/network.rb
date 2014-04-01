@@ -128,7 +128,6 @@ class Network < ActiveRecord::Base
                                         :bootstrap => (self.name.eql? ADMIN_NET),
                                         :discovery => (self.name.eql? ADMIN_NET)  )
         RoleRequire.create!(:role_id => r.id, :requires => "network-server")
-        RoleRequire.create!(:role_id => r.id, :requires => "deployer-client")
         RoleRequire.create!(:role_id => r.id, :requires => "crowbar-installed-node") unless name.eql? ADMIN_NET
         # attributes for jig configuraiton
         Attrib.create!(:role_id => r.id,

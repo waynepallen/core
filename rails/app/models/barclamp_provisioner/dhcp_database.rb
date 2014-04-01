@@ -16,65 +16,62 @@
 class BarclampProvisioner::DhcpDatabase < Role
 
   def on_node_create(node)
+    return unless node.roles.exists?(name: "crowbar-managed_node") || (node.bootenv == "sledgehammer")
     Rails.logger.info("provisioner-dhcp-database: Updating for added node #{node.name}")
-    rerun_my_noderoles
+    rerun_my_noderoles(node) 
   end
 
   def on_node_change(node)
+    return unless node.roles.exists?(name: "crowbar-managed_node") || (node.bootenv == "sledgehammer")
     Rails.logger.info("provisioner-dhcp-database: Updating for changed node #{node.name}")
-    rerun_my_noderoles
+    rerun_my_noderoles(node)
   end
 
   def on_node_delete(node)
+    return unless node.roles.exists?(name: "crowbar-managed_node")
     Rails.logger.info("provisioner-dhcp-database: Updating for deleted node #{node.name}")
-    rerun_my_noderoles
-  end
-
-  def rerun_my_noderoles
-    dhcp_clients = {}
-    Role.transaction do
-      Role.find_by!(name: "crowbar-managed-node").nodes.each do |node|
-        v4addr = node.addresses.reject{|a|a.v6?}.sort.first.to_s
-        # We have not been allocated an address yet, do nothing here.
-        next if v4addr.nil? || v4addr.empty?
-        # scan interfaces to capture all the mac addresses discovered
-        ints = (node.discovery["ohai"]["network"]["interfaces"] rescue nil)
-        mac_list = Attrib.get("hint-admin-macs",node) || []
-        unless ints.nil?
-          ints.each do |net, net_data|
-            net_data.each do |field, field_data|
-              next if field != "addresses"
-              field_data.each do |addr, addr_data|
-                next if addr_data["family"] != "lladdr"
-                mac_list << addr unless mac_list.include? addr
-              end
-            end
-          end
-        end
-        # we need to have at least 1 mac (from preload or inets)
-        next unless mac_list.length > 0
-        # add this node to the DHCP clients list
-        dhcp_clients[node.name] = {
-          "mac_addresses" => mac_list.map{|m|m.upcase}.sort.uniq,
-          "v4addr" => v4addr,
-          "bootenv" => node.bootenv
-        }
+    node_roles.each do |nr|
+      nr.with_lock do
+        hosts = nr.sysdata["crowbar"]["dhcp"]["clients"]
+        next unless hosts.delete(node.name)
+        nr.update_column("sysdata",{"crowbar" => {"dhcp" => {"clients" => hosts}}})
+        to_enqueue << nr
       end
     end
-    # this gets the client list sent to the jig implementing the DHCP database role
-    new_sysdata = {
-      "crowbar" =>{
-        "dhcp" => {
-          "clients" => dhcp_clients
-        }
-      }
-    }
+    to_enqueue.each {|nr| Run.enqueue(nr)}
+  end
+
+  def rerun_my_noderoles(node)
+    host = {}
+    v4addr = node.addresses.reject{|a|a.v6?}.sort.first.to_s
+    # We have not been allocated an address yet, do nothing here.
+    return if v4addr.nil? || v4addr.empty?
+    # scan interfaces to capture all the mac addresses discovered
+    ints = (node.discovery["ohai"]["network"]["interfaces"] rescue nil)
+    mac_list = Attrib.get("hint-admin-macs",node) || []
+    unless ints.nil?
+      ints.each do |net, net_data|
+        net_data.each do |field, field_data|
+          next if field != "addresses"
+          field_data.each do |addr, addr_data|
+            next if addr_data["family"] != "lladdr"
+            mac_list << addr unless mac_list.include? addr
+          end
+        end
+      end
+    end
+    host["mac_addresses"] =  mac_list.map{|m|m.upcase}.sort.uniq
+    host["v4addr"] = v4addr
+    host["bootenv"] = node.bootenv
+    # we need to have at least 1 mac (from preload or inets)
+    return unless mac_list.length > 0
     to_enqueue = []
-    NodeRole.transaction do
-      node_roles.committed.each do |nr|
-        next if nr.sysdata == new_sysdata
-        nr.sysdata = new_sysdata
-        nr.save!
+    node_roles.each do |nr|
+      nr.with_lock do
+        hosts = (nr.sysdata["crowbar"]["dhcp"]["clients"] rescue {})
+        next if hosts[node.name] == host
+        hosts[node.name] = host
+        nr.update_column("sysdata",{"crowbar" => {"dhcp" => {"clients" => hosts}}})
         to_enqueue << nr
       end
     end
