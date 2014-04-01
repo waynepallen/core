@@ -14,7 +14,7 @@
 % 
 % 
 -module(node_role).
--export([step/2, json/3, validate/1, inspector/0, g/1]).
+-export([step/2, json/3, validate/1, inspector/0, g/1, bind/2, bind/3]).
 -include("bdd.hrl").
 
 % Commont Routine
@@ -56,7 +56,12 @@ inspector() ->
 json(Name, Description, Order) ->
   json:output([{"name",Name},{"description", Description}, {"order", Order}, {"role","test-client"}, {"node",node:g(node_atom)}, {"snapshot", "system"}]).
 
-     
+bind(Node, Role) -> bind(Node, Role, "system").
+bind(Node, Role, Deployment) ->
+  Path = bdd_restrat:alias(node_role, g, [path]),
+  JSON = json:output([{"node", Node}, {"role", Role}, {"deployment", Deployment}]),
+  bdd_crud:create(Path, JSON).
+
 % Common Routines
 
 step(_Global, {step_setup, _N, _}) -> 
