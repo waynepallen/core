@@ -57,12 +57,16 @@ openstack/chef/newgoliath/cookbooks/
   * The Berkshelf is located at /root/.berkshelf/  Do not edit it.  If you want to prune it of old and unnecessary versions of cookbooks, feel free to use `sudo berks shelf uninstall <cookbook> -v <version>`  The Chef Jig should replace any missing versions of cookbooks in the Berkshelf next time it runs.
   * You probably want the cookbooks you indicated as dependents to be available to you for reference while you're developing.  The following example will download them and put them in the right place for you.
 
-```sudo berks install -b ./newgoliath/cookbooks/apache2/Berksfile -p ./newgoliath/cookbooks/```
+```sudo berks install -b ./newgoliath/cookbooks/apache2/Berksfile -p ./newgoliath/deploy/```
 
 ### Deploying
 
   * Crowbar's chef-jig will use `sudo berks upload` to send the cookbooks and depenencies from ALL the vendor cookbook directories to the Chef Server.  Be careful what you put in your vendor cookbook directory.
   * Similarly, the chef-solo-jig will recognize ALL vendor cookbooks and package them up for delivery to nodes for execution by chef-solo.
+
+### How it works
+
+  * The Chef-jig keeps track of noderoles, attributes, and the .
 
 
 ### Testing Cookbooks
