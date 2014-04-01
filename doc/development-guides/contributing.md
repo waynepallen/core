@@ -33,7 +33,6 @@ Crowbar uses Berkshelf to help manage cookbooks.  Berkshelf resolves cookbook de
 
 ### Prerequisites
 
-  * Currently, `berks` runs as `root`.  Files created by Berkshelf will be owned by `root`.  There is no forseen harm in this.
   * We encourage you to clone from the OpenCrowbar github organization and submit pull requests.
   * All cookbooks are to be "vendorized." That is, they're prefixed with an organization name, i.e. your identifier.
     * It does not preclude you from using application/library cookbook strategies, because it has no effect on resource scoping within a chef-client run.
