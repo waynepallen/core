@@ -29,7 +29,7 @@
 
 ### The Berkshelf
 
-Crowbar uses Berkshelf to help manage cookbooks.  Berkshelf resolves cookbook dependencies by following the Berksfile instructions for local and remote dependent cookbooks.  It stores dependencies in the Berkshelf (path.)  If you're using a Chef Server, it can uploads them to the Chef Server.  If you're using chef-solo or chef-client -x, it can do a few thins to help you.  It can put them on the filesystem somewhere for you to pick up and deliver to your nodes (perhaps delivered by NFS), or it can even packages them into tar.gz archives for delivery to nodes and unpacking. 
+Crowbar uses Berkshelf to help manage cookbooks.  Berkshelf resolves cookbook dependencies by following the Berksfile instructions for local and remote dependent cookbooks.  It stores dependencies in the Berkshelf (path.)  If you're using a Chef Server, it can upload them to the Chef Server.  If you're using chef-solo or chef-client -x, it packages them on the filesystem  and delivers them to your nodes. 
 
 ### Prerequisites
 
@@ -51,27 +51,45 @@ core/chef/newgoliath/cookbooks/mydhcp/.git/
 openstack/chef/newgoliath/cookbooks/
 ```
 
-### Developing
+### Developing Barclamps
 
   * The Jig will resolve your dependencies expressed in your Berksfile and in your metadata.rb and install those dependencies in the Berkshelf.
   * The Berkshelf is located at /root/.berkshelf/  Do not edit it.  If you want to prune it of old and unnecessary versions of cookbooks, feel free to use `sudo berks shelf uninstall <cookbook> -v <version>`  The Chef Jig should replace any missing versions of cookbooks in the Berkshelf next time it runs.
   * You probably want the cookbooks you indicated as dependents to be available to you for reference while you're developing.  The following example will download them and put them in the right place for you.
 
-```sudo berks install -b ./newgoliath/cookbooks/apache2/Berksfile -p ./newgoliath/deploy/```
+```
+cd <opencrowbar_root>/core/chef/
+sudo berks install -b ./newgoliath/cookbooks/apache2/Berksfile -p ./newgoliath/deploy/
+```
 
-### Deploying
+### Developing OpenCrowbar Core
+
+  * This does not apply to the bootstrapping process.  It only applies to the OpenCrowbar admin server once it is bootstrapped.
+  * OpenCrowbar core uses chef-solo.  It will simply `berks install --path <opencrowbar_root>/core/chef/deploy` on all the cookbooks found in `<opencrowbar_root>/core/<vendor>/cookbooks/`.  This will put all the cookbooks and their depenency in executable format in the deploy directory indicated above.
+
+### Testing Cookbooks
+
+TODO: Script this, possibly under 'tools'
+
+   * create a test node (a kvm node is just fine)
+   * add it to a deployment and add the node-role that your cookbook belongs to
+   * kick off the annealer to deploy your cookbooks to a test node.
+
+FUTURE:
+
+   * Crowbar can help integrate your normal testing patterns.  We're considering `test-kitchen` integration.
+
+### Deploying to your nodes
 
   * Crowbar's chef-jig will use `sudo berks upload` to send the cookbooks and depenencies from ALL the vendor cookbook directories to the Chef Server.  Be careful what you put in your vendor cookbook directory.
   * Similarly, the chef-solo-jig will recognize ALL vendor cookbooks and package them up for delivery to nodes for execution by chef-solo.
 
-### How it works
+### How it works in production
 
-  * The Chef-jig keeps track of noderoles, attributes, and the .
+  * The Chef-jig keeps track of noderoles, attributes, and honors the versions in the Berksfile and Berksfile.lock for each cookbook.  The Berksfile.lock is to track the current best cookbook version for the system.  The Berksfile indicates the compatible versions, and the versions to be installed into the Berkshelf
+  * When the Chef-jig runs, it examines the modify timestamps and, if necessary, checks `shasums` on each of the cookbooks in <barclamp>/chef/<vendor>/cookbooks/ and any appropriate package names in <barclamp>/chef/<vendor>/deploy/
+  * If anything has changed, Chef-Jig uses `berks install; berks package -o <barclamp>/chef/deploy/` to update the Berkshelf and create new packages
 
-
-### Testing Cookbooks
-
-   1. Crowbar can help integrate your normal testing patterns.
 
 ##Edit Documentation
 
