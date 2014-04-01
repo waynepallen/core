@@ -1,242 +1,208 @@
-# OpenCrowbar RPM Deployment on CentOS 6.5
+Objectives:
 
-## Objectives
-Create a OpenCrowbar _admin_ node on a VM or physical machine to begin the process of configuring or managing deployment of a cluster (openstack, hadoop, ceph, etc.).
+Create a OpenCrowbar admin node on a VM or physical machine to begin the process of configuring or managing deployment of a cluster (openstack, hadoop, ceph, etc.).
 
 The following steps will be completed:
-* Prepare a Virtual or Physical machine
-* Installation of CentOS 6.5 x86_64
-* Install OpenCrowbar
-* Start OpenCrowbar webUI
-* Connect to the webUI using a browser
+
+
+    Prepare a Virtual or Physical machine
+    Installation of CentOS 6.5 x86_64
+    Install OpenCrowbar
+    Start OpenCrowbar webUI
+    Connect to the webUI using a browser
 
 An outline is provided as a foundation for QA validation requirements for OpenCrowbar RPM packages.
 
 Known limitations of the installation process, its sensitivities to updates and to upgrades is summarized.
-
-## Installation process
+Installation process:
 
 Before commencing installation and configuration processing ensure that everything needed is available and that all remove resources that must be accessed are capable of being reached.
+Pre-Requisites:
+   CentOS 6.5 x86_64 - download site:  
+   You will need to know how to access the internet from your VM/Physical environment.  
+   Proxy Services
+      Windows - Fiddler 2 is a good one
+      Linux - potential proxy services include: cntlm and squid.
+      Direct Connection - Ensure you have appropriate security setup per security guidelines in effect within your organization.
 
-### Pre-Requisites
-1. CentOS 6.5 x86_64 - download site:  
-2. You will need to know how to access the internet from your VM/Physical environment.  
-  1. Proxy Services
-    1. Windows - Fiddler 2 is a good one
-    2. Linux - potential proxy services include: cntlm and squid.
-  2. Direct Connection - Ensure you have appropriate security setup per security guidelines in effect within your organization.
+Machine preparation
 
-### Machine preparation
-Machine requirements are
-1. Memory: Min 4GB
-2. CPU Cores: 2 or more
-3. Network Interface Controllers: 2 preferred, 1 minimum (can use virtio if using a VM)
-  1. The first NIC (generally known as 'eth0' under Linux, but may named 'em0' or 'en0') must be wired into the private address space (192.168.124.0/24)
-  1. The second NIC will be wired into a network that routes to the internet. Internet access is required for installation OpenCrowbar on CentOS/RHEL 6.5.
-  1. Note: It is possible to use a single NIC. In that case the default network address will be 192.168.124.0/24, the admin node IP address will be 192.168.124.10
-  1. Where a single NIC is used, the private admin network (192.168.124.0/24) must be capable of download of files from the internet or from a local caching server
-4. Storage: A disk capacity of at least 10 GB is preferred.
-5. Ensure that all physical network transports are correctly configured and are operational - at least check/verify that:
-  1. All network cabling is in place
-  1. Network switches are turned on and configured correctly (ask network admin if necessary)
-  1. Keyboard,Video, and Mouse (if required) devices are connected and ready for use.
-6. If using a virtual machine (VM), where VM motion (ability to migrated VMs across Hypervisor platforms) is required ensure that secure VM access is correctly configured and is operational.
-7. Where network-managed power switches are in use, ensure that network access is secure from unwanted access.
+Machine requirements are:
+    Memory: Min 4GB
+    CPU Cores: 2 or more
+    Network Interface Controllers: 2 preferred, 1 minimum (can use virtio if using a VM)
+        The first NIC will be wired into a network that routes to the internet. Internet access is required for installation of CentOS/RHEL 6.5
+        The second NIC (may be named eth1, em1, or en1) must be wired into the private space (192.168.124.0/24)
+        Note: It is possible to use a single NIC. In that case the default network address will be 192.168.124.0/24, the admin node IP address will be 192.168.124.10
+        Where a single NIC is used, the private admin network (192.168.124.0/24) must be capable of download of files from the internet or from a local caching server
+    Storage: A disk capacity of at least 10 GB is preferred. * Make sure you configure RAID on the drives before installing.
+    Ensure that all physical network transports are correctly configured and are operational - at least check/verify that:
+        All network cabling is in place
+        Network switches are turned on and configured correctly (ask network admin if necessary)
+        Keyboard,Video, and Mouse (if required) devices are connected and ready for use.
+    If using a virtual machine (VM), where VM motion (ability to migrated VMs across Hypervisor platforms) is required ensure that secure VM access is correctly configured and is operational.
+    Where network-managed power switches are in use, ensure that network access is secure from unwanted access.
 
-
-## CentOS 6.5 installation
-1. Boot CentOS 6.5 x86_64 from pristine ISO media
-2. At the boot screen select "Install or upgrade an existing system", hit Enter
-3. Screen: "Welcome to CentOS for x86_64", select [Skip], hit Enter
-4. At the first graphical screen, "CentOS 6 Community ENTerprise Operating System", Click [Next]
-5. Screen: "What language would you like to use ...", Select "English (English)", Click [Next]
-6. Screen: "Select the appropriate keyboard ...", Select "U.S. English", Click [Next]
-7. Screen: "What type of devices will your installation involve\?", Select "Basic Storage Devices", Click [Next]
-8. Pop-up: "Storage Device Warning", Click [Yes, discard any data]
-9. Screen: "Please name this computer. The hostname ...", In the Hostname field enter: "admin.mytest.lcl"
-  1. Click [Configure Network]
-    Network configuration requirements depend on how many NICs are available, and on available network topology
-    1. Single NIC configuration:
-      1. Select "System eth0" (first NIC - on public network), Click [Edit]
-        1. Check "Connect automatically"
-        2. Click [IPV4 Settings]
-        3. Select Method "Manual"
-        4. Click [Add]
-           1. Enter IP address: 192.168.124.10
-           2. Click on blank field below "Netmask". Enter: 24, or 255.255.255.0
-        5. Click [Apply]
-    2. Dual NIC configuration:
-      1. Select "System eth0" (first NIC - on public network), Click [Edit]
-        1. Check "Connect automatically"
-        2. Click on [IPV4 Settings]
-        3. Select Method "Manual"
-        4. Click [Add]
-          1. Enter IP address: 192.168.124.10
-          2. Click on blank field below "Netmask". Enter: 24, or 255.255.255.0
-          3. Click [Apply]
-      1. Select "System eth1" (second NIC - on private admin network), Click [Edit]
-        1. Check "Connect automatically"
-        2. Click [IPV4 Settings]
-        3. Select Method "Automatic (DHCP)" if appropriate, else configure network settings. Click [Apply]
-      3. Clock [Close]
-10. Screen: "Please select the nearest city in your time zone:", Select your time zone, Click [Next]
-11. Screen: "The root account is used for administering the system. ...", Enter Root password "crowbar", Confirm: "crowbar", Click [Next]
-12. Popup: "Weak Password", Click [Use Anyway]
-13. Screen: "Which type of installation would you like?", Select "Use All Space", Click [Next]
-14. Popup: "Writing storage configuration to disk", Click [Write changes to disk]
-15. Screen: "The default installation of CentOS is a minimum install ...", Select "Basic Server", Click [Next]
-16. The system will now install. When finished, Click [Reboot]
-
-Configure internet proxy access (where required) by setting
-
-     #> echo "export http_proxy=http://10.208.64.95:3128" >> ~/.bash_profile
-     #> echo "export https_proxy=http://10.208.64.95:3128" >> ~/.bash_profile
-     #> echo "export ftp_proxy=http://10.208.64.95:3128" >> ~/.bash_profile
-     #> echo "export HTTP_PROXY=http://10.208.64.95:3128" >> ~/.bash_profile
-     #> echo "export HTTP_PROXY=http://10.208.64.95:3128" >> ~/.bash_profile
-     #> . ~/.bash_profile
+CentOS 6.5 installation
+    Boot CentOS 6.5 x86_64 from pristine ISO media
+    At the boot screen select "Install or upgrade an existing system", hit Enter
+    Screen: "Welcome to CentOS for x86_64", select [Skip], hit Enter
+    At the first graphical screen, "CentOS 6 Community ENTerprise Operating System", Click [Next]
+    Screen: "What language would you like to use ...", Select "English (English)", Click [Next]
+    Screen: "Select the appropriate keyboard ...", Select "U.S. English", Click [Next]
+    Screen: "What type of devices will your installation involve\?", Select "Basic Storage Devices", Click [Next]
+    Pop-up: "Storage Device Warning", Click [Yes, discard any data]
+    Screen: "Please name this computer. The hostname ...", In the Hostname field enter: "admin.mytest.lcl"
+        Click [Configure Network]
+        Network configuration requirements depend on how many NICs are available, and on available network topology
+            Single NIC configuration:
+                Select "System eth0" (first NIC - on public network), Click [Edit]
+                    Check "Connect automatically"
+                    Click on [IPV4 Settings]
+                    Select Method "Manual"
+                    Click [Add]
+                        Enter IP address: 192.168.124.10
+                        Click on blank field below "Netmask". Enter: 24, or 255.255.255.0.
+                        Enter DNS ip address (Ex.38.151.210.40)
+                    Click [Apply]
+            Dual NIC configuration:
+                Select "System eth1" (first NIC - on public network), Click [Edit]
+                    Check "Connect automatically"
+                    Click [IPV4 Settings]
+                    Select Method "Automatic (DHCP)" if appropriate, else configure network settings. (Need ip, netmask and gw) Click [Apply]
+                Select "System eth0" (second NIC - on private admin network), Click [Edit]
+                    Check "Connect automatically"
+                    Click [IPV4 Settings]
+                    Select Method "Manual"
+                    Click [Add]
+                        Enter IP address: 192.168.124.10
+                        Click on blank field below "Netmask". Enter: 24, or 255.255.255.0, no gateway
+                        Enter DNS ip address (Ex.38.151.210.40)
+                    Click [Apply]
+            Click [Close]
+    Screen: "Please select the nearest city in your time zone:", Select your time zone, Click [Next]
+    Screen: "The root account is used for administering the system. ...", Enter Root password "crowbar", Confirm: "crowbar", Click [Next]
+    Popup: "Weak Password", Click [Use Anyway]
+    Screen: "Which type of installation would you like?", Select "Use All Space", Click [Next]
+    Popup: "Writing storage configuration to disk", Click [Write changes to disk]
+    Screen: "The default installation of CentOS is a minimum install ...", Select "Basic Server", Click [Next]
+    The system will now install. When finished, Click [Reboot]
 
 Verify proxy operation before proceeding.  An example of how this validation may be completed is shown here:
 
-     #> yum clean all
-     #> yum makecache 
+    #> yum clean all
+    #> yum makecache 
 
-### Proxy alternative for YUM only
+### Proxy alternative for YUM only ####
+
 You can setup Yum to use a proxy and not have to add the proxy information to your bashrc script.  The benefit is that you will not have to unset the proxy when you doing local operations, but Gem will still require the above proxy information!
 
 Follow the instructions at  https://www.centos.org/docs/5/html/yum/sn-yum-proxy-server.html
+ 
 
-     # The proxy server - proxy server:port number
-     proxy=http://mycache.mydomain.com:3128
-     # The account details for yum connections 
-     proxy_username=yum-user
-     proxy_password=qwerty 
+    # The proxy server - proxy server:port number
+    proxy=http://mycache.mydomain.com:3128
+    # The account details for yum connections 
+    proxy_username=yum-user
+    proxy_password=qwerty 
 
-**Do NOT attempt to update the system by executing "yum update" at this time - that will be done during installation of OpenCrowbar.**
+### END Proxy alternative ####
+OpenCrowbar installation
 
-**Background information**
-The operating system just installed is without the ruby package.  This is by design since CentOS 6.5 ships with ruby-1.8.7 which can not be used with OpenCrowbar.  OpenCrowbar requires ruby-1.9.x or later. This requirement will be met wit locally built RPM packages that will be installed before OpenCrowbar is installed.
-Following system reboot, verify that there are two network interfaces, one on a network from which internet access is possible, the other which is private (may route to the internet, but is broadcast isolated from any up-stream network).
+NOTE: This is preliminary information.  The specific steps outlined here will change soon and will need to be updated.
 
-## OpenCrowbar installation
+    Log into the CentOS 6.5 Admin node that was installed above, log in as the root user.
 
-**NOTE: This is preliminary information.**  The specific steps outlined here will change soon and will need to be updated.
-At this time the needed files may be downloaded from a CentOS 6.5 Development system. The ruby-2.0.0 and OpenCrowbar RPM packages, together with a helpful install script can be made available from such development platform. It is assumed that these RPM packages will be automatically built and made available from this system.
+    Turn off the linux firewall with these commands: 
+        # chkconfig iptables off
+        # service iptables stop
 
-Log into the CentOS 6.5 Admin node that was installed above, log in as the root user.
+    Create the dell-ocb yum repository file  
 
-Execute the following:#> cd /root
+        cd /etc/yum.repos.d
+        Using your favorite editor create a new repo file called "dell-ocb.repo"
+        Add the following lines to the file
 
-     #> rsync -ave ssh crowbar@10.208.64.30:~crowbar/ocb .
-     (NOTE: Password is crowbar) 
+    [dell-ocb]
+    name=repo for opencrowbar rpms
+    baseurl=https://s3.amazonaws.com/opencrowbar/ocb
+    enabled=1
+    gpgcheck=0
+    type=none
+    autorefresh=1
+    keeppackages=1
 
-Change directory:
+Save the file and continue.
 
-     #> cd ocb
-     #> ./scripts/install.sh 
+    Verify that you can access the RPM repository
+        yum repolist   
 
-**Note:** The contents of the ocb-install.sh file are:
+verify that you see dell-ocb in the list and its status is >0 (the number of packages that were found)
 
-     #!/bin/bash
-     
-     pkgproc(){
-        RLIST=`ls $1*`
-        echo $RLIST
-        yum install -y $RLIST
-     }
+        yum -y install http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm
+        yum -y install http://mirrors.servercentral.net/fedora/epel/6/i386/epel-release-6-8.noarch.rpm
 
-     cp -f .bash_profile /root/.bash_profile 
-     source .bash_profile
-     
-     chkconfig iptables off
-     service iptables stop
-     
-     cp .bash_profile /root/.bash_profile
-     yum -y install http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm
-     yum -y install http://mirrors.servercentral.net/fedora/epel/6/i386/epel-release-6-8.noarch.rpm
-     yum clean all
-     yum makecache
-     yum update -y
-     
-     pkgproc ruby
-     pkgproc open
-     
-     exit 0
+         
+If you are using VMs, now would be a good time to make a snapshot.
+Another good reason to create a snapshot is the migration process doesn't at this date (3/24/2014) support upgrades.   
+    Installing OpenCrowbar
 
-The above script will install OpenCrowbar and all its RPM dependencies up to the point of readiness to actually initialize the Postgresql OpenCrowbar database, and starting up of the OpenCrowbar web server. The package names will need to be updated to match current release versions.
+        yum clean all; yum makecache
+        yum install -y opencrowbar-core
+            this will install opencrowbar core and dependent rpm packages
+         ls /opt/opencrowbar
+            verify that you have one directory (core) and one file (prep.sh)
+            if so, proceed to the following section.
 
-## Enable WebUI / Connect via browser
+Enable WebUI / Connect via browser
 
-Execute the following commands:
+    Execute the following commands:
 
-     #> cd /opt/opencrowbar
-     #> ./prep.sh
+    #> service iptables status (verified it was stopped)
 
-Connect to the IP address of the Admin node on port 3000 using a browser of choice (Google Chrome, or Internet Explorer) URL:http://192.168.124.10:3000
+            if not stopped, then run “service iptables stop”
 
-     Log in as user: crowbar
-           Password: crowbar
+    #> setenforce 0
 
+    #> ifdown eth0 (the interface for the 192.168.124.10 IP)
 
-## QA Valdiation Requirements:
-Ok. So if the above was followed sequentually it is safe to assume that OpenCrowbar was found to be operational.  So what next?
+    #> cd /opt/opencrowbar/core
 
-The OpenCrowbar RPM packages are designed to be capable of:
+    #> ./production/sh <FQDN>
 
-### Removal and Re-installation
+ 
 
-There exist RPM packages for OpenCrowbar for the following components:  core (essential), hardware, hadoop, openstack, and later on ceph.
+Launch your web browser and connect to the IP address of the Admin node on port 3000 using a browser of choice (Google Chrome, or Internet Explorer) URL:http://192.168.124.10:3000
 
-The OpenCrowbar RPMS have dependencies built in.  This means that when they are installed using the yum tool, all pre-requesite RPM packages will automatically be installed before the opencrowbar-core  RPM is installed.
+    Log in as user: crowbar
+    Password: crowbar
 
-Additionally, the opencrowbar-openstack, opencrowbar-hadoop, and opencrowbar-hardware RPM packages depend on opencrownbar-core. When the opencrowbar-core RPM is removed using the yum tool, the packages that depend on it will also be removed.
+Known Issue:
 
-Removal and installation dependencies need to be validated.  During the build process the triggers that drive the correct behavior can get disrupted. When that happens it is important that the cause be identified and corrected.
+  There is one known issue where the provisioner-server was unable to restart httpd and crashed.  The root cuase of the issue is being investigated.   If you see this issue, your best bet (assuming that you created the SnapShot advice) is to jump to the "Updating Crowbar" section below and follow those instructions.  
 
-#### Suggested validation steps:
+ 
 
-  1. Remove freshly installed RPMS:
+If the above was followed sequentually it is safe to assume that OpenCrowbar was found to be operational. 
+a) Updating OpenCrowbar
 
-     #> yum erase -y opencrowbar-core
+As of March 28, the instructions below should not be used as there are still many changes in the database schema occurring that prevent the RPM package from being up-gradable.  Until this churn quiets down your best bet is to follow these instructions:
 
-     All opencrowbar RPMs should be autoamtically removed.
+  Revert your VM to the last Snapshot taken,  (You did follow the advice above to make a SnapShot, correct?)
+  yum clean all; yum makecache
+  yum install -y opencrowbar-core
+  cd /opt/opencrowbar/core
+  ./production.sh <FQDN>
+  Launch your web browser and connect to the IP address of the Admin node on port 3000 using a browser of choice (Google Chrome, or Internet Explorer) URL:http://192.168.124.10:3000
 
-  2. Re-install the RPMS:
-
-     #> yum install opencrowbar-openstack-2.0-1.noarch.rpm
-
-     The opencrowbar-core and the opencrowbar-openstack RPMS should BOTH be automatically installed.
-
-  3. Operate the webUI, then remove all RPMS:
-
-     Operate the webUI following installation of the RPMS, then remove then as follows:
-
-     #> rpm -e opencrowbar-core
-
-     The RPM tools should complain that other RPM packages depend on this package.  Removal should be refused.
-
-     #> rpm e opencrowbar-openstack
-
-     This should remove only the opencrowbar-openstack RPM package.
-
-     #> yum erase -y opencrowbar-core
-
-     This should succeed, together with removal of all opencrowbar component RPM packages.
-
-
-#### Updating (not Upgrading)
-
-    The procedure to test this will be developed when the first versioned RPMs become available.
-
-### Known Limitations:
+Known Limitations:
 
 Please document all limitations that are discovered into this document.
 
 RPM package installation/removal/update/upgrade processes confer many known limitations on third-party application-layer services such as OpenCrowbar, OpenStack, Hadoop. Here are a few issues that need to be defined and addressed:
 
-  1. There is a latent need to document update and upgrade requirements and dependencies so that packaging methods can fully accommodate the scope of these so far as possible.
+  There is a latent need to document update and upgrade requirements and dependencies so that packaging methods can fully accommodate the scope of these so far as possible.
+  The impact of RPM package updates on service continuity must be clearly defined. User-oriented documentation should set appropriate expectations for RPM update application.
+  Risks to continuity of service, potential for loss of critical operational data needs to be identifies and documented.
 
-  2. The impact of RPM package updates on service continuity must be clearly defined. User-oriented documentation should set appropriate expectations for RPM update application.
-Risks to continuity of service, potential for loss of critical operational data needs to be identifies and documented.
-
-  3. Testing, validation and QA requirements for OpenCrowbar itself need to be documented separately and links to these documents should be inserted into this document.
+Testing, validation and QA requirements for OpenCrowbar itself need to be documented separately and links to these documents should be inserted into this document.
