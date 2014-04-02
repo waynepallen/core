@@ -11,7 +11,7 @@
 
 - if current_user
   - if current_user.settings(:docs).sources
-    = link_to t('.edit_this_page'), @doc.git_url, :class=>"button", :style=>"float:right"
+    = link_to t('.edit_this_page'), @doc.git_url, :class=>"button", :style=>"float:right" rescue ""
 
   %p.topic= @text.html_safe
 
