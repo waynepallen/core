@@ -460,7 +460,7 @@ gems:
   pkgs:
     - active_scaffold
     - amqp
-    - bluecloth
+    - maruku
     - berkshelf-(=2.0.14)
     - builder
     - bundler-(~>1.3.0)

@@ -1,4 +1,4 @@
-# Copyright 2013, Dell
+# Copyright 2014, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,10 +19,9 @@ class DocsController < ApplicationController
   skip_before_filter :crowbar_auth
 
   def index
-    if params.has_key?(:rebuild) or (current_user.settings(:docs).rebuild rescue true)
-      # for dev, we want to be able to turn off rebuilds
-      Doc.delete_all unless params[:rebuild].eql? "false"
-      Doc.gen_doc_index
+    if params.has_key?(:rebuild)
+        Doc.delete_all 
+        Doc.gen_doc_index
     end
     respond_to do |format|
       format.html # index.html.haml
@@ -82,17 +81,17 @@ class DocsController < ApplicationController
           @raw = IO.read(@file)
           fix_encoding! unless @raw.valid_encoding?
           @raw.encode!('UTF-8', :invalid=>:replace)
-          @text = (html ? BlueCloth.new(@raw).to_html : @raw)
+          @text = (html ? Maruku.new(@raw).to_html : @raw)
           # @text += Doc.topic_expand(@doc.name, html) if params.has_key? :expand
         elsif @file =~ /\.(jpg|png)$/
           html = false
           image = true
         end
       else
-        @text = I18n.t('.topic_missing', :scope=>'docs.topic') + ": " + @file
+        @text = "#{I18n.t('.topic_missing', :scope=>'docs.topic')}: #{@file}"
       end
     rescue
-      @text = I18n.t('.topic_error', :scope=>'docs.topic')  + ": " + @file
+      @text = "#{I18n.t('.topic_error', :scope=>'docs.topic')}: #{@file}"
       flash[:notice] = @text
     end
     if image
