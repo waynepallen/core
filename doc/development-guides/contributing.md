@@ -27,47 +27,39 @@
 
 > _Strawman proposal: Up for Review_
 
-### The Berkshelf
+### Crowbar and Berkshelf
 
-Crowbar uses Berkshelf to help manage cookbooks.  Berkshelf resolves cookbook dependencies by following the Berksfile instructions for local and remote dependent cookbooks.  It stores dependencies in the Berkshelf (path.)  If you're using a Chef Server, it can uploads them to the Chef Server.  If you're using chef-solo or chef-client -x, it can do a few thins to help you.  It can put them on the filesystem somewhere for you to pick up and deliver to your nodes (perhaps delivered by NFS), or it can even packages them into tar.gz archives for delivery to nodes and unpacking. 
+For each of your workloads (core, openstack, hardware, etc.) Crowbar uses a centralized Berkshelf file for for all of your cookbooks. The Berksfile is in `opencrowbar/<workload>/chef/cookbooks/Berksfile`.  Crowbar ignores Berksfiles in individual cookbooks.
 
-### Prerequisites
+Berkshelf resolves cookbook dependencies by following the Berksfile instructions for local and remote dependent cookbooks.  It stores dependencies in the Berkshelf (path.)  If you're using a Chef Server, it can upload them to the Chef Server.  If you're using chef-solo or chef-client -x, it packages them on the filesystem  and delivers them to your nodes. 
 
-  * Currently, `berks` runs as `root`.  Files created by Berkshelf will be owned by `root`.  There is no forseen harm in this.
-  * We encourage you to clone from the OpenCrowbar github organization and submit pull requests.
-  * All cookbooks are to be "vendorized." That is, they're prefixed with an organization name, i.e. your identifier.
-    * It does not preclude you from using application/library cookbook strategies, because it has no effect on resource scoping within a chef-client run.
-```
-core/chef/crowbar/cookbooks/dhcp/recipes/default.rb
-core/chef/newgoliath/cookbooks/mydhcp/recipes/default.rb
-```
-  * It's expected that all cookbooks will be separate git repositories.
-```
-core/chef/newgoliath/cookbooks/mydhcp/.git/
-```
-  * These apply for the Barclamps as well:
-```
-<barclamp>/chef/<organization>/cookbooks/
-openstack/chef/newgoliath/cookbooks/
-```
+We encourage you to clone from the OpenCrowbar github repos and submit pull requests.
 
-### Developing
+### Developing Cookbooks
 
-  * The Jig will resolve your dependencies expressed in your Berksfile and in your metadata.rb and install those dependencies in the Berkshelf.
+  * YOU MUST put your cookbook and all your cookbooks' dependencies in the centralized Berksfile for them to get picked up and used by the Chef Jig. 
+  * You can use any of the normal sources to indicate the location of dependent cookbooks.
+  * Put your custom and wrapper cookbooks in `opencrowbar/<workload>/chef/cookbooks/<my_cookbook>` 
   * The Berkshelf is located at /root/.berkshelf/  Do not edit it.  If you want to prune it of old and unnecessary versions of cookbooks, feel free to use `sudo berks shelf uninstall <cookbook> -v <version>`  The Chef Jig should replace any missing versions of cookbooks in the Berkshelf next time it runs.
   * You probably want the cookbooks you indicated as dependents to be available to you for reference while you're developing.  The following example will download them and put them in the right place for you.
 
-```sudo berks install -b ./newgoliath/cookbooks/apache2/Berksfile -p ./newgoliath/cookbooks/```
-
-### Deploying
-
-  * Crowbar's chef-jig will use `sudo berks upload` to send the cookbooks and depenencies from ALL the vendor cookbook directories to the Chef Server.  Be careful what you put in your vendor cookbook directory.
-  * Similarly, the chef-solo-jig will recognize ALL vendor cookbooks and package them up for delivery to nodes for execution by chef-solo.
-
+```
+cd <opencrowbar_root>/core/chef/
+sudo berks install -b ./cookbooks/apache2/Berksfile -p ./newgoliath/deploy/
+```
 
 ### Testing Cookbooks
 
-   1. Crowbar can help integrate your normal testing patterns.
+TODO: Script this, possibly under 'tools'
+
+   * create a test node (a kvm node is just fine)
+   * add it to a deployment and add the node-role that your cookbook belongs to
+   * kick off the annealer to deploy your cookbooks to a test node.
+
+FUTURE:
+
+   * Crowbar can help integrate your normal testing patterns.  We're considering `test-kitchen` integration.
+
 
 ##Edit Documentation
 
