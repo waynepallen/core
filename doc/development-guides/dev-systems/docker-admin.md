@@ -104,6 +104,8 @@ to your UID and GID in your development environment.
 
 ### Ensuring that the admin node can deploy operating systems to slaves
 
+> More complete instructions in (Deployment Guide)[../../deployment-guide/adding-operating-systems.md]
+
 When deploying an admin node in production mode, you will want to be
 able to install operating systems on slave nodes.  By default, the
 `provisioner-base-images` role will look for OS install ISO images in
@@ -118,6 +120,8 @@ To enable the provisioner to install from those images, place them in
 hard link.  These images will then be available inside the Docker
 container at `/tftpboot/isos`, and the provisioner will be able to use
 them to install operating systems on slave nodes.
+
+If you do this AFTER the admin node is running, you must rerun the Provisioner OS Repos role.
 
 ### Running a production mode OpenCrowbar admin node in Docker
 

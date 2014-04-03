@@ -91,13 +91,13 @@ class NetworkRange < ActiveRecord::Base
       errors.add("NetworkRange #{fullname}: #{first.inspect} and #{last.inspect} must be of the same type")
     end
     unless first.network == last.network
-      errors.add("NetworkRange #{fullname}.#{name}: #{first.to_s} and #{last.to_s} must be in the same subnet")
+      errors.add("NetworkRange #{fullname}: #{first.to_s} and #{last.to_s} must be in the same subnet")
     end
     if first.network == first
-      errors.add("NetworkRange #{fullname}.#{name}: #{first} cannot be a subnet address")
+      errors.add("NetworkRange #{fullname}: #{first} cannot be a subnet address")
     end
     if last.broadcast == last
-      errors.add("NetworkRange #{fullname}.#{name}: #{last} cannot be a broadcast address")
+      errors.add("NetworkRange #{fullname}: #{last} cannot be a broadcast address")
     end
 
     # Now, verify that this range does not overlap with any other range

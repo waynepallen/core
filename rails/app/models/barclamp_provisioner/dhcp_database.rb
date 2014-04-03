@@ -17,31 +17,29 @@ class BarclampProvisioner::DhcpDatabase < Role
 
   def on_node_create(node)
     Rails.logger.info("provisioner-dhcp-database: Updating for added node #{node.name}")
-    rerun_my_noderoles node
+    rerun_my_noderoles
   end
 
   def on_node_change(node)
     Rails.logger.info("provisioner-dhcp-database: Updating for changed node #{node.name}")
-    rerun_my_noderoles node
+    rerun_my_noderoles
   end
 
   def on_node_delete(node)
     Rails.logger.info("provisioner-dhcp-database: Updating for deleted node #{node.name}")
-    rerun_my_noderoles node
+    rerun_my_noderoles
   end
 
-  def rerun_my_noderoles node
-
-    clients = {}
-
+  def rerun_my_noderoles
+    dhcp_clients = {}
     Role.transaction do
-      Node.all.each do |node|
-        ints = (node.discovery["ohai"]["network"]["interfaces"] rescue nil)
-        mac_list = Attrib.get("hint-admin-macs",node) || []
+      Role.find_by!(name: "crowbar-managed-node").nodes.each do |node|
         v4addr = node.addresses.reject{|a|a.v6?}.sort.first.to_s
         # We have not been allocated an address yet, do nothing here.
         next if v4addr.nil? || v4addr.empty?
         # scan interfaces to capture all the mac addresses discovered
+        ints = (node.discovery["ohai"]["network"]["interfaces"] rescue nil)
+        mac_list = Attrib.get("hint-admin-macs",node) || []
         unless ints.nil?
           ints.each do |net, net_data|
             net_data.each do |field, field_data|
@@ -53,23 +51,21 @@ class BarclampProvisioner::DhcpDatabase < Role
             end
           end
         end
-
         # we need to have at least 1 mac (from preload or inets)
         next unless mac_list.length > 0
         # add this node to the DHCP clients list
-        clients[node.name] = {
+        dhcp_clients[node.name] = {
           "mac_addresses" => mac_list.map{|m|m.upcase}.sort.uniq,
           "v4addr" => v4addr,
           "bootenv" => node.bootenv
         }
-
       end
     end
     # this gets the client list sent to the jig implementing the DHCP database role
     new_sysdata = {
       "crowbar" =>{
         "dhcp" => {
-          "clients" => clients
+          "clients" => dhcp_clients
         }
       }
     }

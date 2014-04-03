@@ -24,7 +24,7 @@ class BarclampNetwork::Server < Role
     o = {}
     if name.eql? 'network-server'
       # use the first one of these -> it should be the system deployment
-      raw = Crowbar::Attrib.get 'network_interface_maps', Deployment.system
+      raw = Attrib.get 'network_interface_maps', Deployment.system
       raw.each { |im| o[im["pattern"]] = im["bus_order"] }
     else
       raise "this model only applies to the network-server named role"
@@ -37,9 +37,8 @@ class BarclampNetwork::Server < Role
     bus_order = bus_order.split("|") unless bus_order.is_a? Array
     map = Attrib.get 'network_interface_maps', Deployment.system
     new_map = map | [{ "pattern"=>pattern, "bus_order"=>bus_order }]
-    data = {:crowbar => {:interface_map => new_map }}
-    DeploymentRole.transaction do 
-      Attrib.set 'network_interface_maps', Deployment.system, data, :user
+    DeploymentRole.transaction do
+      Attrib.set 'network_interface_maps', Deployment.system, new_map, :user
     end
   end
 

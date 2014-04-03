@@ -23,6 +23,7 @@
   1. push your change to your personal repo in a branch: `git push personal master:[my-pull-request-branch]`
   1. from your Github fork UI, create a pull request from my-pull-request-branch
 
+
 ##Edit Documentation
 
 You do NOT need a local clone to update docs!  You can edit them right from your fork on Github.  Just make the changes and then create a pull request.  

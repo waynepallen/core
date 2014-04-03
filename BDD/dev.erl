@@ -43,9 +43,10 @@ pop(ConfigRaw)  ->
   end,
 
   % admin node
-  Admin = crowbar:json([{name, g(node_name)}, {description, "dev" ++ g(description)}, {order, 100}, {alive, "true"}, {admin, "true"}, {bootenv, crowbar:g(bootenv)}]),
-  bdd_crud:create(node:g(path), Admin, g(node_atom)),
+  Admin = node:add_node(g(node_name), "crowbar-admin-node", [{description, "dev" ++ g(description)}, {order, 100}, {admin, "true"}], g(node_atom)),
+
   % admin node has to complete
+  bdd_utils:log(info, dev, pop, "Admin (~p: ~p) exists, waiting for annealer to catch-up...", [Admin#obj.id, g(node_name)]),
   crowbar:step([], {step_given, {0, 0}, ["there are no pending Crowbar runs for",node,g(node_name)]}), 
 
   % turn on the delays in the test jig (the tests turn these off, simulator wants them on)
@@ -77,17 +78,16 @@ remove(Atom) ->
   bdd_crud:delete(Atom).
 
 add_node({Atom, Name, Description, Order, Group}) ->
-  JSON = crowbar:json([{name, Name}, {description, Description}, {order, Order}, {alive, true}, {bootenv, node:g(bootenv)}, {group, Group}]),
   Path = bdd_restrat:alias(node, g, [path]),
   Obj = bdd_crud:read_obj(Path,Name),
   case Obj#obj.id of
-    "-1" -> [_R, O] = bdd_crud:create(Path, JSON, Atom),
+    "-1" -> O = node:add_node(Name, [{description, Description}, {order, Order}, {group, Group}], Atom),
           % load test data
           crowbar:step([], {step_given, {0, 1}, ["test loads the","node_discovery","data into",node, Name]}),
-          % user info
-          bdd_utils:log(info, "Created Node ~p=~p named ~p in group ~p", [Atom, O#obj.id, Name, Group]);
+          O;
     _  -> bdd_utils:config_set(Atom, Obj),
-          bdd_utils:log(info, "Node ~p already exists (~p)", [Name, Obj#obj.id])
+          bdd_utils:log(info, "Node ~p already exists (~p)", [Name, Obj#obj.id]),
+          Obj
   end.
 
 

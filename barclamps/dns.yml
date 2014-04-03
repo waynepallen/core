@@ -16,8 +16,6 @@
 roles:
   - name: dns-server
     jig: chef-solo
-    flags:
-      - server
     requires:
       - network-admin
     attribs:

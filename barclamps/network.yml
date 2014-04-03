@@ -18,12 +18,24 @@ roles:
   # network-server exists to hold interface maps right now.
   - name: network-server
     jig: noop
-    flags:
-      - server
     attribs:
       - name: network_interface_maps
         description: 'The global set of interface maps that should be used to figure out nic ordering.'
         map: 'crowbar/interface_map'
+        schema:
+          type: seq
+          sequence:
+            - type: map
+              mapping:
+                "pattern":
+                  type: str
+                  required: true
+                "bus_order":
+                  type: seq
+                  sequence:
+                    - type: str
+                      pattern: /[0-9a-fA-F]{4}\:[0-9a-fA-F]{2}\/[0-9a-fA-F]{4}\:[0-9a-fA-F]{2}\:[0-9a-fA-F]{2}/
+
   # there are more roles BUT they are dynamically created
 
 attribs:
