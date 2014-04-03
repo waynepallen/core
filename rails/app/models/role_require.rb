@@ -19,7 +19,7 @@ class RoleRequire < ActiveRecord::Base
   belongs_to      :parent, class_name: Role, foreign_key: "required_role_id"
   alias_attribute :upstream, :parent
 
-  before_create :enforce_acyclic
+  validate :enforce_acyclic, on: :create
 
   after_create :resolve_requires
 
@@ -61,16 +61,14 @@ class RoleRequire < ActiveRecord::Base
                               source_role.id,
                               target_role.name).empty?
     # Well, that is that. We will die, but we will be precise about why we die.
-    errstr = "RoleRequire: #{target_role.name} depending on #{requires} makes the role graph cyclic!\n"
-    paths = Role.connection.select_all("select path from all_role_require_paths where child_name = '#{source_role.name}' AND parent_name = '#{target_role.name}'")
-    Rails.logger.fatal(paths.inspect)
+    errors[:base] << "RoleRequire: #{target_role.name} depending on #{requires} makes the role graph cyclic!"
+    paths = Role.connection.select_all("select path from all_role_requires_paths where child_name = '#{source_role.name}' AND parent_name = '#{target_role.name}'")
     unless paths.empty?
-      errstr << "Role dependency chains that would be made cyclic:\n"
+      errors[:base] << "Role dependency chains that would be made cyclic:"
       paths.rows.each do |path|
-        errstr << "  " << path[0][1..-2].split(",").join(" -> ") << " (-> #{requires})\n"
+        errors[:base] << "  #{path[0][1..-2].split(",").join(" -> ")}  (-> #{requires})"
       end
     end
-    raise(errstr)
   end
 
   def resolve_requires

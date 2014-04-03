@@ -35,6 +35,7 @@ roles:
       - implicit
     requires:
       - deployer-client
+      - dns-client
       - logging-client
       - ntp-client
       - provisioner-repos
@@ -46,6 +47,19 @@ roles:
     requires:
       - crowbar-managed-node
       - provisioner-os-install
+  - name: crowbar-docker-node
+    description: "Docker Node Ready Checkpoint"
+    jig: noop
+    flags:
+      - discovery
+      - implicit
+    requires:
+      - deployer-client
+      - provisioner-repos
+      - provisioner-docker-setup
+    provides:
+      - crowbar-managed-node
+      - crowbar-installed-node
 
 attribs:
   # Crowbar Core
