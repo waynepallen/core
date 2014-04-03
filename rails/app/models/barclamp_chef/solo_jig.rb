@@ -1,4 +1,4 @@
-# Copyright 2013, Dell
+# Copyright 2014, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ class BarclampChef::SoloJig < Jig
 
   def run (nr,data)
     local_tmpdir = %x{mktemp -d /tmp/local-chefsolo-XXXXXX}.strip
+    #remote_tmpdir = %x{mktemp -d /tmp/chefsolo-XXXXXX}.strip
     chef_path = File.join(nr.barclamp.source_path, on_disk_name)
     role_json = File.join(local_tmpdir,"crowbar_baserole.json")
     node_json = File.join(local_tmpdir,"node.json")
@@ -58,13 +59,34 @@ class BarclampChef::SoloJig < Jig
     unless File.directory?(cookbook_path)
       raise("No cookbooks at #{cookbook_path}")
     end
+
     paths = ["#{chef_path}/roles",
              "#{chef_path}/data_bags",
-             "/var/tmp/barclamps/#{nr.role.barclamp.name}/chef",
-             "#{chef_path}/cookbooks"].select{|d|File.directory?(d)}.join(' ')
+             "/var/tmp/barclamps/#{nr.role.barclamp.name}/chef"].select{|d|File.directory?(d)}.join(' ')
     # This needs to be replaced by rsync.
+    #out,err,ok = nr.node.scp_to(paths,remote_tmpdir,"-r")
     out,err,ok = nr.node.scp_to(paths,"/var/chef","-r")
     raise("Chef Solo jig run for #{nr.name} failed to copy Chef information from #{paths.inspect}\nOut: #{out}\nErr: #{err}") unless ok.success?
+
+    Rails.logger.debug("Chef Solo Jig: #{nr.name} mkdir time start: #{Time.now.to_s}")
+    #out,err,ok = nr.node.ssh("mkdir -p #{remote_tmpdir}/cookbooks")
+    out,err,ok = nr.node.ssh("mkdir -p /var/chef/cookbooks")
+    raise("Chef Solo jig run for #{nr.name} failed to make cookbooks dir.\nOut: #{out}\nErr:#{err}") unless ok.success?
+
+    Rails.logger.debug("Chef Solo Jig: #{nr.name} scp time start: #{Time.now.to_s}")
+    cookbook_tarball = "#{chef_path}/cookbooks/package.tar.gz"
+    #out,err,ok = nr.node.scp_to(cookbook_tarball,"#{remote_tmpdir}/cookbooks/","-r")
+    out,err,ok = nr.node.scp_to(cookbook_tarball,"/var/chef/cookbooks/","-r")
+    raise("Chef Solo jig run for #{nr.name} failed to scp package.tar.gz.\nOut: #{out}\nErr:#{err}\n") unless ok.success?
+    #Rails.logger.info("Chef Solo jig run for #{nr.name} cookbook tarball scp output: \nOut: #{out}\n")
+
+    Rails.logger.debug("Chef Solo Jig: #{nr.name} tar time start: #{Time.now.to_s}")
+    #out,err,ok = nr.node.ssh("cd #{remote_tmpdir}/cookbooks;  sleep 5; /bin/tar -xvz -f #{remote_tmpdir}/cookbooks/package.tar.gz 2>&1")
+    out,err,ok = nr.node.ssh("/bin/tar xvzf /var/chef/cookbooks/package.tar.gz -C /var/chef/cookbooks/ 2>&1")
+    raise("Chef Solo jig run for #{nr.name} failed to untar package.tar.gz\nOut: #{out}\nErr:#{err}\n") unless ok.success?
+    #Rails.logger.info("Chef Solo jig run for #{nr.name} cookbook tarball tar output: \nOut: #{out}\nClass: #{out.class}\n")
+    Rails.logger.debug("Chef Solo Jig: #{nr.name} scp/tar time end: #{Time.now.to_s}")
+
     File.open(role_json,"w") do |f|
       f.write(JSON.pretty_generate(data))
     end
