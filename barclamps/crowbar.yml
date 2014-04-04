@@ -22,11 +22,11 @@ roles:
       - bootstrap
       - implicit
     requires:
-      - deployer-client
       - network-server
       - dns-database
       - provisioner-dhcp-database
       - provisioner-repos
+      - provisioner-docker-setup
   - name: crowbar-managed-node
     description: "Crowbar Node Service Bundle"
     jig: noop
@@ -38,7 +38,6 @@ roles:
       - dns-client
       - logging-client
       - ntp-client
-      - provisioner-repos
   - name: crowbar-installed-node
     description: "Crowbar Node Ready Checkpoint"
     jig: noop
@@ -54,7 +53,6 @@ roles:
       - discovery
       - implicit
     requires:
-      - deployer-client
       - provisioner-repos
       - provisioner-docker-setup
     provides:

@@ -1,0 +1,61 @@
+#!/bin/bash
+SCREEN_SESSION="crowbar-docker"
+NODE_DIR="$HOME/.cache/opencrowbar/tftpboot/nodes"
+
+if [[ $0 = /* ]]; then
+    tools="${0}"
+elif [[ $0 = .*  || $0 = */* ]]; then
+    tools="$(readlink -f "$PWD/$0")"
+else
+    echo "Cannot figure out where our tools are!"
+    exit 1
+fi
+# This gets us to core
+tools="${tools%/*}"
+
+if [[ $TERM != screen ]]; then
+    screen -wipe
+    screen -d -m -S "$SCREEN_SESSION" -t "Initial Shell" "$0" "$@"
+    screen -S "$SCREEN_SESSION" -X hardstatus alwayslastline "%?%{yk}%-Lw%?%{wb}%n*%f %t%?(%u)%?%?%{yk}%+Lw%?"
+    screen -S "$SCREEN_SESSION" -r
+    docker ps |grep '/crowbar-init' |awk '{print $1}' |xargs docker kill
+    exit
+fi
+
+on_admin() {
+    ssh root@172.17.0.2 -- "$@"
+}
+crowbar() {
+    on_admin /opt/opencrowbar/core/bin/crowbar "$@"
+}
+
+NODES=()
+spawn_ok=true
+# Create our nodes.
+echo "Creating docker nodes"
+for ((n=1;n<=$1;n++)); do
+    node="docker-$n.smoke.test"
+    if [[ -x "$NODE_DIR/$node/crowbar-init" ]]; then
+        echo "$node already created!"
+    else
+        if crowbar nodes create "\"{\\\"name\\\": \\\"$node\\\"}\"" && \
+            crowbar roles bind crowbar-docker-node to "$node" && \
+            crowbar nodes commit "$node"; then
+            echo "Created $node"
+        else
+            spawn_ok=false
+            break
+        fi
+    fi
+    NODES+=("$node")
+done
+if [[ $spawn_ok = true ]]; then
+    echo "Launching docker nodes"
+    for node in "${NODES[@]}"; do
+        screen -S "$SCREEN_SESSION" -X screen -t "$node" -L "$tools/docker-slave" "$node"
+    done
+else
+    echo "Not all docker nodes created, not launching."
+fi
+
+/bin/bash -i

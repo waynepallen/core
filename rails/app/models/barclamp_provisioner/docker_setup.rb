@@ -16,43 +16,38 @@
 class BarclampProvisioner::DockerSetup < Role
 
   def on_node_create(node)
-    rerun_my_noderoles
+    rerun_my_noderoles(node)
   end
 
   def on_node_change(node)
-    rerun_my_noderoles
+    rerun_my_noderoles(node)
   end
 
   def on_node_delete(node)
-    rerun_my_noderoles
-  end
-
-  def rerun_my_noderoles
-    docker_clients = {}
-    Role.transaction do
-      Role.find_by!(name: "crowbar-docker-node").nodes.each do |node|
-        docker_clients[node.name] = {
-          "addresses" => node.addresses.map{|a|a.to_s},
-          "image" => "ubuntu:12.04",
-          "os_token" => "ubuntu-12.04",
-          "bootenv" => "local"
-        }
+    to_enqueue = []
+    node_roles.each do |nr|
+      nr.with_lock do
+        hosts = nr.sysdata["crowbar"]["docker"]["clients"]
+        next unless hosts.delete(node.name)
+        nr.update_column("sysdata",{"crowbar" => {"docker" => {"clients" => hosts}}})
+        to_enqueue << nr
       end
     end
-    # this gets the client list sent to the jig implementing the DHCP database role
-    new_sysdata = {
-      "crowbar" =>{
-        "dhcp" => {
-          "clients" => docker_clients
-        }
-      }
+    to_enqueue.each {|nr| Run.enqueue(nr)}
+  end
+
+  def rerun_my_noderoles(node)
+    host = {
+      "addresses" => node.addresses.map{|a|a.to_s},
+      "image" => "opencrowbar/ubuntu-slave"
     }
     to_enqueue = []
-    NodeRole.transaction do
-      node_roles.committed.each do |nr|
-        next if nr.sysdata == new_sysdata
-        nr.sysdata = new_sysdata
-        nr.save!
+    node_roles.each do |nr|
+      nr.with_lock do
+        hosts = (nr.sysdata["crowbar"]["docker"]["clients"] rescue {})
+        next if hosts[node.name] == host
+        hosts[node.name] = host
+        nr.update_column("sysdata",{"crowbar" => {"docker" => {"clients" => hosts}}})
         to_enqueue << nr
       end
     end

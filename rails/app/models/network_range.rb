@@ -57,6 +57,7 @@ class NetworkRange < ActiveRecord::Base
           if (self === suggestion) &&
               (NetworkAllocation.where(:address => suggestion.to_s).count == 0)
             res = NetworkAllocation.create!(:network_range_id => self.id,
+                                            :network_id => network_id,
                                             :node_id => node.id,
                                             :address => suggestion)
           end
@@ -64,7 +65,10 @@ class NetworkRange < ActiveRecord::Base
         (first..last).each do |addr|
           break if res
           next if NetworkAllocation.where(:address => addr.to_s).count > 0
-          res = NetworkAllocation.create!(:network_range_id => self.id, :node_id => node.id, :address => addr.to_s)
+          res = NetworkAllocation.create!(:network_range_id => self.id,
+                                          :network_id => network_id,
+                                          :node_id => node.id,
+                                          :address => addr.to_s)
         end
       end
     end

@@ -134,9 +134,12 @@ class Node < ActiveRecord::Base
   end
 
   def addresses
-    net = Network.where(:name => "admin").first
-    raise "No admin network" if net.nil?
-    net.node_allocations(self)
+    net = Network.find_by!(:name => "admin")
+    res = network_allocations.where(network_id: net.id).map do |a|
+      a.address
+    end
+    res << auto_v6_address(net) if net.v6prefix
+    res.sort
   end
 
   def address
