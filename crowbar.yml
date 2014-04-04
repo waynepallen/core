@@ -63,7 +63,9 @@ jigs:
     class: 'BarclampChef::SoloJig'
     description: "Allow Crowbar to manage nodes using chef-solo"
     implementor: chef-solo
-
+  - name: puppet-sa
+    class: 'BarclampPuppet::SaJig'
+    description: "Puppet jig for using standalone puppet agent"
 
 extra_files:
   - http://downloads.sourceforge.net/project/elilo/elilo/elilo-3.16/elilo-3.16-all.tar.gz

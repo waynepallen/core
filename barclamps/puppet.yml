@@ -18,7 +18,12 @@ roles:
 #    requires:
 #      - puppet-agent
 
+  - name: puppet-test
+    jig: puppet-sa
+    requires:
+      - puppet-agent_sa
+
   - name: puppet-sa
     jig: noop
     requires:
-      - puppet-agent_sa
+      - puppet-test
