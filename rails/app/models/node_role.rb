@@ -135,7 +135,7 @@ class NodeRole < ActiveRecord::Base
 
   class MissingJig < Exception
     def initalize(nr)
-      @errstr = "NodeRole #{nr.name}: Missing jig #{nr.jig_name}"
+      @errstr = "NodeRole #{nr.name}: Missing jig #{nr.role.jig_name}"
     end
     def to_s
       @errstr
@@ -480,7 +480,7 @@ class NodeRole < ActiveRecord::Base
     unless role.active?
       # if we are testing, then we're going to just skip adding and keep going
       if Jig.active('test')
-        Rails.logger.info("Role: Test mode allows us to coerce role #{name} to use the 'test' jig instead of #{jig_name} when it is not active")
+        Rails.logger.info("Role: Test mode allows us to coerce role #{name} to use the 'test' jig instead of #{role.jig_name} when it is not active")
         role.jig = Jig.find_by(name: 'test')
         role.save
       else
