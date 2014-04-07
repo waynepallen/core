@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+date
 export RAILS_ENV=production
 [[ $1 ]] || {
     echo "Must pass the FQDN you want the admin node to have as the first argument!"
@@ -148,7 +149,7 @@ if ! [[ $* = *--zombie* ]]; then
   #    -d 'alive=true'
   echo "Configuration Complete, you can watch annealing from the UI.  \`su - crowbar\` to begin managing the system."
   # Converge the admin node.
-  crowbar converge && exit 0
+  crowbar converge && date && exit 0
   echo "Could not converge all noderoles!"
   exit 1
 else

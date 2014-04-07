@@ -86,7 +86,25 @@ class Barclamp < ActiveRecord::Base
                                :active => jig_active,
                                :description => jig_desc,
                                :client_role_name => jig_client_role)
+ 
+        # temporary until jigs have a barlcamp import support method
+        if jig_type.start_with?("BarclampChef")
+          Rails.logger.info("Import: #{bc_name} is a chef-type jig. Using Berkshelf.")
+          cookbook_path = File.expand_path(File.join(source_path, 'chef/cookbooks/'))
+          berksfile = cookbook_path + '/Berksfile'
+          raise "Import: No Berksfile found for #{bc_name} in #{berksfile}" unless File.exists?(berksfile)
+          result = %x(cd #{cookbook_path}; berks install 2>&1)
+          raise "Import: Unable to berks install #{berksfile}: #{result}" unless $?.exitstatus == 0
+          Rails.logger.info("Import: berks install: #{result}\n")
+          if jig_type.end_with?("SoloJig")
+            Rails.logger.info("Import: #{bc_name} is a chef-solo-type jig. Using Berkshelf packaging.")
+            result = %x(cd #{cookbook_path}; berks package 2>&1)
+            raise "Import: Unable to berks package #{berksfile}: #{result}" unless $?.exitstatus == 0
+            Rails.logger.info("Import: berks package: #{result}\n")
+          end
+        end
       end if bc["jigs"]
+
 
       # load the barclamps submodules information.
       bc['barclamps'].each do |sub_details|
