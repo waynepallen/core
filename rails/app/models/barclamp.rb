@@ -93,18 +93,17 @@ class Barclamp < ActiveRecord::Base
           cookbook_path = File.expand_path(File.join(source_path, 'chef/cookbooks/'))
           berksfile = cookbook_path + '/Berksfile'
           raise "Import: No Berksfile found for #{bc_name} in #{berksfile}" unless File.exists?(berksfile)
-          result = %x(cd #{cookbook_path}; berks install 2>&1)
+          result = berks(cookbook_path,"install")
           raise "Import: Unable to berks install #{berksfile}: #{result}" unless $?.exitstatus == 0
           Rails.logger.info("Import: berks install: #{result}\n")
           if jig_type.end_with?("SoloJig")
             Rails.logger.info("Import: #{bc_name} is a chef-solo-type jig. Using Berkshelf packaging.")
-            result = %x(cd #{cookbook_path}; berks package 2>&1)
+            result = berks(cookbook_path,"package -o /var/cache/crowbar/cookbooks")
             raise "Import: Unable to berks package #{berksfile}: #{result}" unless $?.exitstatus == 0
             Rails.logger.info("Import: berks package: #{result}\n")
           end
         end
       end if bc["jigs"]
-
 
       # load the barclamps submodules information.
       bc['barclamps'].each do |sub_details|
@@ -222,6 +221,13 @@ class Barclamp < ActiveRecord::Base
 
   def api_version_accepts
     'v2'
+  end
+
+  private
+  def self.berks(dir,args)
+    Dir.chdir(dir) do
+      %x{unset GEM_HOME BUNDLE_BIN_PATH BUNDLE_GEMFILE RUBYOPT RUBYLIB GEM_PATH; berks #{args} 2>&1}
+    end
   end
 
 end
