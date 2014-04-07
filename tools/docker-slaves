@@ -1,5 +1,5 @@
 #!/bin/bash
-SCREEN_SESSION="crowbar-docker"
+SESSION="crowbar-docker"
 NODE_DIR="$HOME/.cache/opencrowbar/tftpboot/nodes"
 
 if [[ $0 = /* ]]; then
@@ -13,14 +13,18 @@ fi
 # This gets us to core
 tools="${tools%/*}"
 
-if [[ $TERM != screen ]]; then
-    screen -wipe
-    screen -d -m -S "$SCREEN_SESSION" -t "Initial Shell" "$0" "$@"
-    screen -S "$SCREEN_SESSION" -X hardstatus alwayslastline "%?%{yk}%-Lw%?%{wb}%n*%f %t%?(%u)%?%?%{yk}%+Lw%?"
-    screen -S "$SCREEN_SESSION" -r
+if ! which tmux &>/dev/null; then
+    echo "Docker-slaves needs tmux installed!"
+    exit 1
+fi
+
+if [[ ! $TMUX ]]; then
+    tmux new-session -n control -s $SESSION "$0 $*"
     docker ps |grep '/crowbar-init' |awk '{print $1}' |xargs docker kill
+    tmux kill-session -t $SESSION
     exit
 fi
+tmux set-option set-remain-on-exit on
 
 on_admin() {
     ssh root@172.17.0.2 -- "$@"
@@ -29,33 +33,24 @@ crowbar() {
     on_admin /opt/opencrowbar/core/bin/crowbar "$@"
 }
 
-NODES=()
-spawn_ok=true
 # Create our nodes.
 echo "Creating docker nodes"
 for ((n=1;n<=$1;n++)); do
     node="docker-$n.smoke.test"
     if [[ -x "$NODE_DIR/$node/crowbar-init" ]]; then
         echo "$node already created!"
+        tmux new-window -d -n "$SESSION:$node" "$tools/docker-slave $node"
     else
         if crowbar nodes create "\"{\\\"name\\\": \\\"$node\\\"}\"" && \
             crowbar roles bind crowbar-docker-node to "$node" && \
             crowbar nodes commit "$node"; then
             echo "Created $node"
+            tmux new-window -d -n "$SESSION:$node" "$tools/docker-slave $node"
         else
-            spawn_ok=false
             break
         fi
     fi
-    NODES+=("$node")
 done
-if [[ $spawn_ok = true ]]; then
-    echo "Launching docker nodes"
-    for node in "${NODES[@]}"; do
-        screen -S "$SCREEN_SESSION" -X screen -t "$node" -L "$tools/docker-slave" "$node"
-    done
-else
-    echo "Not all docker nodes created, not launching."
-fi
 
+echo "Leaving this session (with C-b d) will kill it and all the containers attached to it."
 /bin/bash -i
