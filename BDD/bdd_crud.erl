@@ -27,7 +27,7 @@ read(Path) ->
   bdd_utils:log(trace, bdd_crud, read,  "obj at ~s returned ~p", [Path, R#http.code]),
   case R#http.code of
     200 ->  [R, bdd_restrat:get_object(R)];
-    _   ->  [R]
+    _   ->  [R, #obj{id= "-1"}]
   end.
 
 % given a path + key, uses API to get the ID of the object 
@@ -60,7 +60,7 @@ create(Path, JSON) -> create(Path, JSON, 3).  % loop prevention
 
 % Creates object AND adds marker to session where marker is an atom
 create(Path, JSON, Marker) when is_atom(Marker) -> 
-  [R | O] = create(Path, JSON),
+  [R, O] = create(Path, JSON),
   bdd_utils:config_set(Marker, O),
   [R, O];
 
@@ -74,17 +74,17 @@ create(Path, JSON, N) ->
   R = eurl:put_post(Path, JSON, post),
   bdd_utils:log(trace, bdd_crud, create, "Code: ~p, URL: ~p", [R#http.code, R#http.url]),
   case R#http.code of
-    200 ->  [R | fix_obj_url(bdd_restrat:get_object(R))];
+    200 ->  [R, fix_obj_url(bdd_restrat:get_object(R))];
     422 ->  Key = json:keyfind(JSON, "name"),
             bdd_utils:log(info, bdd_crud, create, "422 error. Delete object ~p and try again.",[Key]),
             delete(Path, Key),
             create(Path, JSON, N-1);
-    _   ->  [R]
+    _   ->  [R, #obj{id = "-1"}]
   end.
 
 % Creates object AND adds marker to session where marker is the scenario id
 create(Path, JSON, Marker, Key) when is_number(Marker) -> 
-  [R | O] = create(Path, JSON),
+  [R, O] = create(Path, JSON),
   bdd_utils:scenario_store(Marker, Key, O), 
   [R, O].
 
