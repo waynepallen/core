@@ -15,8 +15,6 @@
 source 'http://rubygems.org'
 
 gem 'rails', '~> 4.0.4'
-gem 'faraday', '= 0.8.9'
-gem 'berkshelf'
 gem 'pg'
 gem 'haml'
 # Pinned until we fix our stypesheets for sass ~> 3.3.0

@@ -55,11 +55,6 @@ class BarclampChef::SoloJig < Jig
     unless File.directory?(chef_path)
       raise("No Chef data at #{chef_path}")
     end
-    cookbook_path = "#{chef_path}/cookbooks"
-    unless File.directory?(cookbook_path)
-      raise("No cookbooks at #{cookbook_path}")
-    end
-
     paths = ["#{chef_path}/roles",
              "#{chef_path}/data_bags",
              "/var/tmp/barclamps/#{nr.role.barclamp.name}/chef"].select{|d|File.directory?(d)}.join(' ')
@@ -74,15 +69,12 @@ class BarclampChef::SoloJig < Jig
     raise("Chef Solo jig run for #{nr.name} failed to make cookbooks dir.\nOut: #{out}\nErr:#{err}") unless ok.success?
 
     Rails.logger.debug("Chef Solo Jig: #{nr.name} scp time start: #{Time.now.to_s}")
-    cookbook_tarball = "#{chef_path}/cookbooks/package.tar.gz"
-    #out,err,ok = nr.node.scp_to(cookbook_tarball,"#{remote_tmpdir}/cookbooks/","-r")
-    out,err,ok = nr.node.scp_to(cookbook_tarball,"/var/chef/cookbooks/","-r")
-    raise("Chef Solo jig run for #{nr.name} failed to scp package.tar.gz.\nOut: #{out}\nErr:#{err}\n") unless ok.success?
-    #Rails.logger.info("Chef Solo jig run for #{nr.name} cookbook tarball scp output: \nOut: #{out}\n")
-
+    cookbook_tarball = "/var/cache/crowbar/cookbooks/package.tar.gz"
+    raise("Missing Chef cookbooks in #{cookbook_tarball}") unless File.file?(cookbook_tarball)
+    out,err,ok = nr.node.scp_to(cookbook_tarball,"/var/chef/")
+    raise("Chef Solo jig run for #{nr.name} failed to scp pacakge.tar.gz.\nOut: #{out}\nErr:#{err}\n") unless ok.success?
     Rails.logger.debug("Chef Solo Jig: #{nr.name} tar time start: #{Time.now.to_s}")
-    #out,err,ok = nr.node.ssh("cd #{remote_tmpdir}/cookbooks;  sleep 5; /bin/tar -xvz -f #{remote_tmpdir}/cookbooks/package.tar.gz 2>&1")
-    out,err,ok = nr.node.ssh("/bin/tar xvzf /var/chef/cookbooks/package.tar.gz -C /var/chef/cookbooks/ 2>&1")
+    out,err,ok = nr.node.ssh("/bin/tar xvzf /var/chef/package.tar.gz -C /var/chef/cookbooks/ 2>&1")
     raise("Chef Solo jig run for #{nr.name} failed to untar package.tar.gz\nOut: #{out}\nErr:#{err}\n") unless ok.success?
     #Rails.logger.info("Chef Solo jig run for #{nr.name} cookbook tarball tar output: \nOut: #{out}\nClass: #{out.class}\n")
     Rails.logger.debug("Chef Solo Jig: #{nr.name} scp/tar time end: #{Time.now.to_s}")
