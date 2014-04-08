@@ -15,6 +15,8 @@
 
 class Scaffolds::RolesController < ApplicationController
   active_scaffold :role do |conf|
-    list.columns.exclude :template 
+    list.columns.exclude :template
+    list.columns.exclude :provides
+    list.columns.exclude :conflicts
   end
 end 
