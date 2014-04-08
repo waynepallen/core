@@ -8,7 +8,19 @@
       %tr
         %th= t '.attrib'
         %th= t '.value'
-        %th
+        %th= ""
+        - if current_user and current_user.settings(:ui).debug
+          %th= t '.ui_renderer'
     %tbdoy
       - obj.attribs.each do |attrib|
-        = render :partial => 'attribs/raw', :locals => {:obj=>obj, :obj_type => obj_type, :attrib=>attrib, :editable=>editable }
+        - begin
+          = render :partial => attrib.ui_renderer, :locals => {:obj=>obj, :obj_type => obj_type, :attrib=>attrib, :editable=>editable }
+        - rescue Exception => e
+          - if current_user and current_user.settings(:ui).debug
+            %tr
+              %td= t '.error'
+              %td= e.message
+              %td= t 'debug'
+              %td= attrib.ui_renderer rescue t 'not_set'
+          - else
+            = render :partial => Attrib::UI_RENDERER, :locals => {:obj=>obj, :obj_type => obj_type, :attrib=>attrib, :editable=>editable }  

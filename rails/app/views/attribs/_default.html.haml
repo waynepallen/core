@@ -1,5 +1,5 @@
+- value = Attrib.get(attrib.name, obj)
 = form_for :attrib, :remote => true, :url => attribs_api_path(:id=>attrib.id, obj_type=>obj.id, :version=>'v2'), :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic", :onsubmit =>"location.reload();" } do |f|
-  - value = Attrib.get(attrib.name, obj)
   %tr
     %td= link_to attrib.name_i18n, attrib_path(attrib.id), :title=>attrib.description
     - if editable
@@ -12,3 +12,5 @@
       - else
         %td= t('not_set')
       %td= ''
+    - if current_user and current_user.settings(:ui).debug
+      %th= attrib.ui_renderer rescue Attrib::UI_RENDERER

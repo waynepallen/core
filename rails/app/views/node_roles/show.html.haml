@@ -14,24 +14,7 @@
         = link_to t('.retry'), node_role_retry_path(@node_role.id), :class => 'button', :method=>:put
 
 %h3= t '.data'
-
-- begin
-  - p = "barclamp_#{@node_role.barclamp.name}/node_roles/#{@node_role.role.name.gsub("-","_")}"
-  - if params.include? :raw
-    = render :partial => 'raw', :locals => { :obj => @node_role }
-  - else
-    = render :partial => p, :locals  => { :data => @node_role.data, :hide => false, :template => @node_role.role.template }
-- rescue Exception => e
-  = render :partial => 'raw', :locals => { :obj => @node_role }
-  - if e.message.starts_with? "Missing partial #{p}"
-    - if current_user and current_user.settings(:ui).debug
-      %p
-        %em= t 'debug'
-        = t '.no_overlay', :overlay=>p
-  - else
-    %p
-      = t 'error'
-      = e.message
+= render :partial => 'raw', :locals => { :obj => @node_role }
 
 %h3
   %a.toggle.with_label{:href => "#", :id => "#data_toggle", :rel => "rawdata"}= t '.rawdata'

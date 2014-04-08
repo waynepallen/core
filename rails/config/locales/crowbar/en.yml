@@ -370,8 +370,10 @@ en:
       saved: "Node Role Data Saved"
     raw:
       attrib: "Available Attributes"
+      ui_renderer: "Debug Info: Renderer"
       value: "Value"
       save: "Update"
+      error: "Render Error"
   roles:
     common: &roles_common
       flags: "Flags"
