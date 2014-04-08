@@ -112,6 +112,7 @@ roles:
       - name: provisioner-target_os
         description: "The operating system to install on a node"
         map: 'crowbar/target_os'
+        ui_renderer: 'barclamp_provisioner/attribs/target_os'
         schema:
           type: str
           required: true

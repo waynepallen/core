@@ -184,7 +184,7 @@ class Barclamp < ActiveRecord::Base
           attrib_type = attrib_type_candidates.detect{|at| (at.constantize ? true : false) rescue false}.constantize
           attrib_name = attrib["name"]
           attrib_desc = attrib['description'] || ""
-          attrib_ui_renderer = attrib['ui_rendere'] || Attrib::UI_RENDERER
+          attrib_ui_renderer = attrib['ui_renderer'] || Attrib::UI_RENDERER
           attrib_map = attrib['map'] || ""
           attrib_writable = !!attrib['schema']
           a = attrib_type.find_or_create_by!(name: attrib_name)
