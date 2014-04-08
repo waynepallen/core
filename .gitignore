@@ -43,3 +43,4 @@ erl_crash.dump
 /rails/public/assets/
 
 .idea
+Berksfile.lock
