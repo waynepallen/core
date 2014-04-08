@@ -2,6 +2,7 @@
   =t 'no_items'
 - else
   - obj_type = obj.class.to_s.underscore + "_id"
+  - editable = (obj.is_a? NodeRole and obj.proposed?) or obj.is_a? DeploymentRole
   %table.data.box
     %thead
       %tr
@@ -9,15 +10,5 @@
         %th= t '.value'
         %th
     %tbdoy
-      - editable = (obj.is_a? NodeRole and obj.proposed?) or obj.is_a? DeploymentRole
       - obj.attribs.each do |attrib|
-        = form_for :attrib, :remote => true, :url => attribs_api_path(:id=>attrib.id, obj_type=>obj.id, :version=>'v2'), :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic", :onsubmit =>"location.reload();" } do |f|
-          %tr
-            %td= link_to attrib.name_i18n, attrib_path(attrib.id), :title=>attrib.description
-            - if editable
-              %td= text_field_tag :value, Attrib.get(attrib.name, obj), :size => 40
-              %td{:align=>"right"}
-                %input.button{:type => "submit", :name => "save", :value => t('.save')}
-            -else
-              %td= Attrib.get(attrib.name, obj)
-              %td= ''
+        = render :partial => 'attribs/raw', :locals => {:obj=>obj, :obj_type => obj_type, :attrib=>attrib, :editable=>editable }
