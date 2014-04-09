@@ -56,32 +56,6 @@ jQuery(document).ready(function($) {
     });
   });
   
-  $('#details .roles a').live('click', function(e) {
-    link = $(this);
-    $.getJSON(link.attr('href'), function(data) {
-      $('a.highlight').removeClass('highlight');
-      link.addClass('highlight');
-      $('tr.selected').removeClass('selected');
-      $.each(data['nodes'], function(i,node) {
-        $('tr#'+node).addClass('selected');
-      });
-    });
-    e.preventDefault();
-  });
-  
-  $('#details .barclamps a').live('click', function(e) {
-    link = $(this);
-    $.getJSON(link.attr('href'), function(data) {
-      $('a.highlight').removeClass('highlight');
-      link.addClass('highlight');
-      $('tr.selected').removeClass('selected');
-      $.each(data['nodes'], function(i,node) {
-        $('tr#'+node).addClass('selected');
-      });
-    });
-    e.preventDefault();
-  });
-  
   $('.inline_piechart').sparkline('html', piechart_options );
   
   // Blinking lights
