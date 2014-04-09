@@ -27,6 +27,8 @@ roles:
       - provisioner-dhcp-database
       - provisioner-repos
       - provisioner-docker-setup
+    conflicts:
+      - crowbar-managed-node
   - name: crowbar-managed-node
     description: "Crowbar Node Service Bundle"
     jig: noop
