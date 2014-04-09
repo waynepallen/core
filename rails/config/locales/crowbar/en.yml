@@ -197,6 +197,7 @@ en:
     show:
       <<: *form_common
       map: "Map"
+      ui_renderer: "UI Renderer"
   barclamps:
     index:
       title: "Installed Barclamps"
@@ -368,6 +369,7 @@ en:
       runlog: "Log Capture (from last run)"
       save: "Save"
       saved: "Node Role Data Saved"
+      default: "Default Render"
     raw:
       attrib: "Available Attributes"
       ui_renderer: "Debug Info: Renderer"
