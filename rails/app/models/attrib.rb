@@ -17,6 +17,9 @@ require 'yaml'
 require 'kwalify'
 class Attrib < ActiveRecord::Base
 
+  # determines default view for editing attributes in UI
+  UI_RENDERER = "attribs/default"
+
   validate :schema_is_valid
 
   serialize :schema

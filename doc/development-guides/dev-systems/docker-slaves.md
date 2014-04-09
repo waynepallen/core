@@ -9,6 +9,8 @@ Benefits:
 * very consistent and repeatable system configuration
 * good separation of nodes helps find of issues related to multi-node deployment
 
+> Containers do still use system resources!  Do not assume that you can start unlimited containers - watch your RAM and CPU utilization.
+
 Not Currently Available (but expected):
 
 * support heterogeneous Linux operating systems (important for testing)
@@ -17,8 +19,13 @@ Not Currently Available (but expected):
 
 ### Using docker-slaves with _docker-slaves_ script
 
+1. Prereqs
+
 > The docker-slaves script uses the docker-slave script.  They are different!
- 
+
+   1. Install TMux: `sudo apt-get install tmux`
+   1. Pull the slave container: `docker pull opencrowbar/ubuntu-slave`
+
 Wait until the admin node is up and admin node annealing is complete!
 
 1. From the dev system, `tools/docker-slaves <number of slaves>`
@@ -28,10 +35,10 @@ CLI on the Admin node.  This script relies on `ssh root@172.17.0.2` to
 access the Crowbar CLI and will fail if that access is not available; however
 configuring keys and ssh is part of the normal `docker-admin` script process.
 
-It will run up to 40 of them all under Screen if
-they were created successfully. 
+It will run up to 40 of them all under TMux if
+they were created successfully. Please review [TMux intro](http://code.tutsplus.com/tutorials/intro-to-tmux--net-33889) to learn how to use this tool.  Quick tips are: Ctrl-B then N(ext), P(revious) X(close)
 
-> Detaching from the screen session will kill all the nodes!
+> Detaching from the tmux session will kill all the nodes!
 
 Docker slaves is currently hard coded to only work
 when the admin node is running in a container as well.

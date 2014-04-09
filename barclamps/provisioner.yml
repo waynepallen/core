@@ -58,9 +58,11 @@ roles:
       - name: provisioner-package-repos
         description: 'The packages repositories that managed nodes should use to install packages.'
         map: 'crowbar/provisioner/server/repositories'
+        ui_renderer: 'barclamp_provisioner/attribs/package-repos'
       - name: provisioner-available-oses
         description: 'The operating systems that the provisioner knows how to install'
         map: 'crowbar/provisioner/server/available_oses'
+        ui_renderer: 'barclamp_provisioner/attribs/available_oses'
     requires:
       - provisioner-server
   - name: provisioner-repos
@@ -112,6 +114,7 @@ roles:
       - name: provisioner-target_os
         description: "The operating system to install on a node"
         map: 'crowbar/target_os'
+        ui_renderer: 'barclamp_provisioner/attribs/target_os'
         schema:
           type: str
           required: true

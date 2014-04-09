@@ -1,4 +1,4 @@
-# Copyright 2012, Dell
+# Copyright 2014, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
 
 class Scaffolds::RolesController < ApplicationController
   active_scaffold :role do |conf|
-    list.columns.exclude :template 
+    list.columns.exclude :template
+    list.columns.exclude :provides
+    list.columns.exclude :conflicts
   end
 end 

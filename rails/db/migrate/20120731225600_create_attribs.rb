@@ -25,6 +25,7 @@ class CreateAttribs < ActiveRecord::Migration
       t.text        :schema
       t.integer     :order,         default: 10000
       t.string      :map,           null: true
+      t.string      :ui_renderer,   null: false, default: "attribs/default"
       t.timestamps
     end
   end

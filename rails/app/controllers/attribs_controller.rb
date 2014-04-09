@@ -64,6 +64,8 @@ class AttribsController < ApplicationController
       render api_not_supported 'put', 'attribs/:id'
       return
     end
+    # unpack form updates
+    params[:value] = params[:attrib][:value] if params[:attrib]
     params.require(:value)
     attrib = Attrib.find_key(params[:id])
     target.attribs.find(attrib.id).set(target,params[:value], :user)

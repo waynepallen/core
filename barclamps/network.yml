@@ -22,6 +22,7 @@ roles:
       - name: network_interface_maps
         description: 'The global set of interface maps that should be used to figure out nic ordering.'
         map: 'crowbar/interface_map'
+        ui_renderer: 'barclamp_network/attribs/interface_map'
         schema:
           type: seq
           sequence:

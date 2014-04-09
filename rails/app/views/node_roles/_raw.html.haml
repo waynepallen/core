@@ -2,21 +2,28 @@
   =t 'no_items'
 - else
   - obj_type = obj.class.to_s.underscore + "_id"
+  - editable = (obj.is_a? NodeRole and obj.proposed?) or obj.is_a? DeploymentRole
   %table.data.box
     %thead
       %tr
         %th= t '.attrib'
         %th= t '.value'
-        %th
+        %th= ""
+        - if current_user and current_user.settings(:ui).debug
+          %th= t '.ui_renderer'
     %tbdoy
-      - obj.attribs.each do |a|
-        = form_for :attrib, :remote => true, :url => attribs_api_path(:id=>a.id, obj_type=>obj.id, :version=>'v2'), :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic", :onsubmit =>"location.reload();" } do |f|
-          %tr
-            %td= link_to a.name_i18n, attrib_path(a.id), :title=>a.description
-            - if (obj.is_a? NodeRole and obj.proposed?) or obj.is_a? DeploymentRole
-              %td= text_field_tag :value, Attrib.get(a.name, obj), :size => 40
-              %td{:align=>"right"}
-                %input.button{:type => "submit", :name => "save", :value => t('.save')}
-            -else
-              %td= Attrib.get(a.name, obj)
-              %td= ''
+      - obj.attribs.each do |attrib|
+        - begin
+          - if params.key? :raw
+            = render :partial => Attrib::UI_RENDERER, :locals => {:obj=>obj, :obj_type => obj_type, :attrib=>attrib, :editable=>editable }
+          - else
+            = render :partial => attrib.ui_renderer, :locals => {:obj=>obj, :obj_type => obj_type, :attrib=>attrib, :editable=>editable }
+        - rescue Exception => e
+          - if current_user and current_user.settings(:ui).debug
+            %tr
+              %td= t '.error'
+              %td= e.message
+              %td= t 'debug'
+              %td= attrib.ui_renderer rescue t 'not_set'
+          - else
+            = render :partial => Attrib::UI_RENDERER, :locals => {:obj=>obj, :obj_type => obj_type, :attrib=>attrib, :editable=>editable }  
