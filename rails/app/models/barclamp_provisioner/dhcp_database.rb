@@ -16,19 +16,18 @@
 class BarclampProvisioner::DhcpDatabase < Role
 
   def on_node_create(node)
-    return unless node.roles.exists?(name: "crowbar-managed_node") || (node.bootenv == "sledgehammer")
+    return unless node.roles.exists?(name: "crowbar-managed-node") || (node.bootenv == "sledgehammer")
     Rails.logger.info("provisioner-dhcp-database: Updating for added node #{node.name}")
     rerun_my_noderoles(node) 
   end
 
   def on_node_change(node)
-    return unless node.roles.exists?(name: "crowbar-managed_node") || (node.bootenv == "sledgehammer")
+    return unless node.roles.exists?(name: "crowbar-managed-node") || (node.bootenv == "sledgehammer")
     Rails.logger.info("provisioner-dhcp-database: Updating for changed node #{node.name}")
     rerun_my_noderoles(node)
   end
 
   def on_node_delete(node)
-    return unless node.roles.exists?(name: "crowbar-managed_node")
     Rails.logger.info("provisioner-dhcp-database: Updating for deleted node #{node.name}")
     node_roles.each do |nr|
       nr.with_lock do
