@@ -8,10 +8,14 @@
     %dd= select_tag :deployment_id, options_from_collection_for_select(Deployment.all, :id, :name, :selected=>network.deployment.id)
     %dt= t '.conduit'
     %dd= text_field_tag :conduit, network.conduit, :size=>15
+    %dt= t '.use_vlan'
+    %dd= check_box_tag :use_vlan, true,  network.use_vlan
     %dt= t '.vlan'
-    %dd= text_field_tag :vlan, network.vlan, :size=>5
+    %dd= text_field_tag( :vlan, network.vlan, :size=>5)
     %dt= t '.v6prefix'
     %dd= text_field_tag :v6prefix, network.v6prefix, :size=>20
+    %dt= t '.use_team'
+    %dd= check_box_tag :use_team, true, network.use_team
     %dt= t '.team'
     %dd= text_field_tag :team_mode, network.team_mode, :size=>5
     %dt= t '.bridge'
